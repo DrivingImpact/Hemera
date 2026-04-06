@@ -118,6 +118,63 @@ def build_qc_cards(transactions: list, top_10_threshold: float) -> list[dict]:
     ]
 
 
+def apply_qc_result(transaction, result: dict) -> None:
+    all_pass = all([
+        result.get("classification_pass", False),
+        result.get("emission_factor_pass", False),
+        result.get("arithmetic_pass", False),
+        result.get("supplier_match_pass", False),
+        result.get("pedigree_pass", False),
+    ])
+    transaction.qc_pass = all_pass
+    transaction.qc_notes = json.dumps({
+        "classification_pass": result.get("classification_pass"),
+        "emission_factor_pass": result.get("emission_factor_pass"),
+        "arithmetic_pass": result.get("arithmetic_pass"),
+        "supplier_match_pass": result.get("supplier_match_pass"),
+        "pedigree_pass": result.get("pedigree_pass"),
+        "notes": result.get("notes", ""),
+    })
+
+
+def compute_qc_status(transactions: list) -> dict:
+    sampled = [t for t in transactions if t.is_sampled]
+    if not sampled:
+        return {
+            "status": "not_started", "sample_size": 0, "reviewed_count": 0,
+            "remaining_count": 0, "pass_count": 0, "fail_count": 0,
+            "current_error_rate": 0.0, "hard_gate_threshold": HARD_GATE_THRESHOLD,
+            "would_pass_now": False,
+        }
+    reviewed = [t for t in sampled if t.qc_pass is not None]
+    passed = [t for t in reviewed if t.qc_pass is True]
+    failed = [t for t in reviewed if t.qc_pass is False]
+    sample_size = len(sampled)
+    reviewed_count = len(reviewed)
+    remaining = sample_size - reviewed_count
+    error_rate = len(failed) / sample_size if sample_size > 0 else 0.0
+
+    if reviewed_count < sample_size:
+        return {
+            "status": "in_progress", "sample_size": sample_size,
+            "reviewed_count": reviewed_count, "remaining_count": remaining,
+            "pass_count": len(passed), "fail_count": len(failed),
+            "current_error_rate": round(error_rate, 4),
+            "hard_gate_threshold": HARD_GATE_THRESHOLD,
+            "would_pass_now": error_rate <= HARD_GATE_THRESHOLD,
+        }
+    else:
+        gate_passed = error_rate <= HARD_GATE_THRESHOLD
+        return {
+            "status": "passed" if gate_passed else "failed",
+            "sample_size": sample_size, "reviewed_count": reviewed_count,
+            "remaining_count": 0, "pass_count": len(passed), "fail_count": len(failed),
+            "current_error_rate": round(error_rate, 4),
+            "hard_gate_threshold": HARD_GATE_THRESHOLD,
+            "hard_gate_result": "passed" if gate_passed else "failed",
+        }
+
+
 def select_sample(transactions: list, engagement_id: int, attempt: int = 1) -> list:
     valid = [t for t in transactions if t.co2e_kg is not None and not t.is_duplicate]
     if not valid:

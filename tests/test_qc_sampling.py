@@ -148,3 +148,77 @@ def test_build_qc_cards_numbering(sample_transactions):
         assert card["card_number"] == i
         assert card["total_cards"] == len(sample_transactions)
         assert card["remaining"] == len(sample_transactions) - i + 1
+
+
+# ---------------------------------------------------------------------------
+# Task 3: Error Rate and Hard Gate
+# ---------------------------------------------------------------------------
+
+import json
+from hemera.services.qc_sampling import compute_qc_status, apply_qc_result, HARD_GATE_THRESHOLD
+
+
+def test_compute_qc_status_not_started(sample_transactions):
+    status = compute_qc_status(sample_transactions)
+    assert status["status"] == "not_started"
+    assert status["sample_size"] == 0
+
+
+def test_compute_qc_status_in_progress(sample_transactions, db):
+    sample_transactions[0].is_sampled = True
+    sample_transactions[1].is_sampled = True
+    sample_transactions[0].qc_pass = True
+    db.flush()
+    status = compute_qc_status(sample_transactions)
+    assert status["status"] == "in_progress"
+    assert status["sample_size"] == 2
+    assert status["reviewed_count"] == 1
+    assert status["remaining_count"] == 1
+
+
+def test_compute_qc_status_passed(sample_transactions, db):
+    for t in sample_transactions[:3]:
+        t.is_sampled = True
+        t.qc_pass = True
+    db.flush()
+    status = compute_qc_status(sample_transactions)
+    assert status["status"] == "passed"
+    assert status["current_error_rate"] == 0.0
+    assert status["hard_gate_result"] == "passed"
+
+
+def test_compute_qc_status_failed(sample_transactions, db):
+    for t in sample_transactions[:3]:
+        t.is_sampled = True
+    sample_transactions[0].qc_pass = True
+    sample_transactions[1].qc_pass = True
+    sample_transactions[2].qc_pass = False
+    db.flush()
+    status = compute_qc_status(sample_transactions)
+    assert status["status"] == "failed"
+    assert abs(status["current_error_rate"] - 1/3) < 0.01
+    assert status["hard_gate_result"] == "failed"
+
+
+def test_apply_qc_result_all_pass(sample_transactions, db):
+    t = sample_transactions[0]
+    t.is_sampled = True
+    db.flush()
+    result = {"classification_pass": True, "emission_factor_pass": True, "arithmetic_pass": True, "supplier_match_pass": True, "pedigree_pass": True, "notes": ""}
+    apply_qc_result(t, result)
+    assert t.qc_pass is True
+    assert t.qc_notes is not None
+    stored = json.loads(t.qc_notes)
+    assert stored["classification_pass"] is True
+
+
+def test_apply_qc_result_one_fail(sample_transactions, db):
+    t = sample_transactions[0]
+    t.is_sampled = True
+    db.flush()
+    result = {"classification_pass": True, "emission_factor_pass": True, "arithmetic_pass": True, "supplier_match_pass": True, "pedigree_pass": False, "notes": "Technological score wrong"}
+    apply_qc_result(t, result)
+    assert t.qc_pass is False
+    stored = json.loads(t.qc_notes)
+    assert stored["pedigree_pass"] is False
+    assert stored["notes"] == "Technological score wrong"
