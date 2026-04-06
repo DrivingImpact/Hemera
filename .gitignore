@@ -4,4 +4,8 @@ __pycache__/
 .env
 *.pdf
 *.xlsx
-*.xlsx
+
+# Allow DEFRA workbooks (official government data, needed for seeding)
+!data/defra/*.xlsx
+!data/defra/*.xls
+!data/defra/*.ods
