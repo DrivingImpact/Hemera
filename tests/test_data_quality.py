@@ -112,3 +112,43 @@ def test_summary_has_all_fields(sample_transactions):
                   "data_quality_grade", "transactions_analysed", "vague_code_count",
                   "vague_code_spend_gbp", "vague_code_spend_pct"]:
         assert field in result, f"Missing field: {field}"
+
+
+# --- Task 5: Recommendations Engine ---
+
+def test_recommendations_include_chart_of_accounts(sample_transactions):
+    recs = generate_recommendations(sample_transactions)
+    coa_recs = [r for r in recs if r["type"] == "chart_of_accounts"]
+    assert len(coa_recs) >= 1
+    sundries_rec = next(r for r in coa_recs if r["current_code"] == "Sundries")
+    assert set(sundries_rec["suggested_splits"]) == {
+        "Purchased goods — office supplies",
+        "Purchased goods — IT equipment",
+    }
+    assert sundries_rec["spend_gbp"] == 8000.0
+
+def test_recommendations_include_activity_data(sample_transactions):
+    recs = generate_recommendations(sample_transactions)
+    act_recs = [r for r in recs if r["type"] == "activity_data"]
+    elec = [r for r in act_recs if r["category"] == "Purchased electricity"]
+    assert len(elec) == 1
+    assert elec[0]["data_needed"] == "kWh from electricity bills or supplier portal"
+
+def test_recommendations_include_gas_activity_data(sample_transactions):
+    recs = generate_recommendations(sample_transactions)
+    act_recs = [r for r in recs if r["type"] == "activity_data"]
+    gas = [r for r in act_recs if "gas" in r["category"].lower() or "combustion" in r["category"].lower()]
+    assert len(gas) == 1
+
+def test_recommendations_ranked_by_impact(sample_transactions):
+    recs = generate_recommendations(sample_transactions)
+    scores = [r["impact_score"] for r in recs]
+    assert scores == sorted(scores, reverse=True)
+
+def test_recommendations_have_required_fields(sample_transactions):
+    recs = generate_recommendations(sample_transactions)
+    for r in recs:
+        assert "type" in r
+        assert "rank" in r
+        assert "impact_score" in r
+        assert "explanation" in r

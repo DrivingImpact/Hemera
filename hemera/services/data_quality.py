@@ -266,3 +266,150 @@ def compute_summary(transactions: list) -> dict:
         "vague_code_spend_pct": round(vague_spend / total_spend * 100, 1) if total_spend > 0 else 0.0,
     }
 
+
+# ---------------------------------------------------------------------------
+# Task 5: Recommendations Engine
+# ---------------------------------------------------------------------------
+
+ACTIVITY_DATA_CATEGORIES = {
+    "Purchased electricity": {
+        "data_needed": "kWh from electricity bills or supplier portal",
+        "recommended_method": "activity-based kWh (Level 2)",
+        "projected_gsd": 1.05,
+    },
+    "Purchased heat/steam/cooling": {
+        "data_needed": "kWh from heating bills",
+        "recommended_method": "activity-based kWh (Level 2)",
+        "projected_gsd": 1.10,
+    },
+    "Stationary combustion — gas/heating fuel": {
+        "data_needed": "kWh or litres from gas bills",
+        "recommended_method": "activity-based kWh/litres (Level 2)",
+        "projected_gsd": 1.05,
+    },
+    "Mobile combustion — company vehicles": {
+        "data_needed": "Litres from fuel card statements",
+        "recommended_method": "activity-based litres (Level 2)",
+        "projected_gsd": 1.10,
+    },
+    "Waste generated in operations": {
+        "data_needed": "Tonnes by waste type from contractor reports",
+        "recommended_method": "waste-type based tonnes (Level 2)",
+        "projected_gsd": 1.15,
+    },
+    "Business travel — rail": {
+        "data_needed": "Passenger-km from booking confirmations",
+        "recommended_method": "distance-based pax-km (Level 2)",
+        "projected_gsd": 1.10,
+    },
+    "Business travel — air": {
+        "data_needed": "Passenger-km and cabin class from bookings",
+        "recommended_method": "distance-based pax-km (Level 2)",
+        "projected_gsd": 1.10,
+    },
+    "Purchased services — water supply": {
+        "data_needed": "m3 from water bills",
+        "recommended_method": "activity-based m3 (Level 2)",
+        "projected_gsd": 1.05,
+    },
+}
+
+
+def _projected_gsd_one_level_better(current_gsd: float) -> float:
+    ln_gsd = math.log(current_gsd)
+    return math.exp(ln_gsd * 0.8)
+
+
+def generate_recommendations(transactions: list) -> list[dict]:
+    valid = [t for t in transactions if t.co2e_kg is not None and not t.is_duplicate]
+    recs = []
+
+    # 1. Chart-of-accounts
+    vague = detect_vague_codes(transactions)
+    for v in vague:
+        if len(v["classified_as"]) >= 2:
+            group_txns = [t for t in valid if (t.raw_category or "").strip() == v["raw_category"]]
+            gsd_vals = [t.gsd_total for t in group_txns if t.gsd_total]
+            avg_gsd = sum(gsd_vals) / len(gsd_vals) if gsd_vals else 1.5
+            projected = _projected_gsd_one_level_better(avg_gsd)
+            impact = v["spend_gbp"] * (avg_gsd - projected)
+            reduction_pct = round((1 - projected / avg_gsd) * 100, 1)
+            recs.append({
+                "type": "chart_of_accounts",
+                "impact_score": round(impact, 1),
+                "current_code": v["raw_category"],
+                "suggested_splits": v["classified_as"],
+                "spend_gbp": v["spend_gbp"],
+                "current_avg_gsd": round(avg_gsd, 2),
+                "projected_avg_gsd": round(projected, 2),
+                "uncertainty_reduction_pct": reduction_pct,
+                "explanation": (
+                    f"{v['transaction_count']} transactions under this code were classified into "
+                    f"{len(v['classified_as'])} distinct categories. Splitting the nominal code "
+                    f"would allow more specific emission factors."
+                ),
+            })
+
+    # 2. Activity data
+    category_groups: dict[str, list] = {}
+    for t in valid:
+        if t.category_name and (t.ef_level or 0) >= 4:
+            category_groups.setdefault(t.category_name, []).append(t)
+
+    for cat_name, txns in category_groups.items():
+        if cat_name in ACTIVITY_DATA_CATEGORIES:
+            info = ACTIVITY_DATA_CATEGORIES[cat_name]
+            spend = sum(abs(t.amount_gbp or 0) for t in txns)
+            gsd_vals = [t.gsd_total for t in txns if t.gsd_total]
+            avg_gsd = sum(gsd_vals) / len(gsd_vals) if gsd_vals else 1.5
+            impact = spend * (avg_gsd - info["projected_gsd"])
+            recs.append({
+                "type": "activity_data",
+                "impact_score": round(impact, 1),
+                "category": cat_name,
+                "current_method": f"spend-based (Level {txns[0].ef_level})",
+                "recommended_method": info["recommended_method"],
+                "spend_gbp": spend,
+                "current_gsd": round(avg_gsd, 2),
+                "projected_gsd": info["projected_gsd"],
+                "data_needed": info["data_needed"],
+                "explanation": (
+                    f"{cat_name} spend is currently estimated from GBP. Providing "
+                    f"{info['data_needed'].split(' from ')[0].lower()} would move this "
+                    f"from Level {txns[0].ef_level} to Level 2."
+                ),
+            })
+
+    # 3. Supplier engagement
+    supplier_groups: dict[str, list] = {}
+    for t in valid:
+        if t.raw_supplier and (t.ef_level or 0) >= 4:
+            supplier_groups.setdefault(t.raw_supplier.strip(), []).append(t)
+
+    for supplier_name, txns in supplier_groups.items():
+        spend = sum(abs(t.amount_gbp or 0) for t in txns)
+        if spend < 2000:
+            continue
+        gsd_vals = [t.gsd_total for t in txns if t.gsd_total]
+        avg_gsd = sum(gsd_vals) / len(gsd_vals) if gsd_vals else 1.5
+        projected = 1.05
+        impact = spend * (avg_gsd - projected)
+        recs.append({
+            "type": "supplier_engagement",
+            "impact_score": round(impact, 1),
+            "supplier_name": supplier_name,
+            "supplier_id": txns[0].supplier_id,
+            "spend_gbp": spend,
+            "current_ef_level": txns[0].ef_level,
+            "projected_ef_level": 1,
+            "explanation": (
+                f"{supplier_name} is a significant supplier by spend. Requesting their emission "
+                f"intensity data would reduce uncertainty from GSD {round(avg_gsd, 2)} to ~1.05."
+            ),
+        })
+
+    recs.sort(key=lambda r: r["impact_score"], reverse=True)
+    for i, r in enumerate(recs, 1):
+        r["rank"] = i
+    return recs
+
