@@ -79,6 +79,33 @@ a new sample.
 Each sampled transaction is served as a self-contained verification card with three
 sections.
 
+### Sampling Rationale
+
+Each card explains WHY this transaction was selected, so the analyst understands the
+risk profile they're verifying:
+
+```json
+{
+  "card_number": 12,
+  "total_cards": 80,
+  "remaining": 68,
+  "sampling_reasons": [
+    "High-spend transaction (top 10% by value)",
+    "Level 5 emission factor (high uncertainty)"
+  ]
+}
+```
+
+`sampling_reasons` is a list of human-readable strings explaining which weighting
+criteria applied. Possible reasons:
+- "High-spend transaction (top 10% by value)"
+- "Low-confidence classification (method: none)"
+- "LLM-classified transaction"
+- "High-uncertainty emission factor (Level 5-6)"
+- "Routine sample (proportional representation)"
+
+If no special weighting applied, the reason is "Routine sample."
+
 ### Section A — Raw Data (what the client uploaded)
 
 ```json
@@ -203,7 +230,15 @@ Generate the QC sample for an engagement.
     "low_confidence_sampled": 15
   },
   "cards": [
-    { "...QC card as described in Section 4..." }
+    {
+      "card_number": 1,
+      "total_cards": 80,
+      "remaining": 80,
+      "sampling_reasons": ["High-spend transaction (top 10% by value)"],
+      "raw_data": { "...Section A..." },
+      "decisions": { "...Section B..." },
+      "checks": ["classification", "emission_factor", "arithmetic", "supplier_match", "pedigree"]
+    }
   ]
 }
 ```
