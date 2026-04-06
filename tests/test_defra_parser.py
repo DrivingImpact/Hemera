@@ -166,3 +166,77 @@ class TestParseEeioFactors:
     def test_all_factor_values_positive(self, eeio_factors_2022):
         for f in eeio_factors_2022:
             assert f["factor_value"] > 0, f"Non-positive factor: {f}"
+
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from hemera.database import Base
+from hemera.models.emission_factor import EmissionFactor
+from hemera.services.seed_factors import seed_emission_factors
+
+
+@pytest.fixture
+def db():
+    """In-memory SQLite session for seeder tests."""
+    engine = create_engine("sqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    yield session
+    session.close()
+
+
+DEFRA_DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data", "defra")
+
+
+class TestSeedEmissionFactors:
+    def test_seeds_from_real_files(self, db):
+        """Seeder should populate factors from workbooks in data/defra/."""
+        count = seed_emission_factors(db, data_dir=DEFRA_DATA_DIR)
+        assert count > 3000  # At least activity factors from one year
+
+    def test_has_both_sources(self, db):
+        """Should have both defra (activity) and defra-eeio (spend) factors."""
+        seed_emission_factors(db, data_dir=DEFRA_DATA_DIR)
+        sources = {
+            r[0] for r in db.query(EmissionFactor.source).distinct().all()
+        }
+        assert "defra" in sources
+        assert "defra-eeio" in sources
+
+    def test_has_multiple_years(self, db):
+        """Should have factors from 2023 and 2024 (activity-based)."""
+        seed_emission_factors(db, data_dir=DEFRA_DATA_DIR)
+        years = {
+            r[0]
+            for r in db.query(EmissionFactor.year)
+            .filter(EmissionFactor.source == "defra")
+            .distinct()
+            .all()
+        }
+        assert 2024 in years
+        assert 2023 in years
+
+    def test_idempotent(self, db):
+        """Running seeder twice should produce same count (replaces, not duplicates)."""
+        count1 = seed_emission_factors(db, data_dir=DEFRA_DATA_DIR)
+        count2 = seed_emission_factors(db, data_dir=DEFRA_DATA_DIR)
+        assert count1 == count2
+        total = db.query(EmissionFactor).count()
+        assert total == count1
+
+    def test_spot_check_uk_electricity_2024(self, db):
+        """After seeding, UK electricity 2024 should be 0.20705 kgCO2e/kWh."""
+        seed_emission_factors(db, data_dir=DEFRA_DATA_DIR)
+        ef = (
+            db.query(EmissionFactor)
+            .filter(
+                EmissionFactor.source == "defra",
+                EmissionFactor.category == "UK electricity",
+                EmissionFactor.year == 2024,
+                EmissionFactor.scope == 2,
+            )
+            .first()
+        )
+        assert ef is not None
+        assert ef.factor_value == pytest.approx(0.20705, abs=0.0001)
