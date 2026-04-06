@@ -28,7 +28,7 @@
             <td>{{ t.transaction_date or '—' }}</td>
             <td>{{ t.raw_description[:40] if t.raw_description else '—' }}</td>
             <td>{{ t.raw_supplier[:25] if t.raw_supplier else '—' }}</td>
-            <td class="num">{{ "{:,.0f}"|format(t.amount_gbp or 0) }}</td>
+            <td class="num">{{ "%.0f"|format(t.amount_gbp or 0) }}</td>
             <td>{{ t.scope or '—' }}</td>
             <td>{{ t.category_name[:30] if t.category_name else '—' }}</td>
             <td>{{ t.ef_source or '—' }}</td>
