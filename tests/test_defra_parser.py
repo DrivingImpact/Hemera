@@ -2,7 +2,7 @@
 
 import os
 import pytest
-from hemera.services.defra_parser import parse_activity_factors
+from hemera.services.defra_parser import parse_activity_factors, parse_eeio_factors
 
 
 DEFRA_2024_PATH = os.path.join(
@@ -100,4 +100,69 @@ class TestParseActivityFactors:
 
     def test_all_factor_values_positive(self, activity_factors_2024):
         for f in activity_factors_2024:
+            assert f["factor_value"] > 0, f"Non-positive factor: {f}"
+
+
+EEIO_2022_PATH = os.path.join(
+    os.path.dirname(__file__), "..", "data", "defra",
+    "eeio-factors-by-sic-2022.ods",
+)
+
+
+@pytest.fixture
+def eeio_factors_2022():
+    """Parse the real EEIO ODS file."""
+    return parse_eeio_factors(EEIO_2022_PATH, 2022)
+
+
+class TestParseEeioFactors:
+    def test_returns_list_of_dicts(self, eeio_factors_2022):
+        assert isinstance(eeio_factors_2022, list)
+        assert len(eeio_factors_2022) > 0
+
+    def test_expected_row_count(self, eeio_factors_2022):
+        """Should have ~110 SIC-code-level factors."""
+        assert 100 < len(eeio_factors_2022) < 130
+
+    def test_all_scope_3(self, eeio_factors_2022):
+        for f in eeio_factors_2022:
+            assert f["scope"] == 3
+
+    def test_all_spend_type(self, eeio_factors_2022):
+        for f in eeio_factors_2022:
+            assert f["factor_type"] == "spend"
+            assert f["unit"] == "kgCO2e/GBP"
+
+    def test_source_is_defra_eeio(self, eeio_factors_2022):
+        for f in eeio_factors_2022:
+            assert f["source"] == "defra-eeio"
+
+    def test_agriculture_factor(self, eeio_factors_2022):
+        """Spot-check: SIC 01 agriculture = 2.633029 kgCO2e/GBP."""
+        matches = [f for f in eeio_factors_2022 if f["subcategory"] == "01"]
+        assert len(matches) == 1
+        assert matches[0]["factor_value"] == pytest.approx(2.633029, abs=0.001)
+        assert "agriculture" in matches[0]["category"].lower()
+
+    def test_textiles_factor(self, eeio_factors_2022):
+        """Spot-check: SIC 13 textiles = 0.782675 kgCO2e/GBP."""
+        matches = [f for f in eeio_factors_2022 if f["subcategory"] == "13"]
+        assert len(matches) == 1
+        assert matches[0]["factor_value"] == pytest.approx(0.782675, abs=0.001)
+
+    def test_domestic_personnel_factor(self, eeio_factors_2022):
+        """Spot-check: SIC 97 (last row) = 0.045117 kgCO2e/GBP."""
+        matches = [f for f in eeio_factors_2022 if f["subcategory"] == "97"]
+        assert len(matches) == 1
+        assert matches[0]["factor_value"] == pytest.approx(0.045117, abs=0.001)
+
+    def test_all_factors_have_required_fields(self, eeio_factors_2022):
+        required = {"source", "category", "subcategory", "scope", "factor_value",
+                     "unit", "factor_type", "year", "region"}
+        for f in eeio_factors_2022:
+            missing = required - set(f.keys())
+            assert not missing, f"Missing fields {missing} in {f['category']}"
+
+    def test_all_factor_values_positive(self, eeio_factors_2022):
+        for f in eeio_factors_2022:
             assert f["factor_value"] > 0, f"Non-positive factor: {f}"
