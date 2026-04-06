@@ -107,3 +107,67 @@ def test_require_admin_with_client():
     with pytest.raises(HTTPException) as exc:
         require_admin(current_user=client_user)
     assert exc.value.status_code == 403
+
+
+# ---------------------------------------------------------------------------
+# Task 3: API auth endpoints and webhook
+# ---------------------------------------------------------------------------
+
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.pool import StaticPool
+from sqlalchemy.orm import sessionmaker
+from hemera.database import Base, get_db
+from hemera.main import app
+from hemera.models.user import User
+
+
+def _make_test_session():
+    engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False}, poolclass=StaticPool)
+    Base.metadata.create_all(engine)
+    return sessionmaker(bind=engine)()
+
+
+def test_api_auth_me():
+    mock_user = ClerkUser(clerk_id="user_1", email="test@su.ac.uk", org_name="Imperial SU", role="client")
+    with patch("hemera.dependencies.verify_clerk_token", return_value=mock_user):
+        client = TestClient(app)
+        r = client.get("/api/auth/me", headers={"Authorization": "Bearer fake_token"})
+        assert r.status_code == 200
+        data = r.json()
+        assert data["email"] == "test@su.ac.uk"
+        assert data["org_name"] == "Imperial SU"
+        assert data["role"] == "client"
+
+
+def test_api_auth_me_no_token():
+    client = TestClient(app)
+    r = client.get("/api/auth/me")
+    assert r.status_code == 401
+
+
+def test_webhook_creates_user():
+    session = _make_test_session()
+    def override_get_db():
+        try: yield session
+        finally: pass
+    app.dependency_overrides[get_db] = override_get_db
+    payload = {
+        "type": "user.created",
+        "data": {
+            "id": "user_clerk_abc",
+            "email_addresses": [{"email_address": "new@su.ac.uk"}],
+            "public_metadata": {"org_name": "Test SU", "role": "client"},
+        },
+    }
+    with patch("hemera.api.auth._verify_webhook_signature", return_value=True):
+        client = TestClient(app)
+        r = client.post("/api/webhooks/clerk", json=payload)
+        assert r.status_code == 200
+    user = session.query(User).filter(User.clerk_id == "user_clerk_abc").first()
+    assert user is not None
+    assert user.email == "new@su.ac.uk"
+    assert user.org_name == "Test SU"
+    assert user.role == "client"
+    app.dependency_overrides.clear()
+    session.close()

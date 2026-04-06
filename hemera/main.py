@@ -1,7 +1,7 @@
 """Hemera — FastAPI application."""
 
 from fastapi import FastAPI
-from hemera.api import upload, engagements, suppliers, reports, qc
+from hemera.api import upload, engagements, suppliers, reports, qc, auth
 
 app = FastAPI(
     title="Hemera",
@@ -9,6 +9,7 @@ app = FastAPI(
     version="0.1.0",
 )
 
+app.include_router(auth.router, prefix="/api", tags=["auth"])
 app.include_router(upload.router, prefix="/api", tags=["upload"])
 app.include_router(engagements.router, prefix="/api", tags=["engagements"])
 app.include_router(suppliers.router, prefix="/api", tags=["suppliers"])
