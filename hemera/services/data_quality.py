@@ -6,6 +6,7 @@ Pure functions — no DB writes, no side effects.
 """
 
 import math
+from datetime import datetime, timezone
 from hemera.services.pedigree import (
     RELIABILITY_GSD, COMPLETENESS_GSD, TEMPORAL_GSD,
     GEOGRAPHICAL_GSD, TECHNOLOGICAL_GSD, BASIC_GSD,
@@ -205,3 +206,63 @@ def compute_pedigree_breakdown(transactions: list) -> dict:
             "contribution_pct": round(indicator_variance[ind] / total_indicator_variance * 100, 1),
         }
     return result
+
+
+# ---------------------------------------------------------------------------
+# Task 4: Data Quality Grade and Summary
+# ---------------------------------------------------------------------------
+
+def compute_data_quality_grade(cascade_spend_pct: dict) -> str:
+    l1_l2 = cascade_spend_pct.get("L1", 0) + cascade_spend_pct.get("L2", 0)
+    l1_l3 = l1_l2 + cascade_spend_pct.get("L3", 0)
+    l4_plus = cascade_spend_pct.get("L4", 0) + cascade_spend_pct.get("L5", 0) + cascade_spend_pct.get("L6", 0)
+    if l1_l2 > 60:
+        return "A"
+    if l1_l3 > 40:
+        return "B"
+    if l4_plus > 80:
+        return "D"
+    if l4_plus > 60:
+        return "C"
+    return "E"
+
+
+def compute_summary(transactions: list) -> dict:
+    valid = [t for t in transactions if t.co2e_kg is not None and not t.is_duplicate]
+    total_spend = sum(abs(t.amount_gbp or 0) for t in valid)
+    total_co2e_kg = sum(t.co2e_kg for t in valid)
+
+    vague_codes = detect_vague_codes(transactions)
+    vague_count = sum(v["transaction_count"] for v in vague_codes)
+    vague_spend = sum(v["spend_gbp"] for v in vague_codes)
+
+    cascade = compute_cascade_distribution(transactions)
+    grade = compute_data_quality_grade(cascade["current_by_spend_pct"])
+
+    gsd_values = [t.gsd_total for t in valid if t.gsd_total and t.gsd_total > 0]
+    co2e_values = [t.co2e_kg for t in valid if t.gsd_total and t.gsd_total > 0]
+
+    if gsd_values and co2e_values:
+        total = sum(co2e_values)
+        ln_sq_sum = 0.0
+        for gsd, co2e in zip(gsd_values, co2e_values):
+            weight = co2e / total
+            ln_sq_sum += (weight * math.log(gsd)) ** 2
+        overall_gsd = math.exp(math.sqrt(ln_sq_sum))
+    else:
+        overall_gsd = 1.0
+
+    ci_pct = round((overall_gsd ** 2 - 1) * 100, 0)
+
+    return {
+        "overall_gsd": round(overall_gsd, 3),
+        "ci_95_percent": f"+/-{int(ci_pct)}%",
+        "total_spend_gbp": round(total_spend, 2),
+        "total_co2e_tonnes": round(total_co2e_kg / 1000, 2),
+        "data_quality_grade": grade,
+        "transactions_analysed": len(valid),
+        "vague_code_count": vague_count,
+        "vague_code_spend_gbp": round(vague_spend, 2),
+        "vague_code_spend_pct": round(vague_spend / total_spend * 100, 1) if total_spend > 0 else 0.0,
+    }
+

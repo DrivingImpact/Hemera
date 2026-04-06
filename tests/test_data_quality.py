@@ -5,6 +5,10 @@ from hemera.services.data_quality import (
     compute_uncertainty_contributors,
     compute_cascade_distribution,
     compute_pedigree_breakdown,
+    compute_data_quality_grade,
+    compute_summary,
+    generate_recommendations,
+    generate_data_quality_report,
 )
 
 
@@ -84,3 +88,27 @@ def test_pedigree_reliability_dominates(sample_transactions):
     technological scores of 4-5 (GSD 1.21-1.35) in the sample fixture."""
     result = compute_pedigree_breakdown(sample_transactions)
     assert result["reliability"]["contribution_pct"] > result["technological"]["contribution_pct"]
+
+
+# --- Task 4: Data Quality Grade and Summary ---
+
+def test_grade_d_for_mostly_level4(sample_transactions):
+    # Sample fixture has ~95% L4 + ~5% L5 = 100% L4+, which scores D (>80% L4+)
+    cascade = compute_cascade_distribution(sample_transactions)
+    grade = compute_data_quality_grade(cascade["current_by_spend_pct"])
+    assert grade == "D"
+
+def test_grade_a_for_high_l1_l2():
+    dist = {"L1": 40, "L2": 25, "L3": 15, "L4": 15, "L5": 5, "L6": 0}
+    assert compute_data_quality_grade(dist) == "A"
+
+def test_grade_b_for_moderate_l1_l3():
+    dist = {"L1": 15, "L2": 15, "L3": 15, "L4": 40, "L5": 15, "L6": 0}
+    assert compute_data_quality_grade(dist) == "B"
+
+def test_summary_has_all_fields(sample_transactions):
+    result = compute_summary(sample_transactions)
+    for field in ["overall_gsd", "ci_95_percent", "total_spend_gbp", "total_co2e_tonnes",
+                  "data_quality_grade", "transactions_analysed", "vague_code_count",
+                  "vague_code_spend_gbp", "vague_code_spend_pct"]:
+        assert field in result, f"Missing field: {field}"
