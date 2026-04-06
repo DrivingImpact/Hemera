@@ -3,6 +3,8 @@
 from hemera.services.data_quality import (
     detect_vague_codes,
     compute_uncertainty_contributors,
+    compute_cascade_distribution,
+    compute_pedigree_breakdown,
 )
 
 
@@ -50,3 +52,35 @@ def test_uncertainty_contributors_fields(sample_transactions):
     first = result[0]
     for field in ["raw_category", "transaction_count", "spend_gbp", "co2e_kg", "avg_gsd", "uncertainty_contribution_pct", "dominant_pedigree_indicator"]:
         assert field in first
+
+
+# --- Task 3: Cascade Distribution and Pedigree Breakdown ---
+
+def test_cascade_distribution_sums_to_100(sample_transactions):
+    result = compute_cascade_distribution(sample_transactions)
+    spend_total = sum(result["current_by_spend_pct"].values())
+    assert abs(spend_total - 100.0) < 0.1
+
+
+def test_cascade_distribution_has_target(sample_transactions):
+    result = compute_cascade_distribution(sample_transactions)
+    assert "target_by_spend_pct" in result
+    assert result["target_by_spend_pct"]["L2"] == 30
+
+
+def test_cascade_all_level_4(sample_transactions):
+    result = compute_cascade_distribution(sample_transactions)
+    assert result["current_by_spend_pct"]["L4"] > 50
+
+
+def test_pedigree_breakdown_contributions_sum_to_100(sample_transactions):
+    result = compute_pedigree_breakdown(sample_transactions)
+    total = sum(v["contribution_pct"] for v in result.values())
+    assert abs(total - 100.0) < 0.1
+
+
+def test_pedigree_reliability_dominates(sample_transactions):
+    """Reliability scores of 3-4 (GSD 1.61-1.69) produce more variance than
+    technological scores of 4-5 (GSD 1.21-1.35) in the sample fixture."""
+    result = compute_pedigree_breakdown(sample_transactions)
+    assert result["reliability"]["contribution_pct"] > result["technological"]["contribution_pct"]

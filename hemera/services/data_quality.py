@@ -124,3 +124,84 @@ def compute_uncertainty_contributors(transactions: list) -> list[dict]:
 
     result.sort(key=lambda r: r["uncertainty_contribution_pct"], reverse=True)
     return result
+
+
+# ---------------------------------------------------------------------------
+# Task 3: Cascade Distribution and Pedigree Breakdown
+# ---------------------------------------------------------------------------
+
+CASCADE_TARGET = {"L1": 10, "L2": 30, "L3": 20, "L4": 30, "L5": 10, "L6": 0}
+
+
+def compute_cascade_distribution(transactions: list) -> dict:
+    valid = [t for t in transactions if t.co2e_kg is not None and not t.is_duplicate]
+    total_spend = sum(abs(t.amount_gbp or 0) for t in valid)
+    total_co2e = sum(t.co2e_kg for t in valid)
+
+    spend_by_level = {f"L{i}": 0.0 for i in range(1, 7)}
+    co2e_by_level = {f"L{i}": 0.0 for i in range(1, 7)}
+
+    for t in valid:
+        level_key = f"L{t.ef_level or 5}"
+        if level_key not in spend_by_level:
+            level_key = "L6"
+        spend_by_level[level_key] += abs(t.amount_gbp or 0)
+        co2e_by_level[level_key] += t.co2e_kg
+
+    spend_pct = {k: round(v / total_spend * 100, 1) if total_spend > 0 else 0.0 for k, v in spend_by_level.items()}
+    co2e_pct = {k: round(v / total_co2e * 100, 1) if total_co2e > 0 else 0.0 for k, v in co2e_by_level.items()}
+
+    return {
+        "current_by_spend_pct": spend_pct,
+        "current_by_co2e_pct": co2e_pct,
+        "target_by_spend_pct": CASCADE_TARGET.copy(),
+    }
+
+
+def compute_pedigree_breakdown(transactions: list) -> dict:
+    valid = [t for t in transactions if t.co2e_kg and t.co2e_kg > 0 and not t.is_duplicate]
+    total_co2e = sum(t.co2e_kg for t in valid)
+
+    if total_co2e == 0:
+        return {ind: {"weighted_avg_score": 0, "contribution_pct": 0}
+                for ind in ["reliability", "completeness", "temporal", "geographical", "technological"]}
+
+    gsd_maps = {
+        "reliability": RELIABILITY_GSD,
+        "completeness": COMPLETENESS_GSD,
+        "temporal": TEMPORAL_GSD,
+        "geographical": GEOGRAPHICAL_GSD,
+        "technological": TECHNOLOGICAL_GSD,
+    }
+    score_attrs = {
+        "reliability": "pedigree_reliability",
+        "completeness": "pedigree_completeness",
+        "temporal": "pedigree_temporal",
+        "geographical": "pedigree_geographical",
+        "technological": "pedigree_technological",
+    }
+
+    weighted_scores = {}
+    for ind, attr in score_attrs.items():
+        weighted_sum = sum((getattr(t, attr) or 3) * t.co2e_kg for t in valid)
+        weighted_scores[ind] = round(weighted_sum / total_co2e, 1)
+
+    indicator_variance = {ind: 0.0 for ind in gsd_maps}
+    for t in valid:
+        weight = t.co2e_kg / total_co2e
+        for ind, gsd_map in gsd_maps.items():
+            score = getattr(t, score_attrs[ind]) or 3
+            gsd_val = gsd_map.get(score, 1.0)
+            indicator_variance[ind] += (weight * math.log(gsd_val)) ** 2
+
+    total_indicator_variance = sum(indicator_variance.values())
+    if total_indicator_variance == 0:
+        total_indicator_variance = 1.0
+
+    result = {}
+    for ind in gsd_maps:
+        result[ind] = {
+            "weighted_avg_score": weighted_scores[ind],
+            "contribution_pct": round(indicator_variance[ind] / total_indicator_variance * 100, 1),
+        }
+    return result
