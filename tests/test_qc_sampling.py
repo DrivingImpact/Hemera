@@ -222,3 +222,145 @@ def test_apply_qc_result_one_fail(sample_transactions, db):
     stored = json.loads(t.qc_notes)
     assert stored["pedigree_pass"] is False
     assert stored["notes"] == "Technological score wrong"
+
+
+# ---------------------------------------------------------------------------
+# Task 4: API endpoints
+# ---------------------------------------------------------------------------
+
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.pool import StaticPool
+from sqlalchemy.orm import sessionmaker
+from hemera.database import Base, get_db
+from hemera.main import app
+from hemera.models.engagement import Engagement
+from hemera.models.transaction import Transaction
+
+
+def _make_test_session():
+    engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False}, poolclass=StaticPool)
+    Base.metadata.create_all(engine)
+    return sessionmaker(bind=engine)()
+
+
+def _seed_engagement_with_transactions(session, count=20):
+    eng = Engagement(org_name="QC Test SU", status="reviewing", transaction_count=count)
+    session.add(eng)
+    session.flush()
+    for i in range(count):
+        txn = Transaction(
+            engagement_id=eng.id, row_number=i + 1,
+            raw_description=f"Test item {i+1}", raw_supplier=f"Supplier {i+1}",
+            raw_category="General", raw_amount=1000.0 + i * 100, amount_gbp=1000.0 + i * 100,
+            scope=3, ghg_category=1, category_name="Purchased goods — office supplies",
+            classification_method="keyword", classification_confidence=0.85,
+            ef_value=0.5, ef_unit="kgCO2e/GBP", ef_source="defra",
+            ef_level=4, ef_year=2024, ef_region="UK",
+            co2e_kg=(1000.0 + i * 100) * 0.5,
+            pedigree_reliability=3, pedigree_completeness=2,
+            pedigree_temporal=1, pedigree_geographical=1, pedigree_technological=4,
+            gsd_total=1.69,
+        )
+        session.add(txn)
+    session.flush()
+    return eng
+
+
+def test_api_qc_generate():
+    session = _make_test_session()
+    def override_get_db():
+        try: yield session
+        finally: pass
+    app.dependency_overrides[get_db] = override_get_db
+    eng = _seed_engagement_with_transactions(session, count=20)
+    client = TestClient(app)
+    response = client.post(f"/api/engagements/{eng.id}/qc/generate")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["engagement_id"] == eng.id
+    assert data["sample_size"] > 0
+    assert data["population_size"] == 20
+    assert len(data["cards"]) == data["sample_size"]
+    assert data["cards"][0]["card_number"] == 1
+    assert "sampling_reasons" in data["cards"][0]
+    assert "raw_data" in data["cards"][0]
+    assert "decisions" in data["cards"][0]
+    app.dependency_overrides.clear()
+    session.close()
+
+
+def test_api_qc_generate_idempotent():
+    session = _make_test_session()
+    def override_get_db():
+        try: yield session
+        finally: pass
+    app.dependency_overrides[get_db] = override_get_db
+    eng = _seed_engagement_with_transactions(session, count=20)
+    client = TestClient(app)
+    r1 = client.post(f"/api/engagements/{eng.id}/qc/generate")
+    r2 = client.post(f"/api/engagements/{eng.id}/qc/generate")
+    assert r1.json()["sample_size"] == r2.json()["sample_size"]
+    app.dependency_overrides.clear()
+    session.close()
+
+
+def test_api_qc_status():
+    session = _make_test_session()
+    def override_get_db():
+        try: yield session
+        finally: pass
+    app.dependency_overrides[get_db] = override_get_db
+    eng = _seed_engagement_with_transactions(session, count=10)
+    client = TestClient(app)
+    r = client.get(f"/api/engagements/{eng.id}/qc")
+    assert r.status_code == 200
+    assert r.json()["status"] == "not_started"
+    client.post(f"/api/engagements/{eng.id}/qc/generate")
+    r = client.get(f"/api/engagements/{eng.id}/qc")
+    assert r.json()["status"] == "in_progress"
+    app.dependency_overrides.clear()
+    session.close()
+
+
+def test_api_qc_submit_and_gate():
+    session = _make_test_session()
+    def override_get_db():
+        try: yield session
+        finally: pass
+    app.dependency_overrides[get_db] = override_get_db
+    eng = _seed_engagement_with_transactions(session, count=5)
+    client = TestClient(app)
+    gen_response = client.post(f"/api/engagements/{eng.id}/qc/generate")
+    cards = gen_response.json()["cards"]
+    for card in cards:
+        r = client.post(f"/api/engagements/{eng.id}/qc/submit", json={
+            "results": [{"transaction_id": card["transaction_id"],
+                "classification_pass": True, "emission_factor_pass": True,
+                "arithmetic_pass": True, "supplier_match_pass": True,
+                "pedigree_pass": True, "notes": ""}]
+        })
+        assert r.status_code == 200
+    status = client.get(f"/api/engagements/{eng.id}/qc").json()
+    assert status["status"] == "passed"
+    eng_refreshed = session.query(Engagement).filter(Engagement.id == eng.id).first()
+    assert eng_refreshed.status == "delivered"
+    app.dependency_overrides.clear()
+    session.close()
+
+
+def test_api_qc_submit_not_found():
+    session = _make_test_session()
+    def override_get_db():
+        try: yield session
+        finally: pass
+    app.dependency_overrides[get_db] = override_get_db
+    client = TestClient(app)
+    r = client.post("/api/engagements/99999/qc/submit", json={
+        "results": [{"transaction_id": 1, "classification_pass": True,
+            "emission_factor_pass": True, "arithmetic_pass": True,
+            "supplier_match_pass": True, "pedigree_pass": True, "notes": ""}]
+    })
+    assert r.status_code == 404
+    app.dependency_overrides.clear()
+    session.close()
