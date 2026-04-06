@@ -169,3 +169,90 @@ def test_full_report_structure(sample_transactions, sample_engagement):
 def test_full_report_summary_grade(sample_transactions, sample_engagement):
     report = generate_data_quality_report(sample_transactions, sample_engagement.id)
     assert report["summary"]["data_quality_grade"] in ("A", "B", "C", "D", "E")
+
+
+# --- Task 7: API Integration Tests ---
+
+from fastapi.testclient import TestClient
+from hemera.database import Base, get_db
+from hemera.main import app
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
+
+
+def _make_test_session():
+    """Create an in-memory SQLite engine safe for cross-thread use in tests."""
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+    Base.metadata.create_all(engine)
+    TestSession = sessionmaker(bind=engine)
+    return TestSession()
+
+
+def test_api_data_quality_endpoint():
+    session = _make_test_session()
+
+    def override_get_db():
+        try:
+            yield session
+        finally:
+            pass
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    from hemera.models.engagement import Engagement
+    from hemera.models.transaction import Transaction
+
+    eng = Engagement(org_name="API Test SU", status="delivered", transaction_count=1)
+    session.add(eng)
+    session.flush()
+
+    txn = Transaction(
+        engagement_id=eng.id, row_number=1,
+        raw_description="Test electricity", raw_supplier="EDF Energy",
+        raw_category="Utilities", raw_amount=1000.0, amount_gbp=1000.0,
+        scope=2, ghg_category=None, category_name="Purchased electricity",
+        classification_method="keyword", classification_confidence=0.95,
+        ef_value=0.23, ef_unit="kgCO2e/GBP", ef_source="defra",
+        ef_level=4, ef_year=2024, ef_region="UK", co2e_kg=230.0,
+        pedigree_reliability=3, pedigree_completeness=2,
+        pedigree_temporal=1, pedigree_geographical=1, pedigree_technological=4,
+        gsd_total=1.69,
+    )
+    session.add(txn)
+    session.flush()
+
+    client = TestClient(app)
+    response = client.get(f"/api/reports/{eng.id}/data-quality")
+    assert response.status_code == 200
+
+    data = response.json()
+    assert data["engagement_id"] == eng.id
+    assert "summary" in data
+    assert "recommendations" in data
+
+    app.dependency_overrides.clear()
+    session.close()
+
+
+def test_api_data_quality_not_found():
+    session = _make_test_session()
+
+    def override_get_db():
+        try:
+            yield session
+        finally:
+            pass
+
+    app.dependency_overrides[get_db] = override_get_db
+
+    client = TestClient(app)
+    response = client.get("/api/reports/99999/data-quality")
+    assert response.status_code == 404
+
+    app.dependency_overrides.clear()
+    session.close()
