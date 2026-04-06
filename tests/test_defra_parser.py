@@ -24,8 +24,8 @@ class TestParseActivityFactors:
         assert isinstance(activity_factors_2024[0], dict)
 
     def test_expected_row_count(self, activity_factors_2024):
-        """Should have ~3300-3400 factors (kg CO2e rows only, no biogenic)."""
-        assert 3000 < len(activity_factors_2024) < 4000
+        """Should have ~2500-2700 factors (kg CO2e rows only, no biogenic, no zero values)."""
+        assert 2000 < len(activity_factors_2024) < 3000
 
     def test_no_individual_gas_breakdowns(self, activity_factors_2024):
         """Should only have total kg CO2e, not per-gas breakdowns."""
