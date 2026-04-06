@@ -59,3 +59,68 @@ def detect_vague_codes(transactions: list) -> list[dict]:
 
     result.sort(key=lambda r: r["spend_gbp"], reverse=True)
     return result
+
+
+# ---------------------------------------------------------------------------
+# Task 2: Uncertainty Contribution Decomposition
+# ---------------------------------------------------------------------------
+
+def _uncertainty_contribution(co2e: float, gsd: float, total_co2e: float) -> float:
+    if total_co2e == 0 or gsd <= 0 or co2e <= 0:
+        return 0.0
+    weight = co2e / total_co2e
+    return (weight * math.log(gsd)) ** 2
+
+
+def _dominant_pedigree_indicator(t) -> str:
+    indicators = {
+        "reliability": RELIABILITY_GSD.get(t.pedigree_reliability or 3, 1.61),
+        "completeness": COMPLETENESS_GSD.get(t.pedigree_completeness or 3, 1.04),
+        "temporal": TEMPORAL_GSD.get(t.pedigree_temporal or 3, 1.10),
+        "geographical": GEOGRAPHICAL_GSD.get(t.pedigree_geographical or 3, 1.08),
+        "technological": TECHNOLOGICAL_GSD.get(t.pedigree_technological or 3, 1.12),
+    }
+    return max(indicators, key=lambda k: math.log(indicators[k]) ** 2)
+
+
+def compute_uncertainty_contributors(transactions: list) -> list[dict]:
+    valid = [t for t in transactions if t.co2e_kg and t.co2e_kg > 0 and not t.is_duplicate]
+    total_co2e = sum(t.co2e_kg for t in valid)
+    if total_co2e == 0:
+        return []
+
+    txn_contributions = []
+    for t in valid:
+        contrib = _uncertainty_contribution(t.co2e_kg, t.gsd_total or 1.0, total_co2e)
+        txn_contributions.append((t, contrib))
+
+    total_variance = sum(c for _, c in txn_contributions)
+    if total_variance == 0:
+        return []
+
+    groups: dict[str, list[tuple]] = {}
+    for t, contrib in txn_contributions:
+        key = (t.raw_category or "(blank)").strip()
+        groups.setdefault(key, []).append((t, contrib))
+
+    result = []
+    for raw_cat, items in groups.items():
+        txns_in_group = [t for t, _ in items]
+        group_variance = sum(c for _, c in items)
+        group_co2e = sum(t.co2e_kg for t in txns_in_group)
+        group_spend = sum(abs(t.amount_gbp or 0) for t in txns_in_group)
+        gsd_values = [t.gsd_total for t in txns_in_group if t.gsd_total]
+        top_txn = max(items, key=lambda x: x[1])[0]
+
+        result.append({
+            "raw_category": raw_cat,
+            "transaction_count": len(txns_in_group),
+            "spend_gbp": group_spend,
+            "co2e_kg": group_co2e,
+            "avg_gsd": sum(gsd_values) / len(gsd_values) if gsd_values else 1.0,
+            "uncertainty_contribution_pct": round(group_variance / total_variance * 100, 1),
+            "dominant_pedigree_indicator": _dominant_pedigree_indicator(top_txn),
+        })
+
+    result.sort(key=lambda r: r["uncertainty_contribution_pct"], reverse=True)
+    return result
