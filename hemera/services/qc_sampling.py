@@ -53,6 +53,71 @@ def _compute_top_10_threshold(transactions: list) -> float:
     return amounts[index]
 
 
+def build_qc_card(transaction, card_number: int, total_cards: int, top_10_threshold: float) -> dict:
+    t = transaction
+    expected_co2e = abs(t.amount_gbp or 0) * (t.ef_value or 0)
+    arithmetic_ok = abs(expected_co2e - (t.co2e_kg or 0)) < 0.01
+    return {
+        "card_number": card_number,
+        "total_cards": total_cards,
+        "remaining": total_cards - card_number + 1,
+        "transaction_id": t.id,
+        "sampling_reasons": get_sampling_reasons(t, top_10_threshold),
+        "raw_data": {
+            "row_number": t.row_number,
+            "raw_date": t.raw_date,
+            "raw_description": t.raw_description,
+            "raw_supplier": t.raw_supplier,
+            "raw_amount": t.raw_amount,
+            "raw_category": t.raw_category,
+        },
+        "decisions": {
+            "classification": {
+                "scope": t.scope,
+                "ghg_category": t.ghg_category,
+                "category_name": t.category_name,
+                "method": t.classification_method,
+                "confidence": t.classification_confidence,
+            },
+            "supplier_match": {
+                "supplier_id": t.supplier_id,
+                "match_method": t.supplier_match_method,
+            },
+            "emission_factor": {
+                "value": t.ef_value,
+                "unit": t.ef_unit,
+                "source": t.ef_source,
+                "level": t.ef_level,
+                "year": t.ef_year,
+                "region": t.ef_region,
+            },
+            "calculation": {
+                "amount_gbp": abs(t.amount_gbp or 0),
+                "ef_value": t.ef_value,
+                "co2e_kg": t.co2e_kg,
+                "arithmetic_verified": arithmetic_ok,
+            },
+            "pedigree": {
+                "reliability": t.pedigree_reliability,
+                "completeness": t.pedigree_completeness,
+                "temporal": t.pedigree_temporal,
+                "geographical": t.pedigree_geographical,
+                "technological": t.pedigree_technological,
+                "gsd_total": t.gsd_total,
+            },
+        },
+        "checks": ["classification", "emission_factor", "arithmetic", "supplier_match", "pedigree"],
+    }
+
+
+def build_qc_cards(transactions: list, top_10_threshold: float) -> list[dict]:
+    total = len(transactions)
+    return [
+        build_qc_card(t, card_number=i, total_cards=total, top_10_threshold=top_10_threshold)
+        for i, t in enumerate(transactions, 1)
+    ]
+
+
 def select_sample(transactions: list, engagement_id: int, attempt: int = 1) -> list:
     valid = [t for t in transactions if t.co2e_kg is not None and not t.is_duplicate]
     if not valid:

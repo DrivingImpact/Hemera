@@ -86,3 +86,65 @@ def test_get_sampling_reasons_routine(sample_transactions):
     gas_txn = sample_transactions[5]
     reasons = get_sampling_reasons(gas_txn, top_10_threshold=50000.0)
     assert reasons == ["Routine sample (proportional representation)"]
+
+
+# ---------------------------------------------------------------------------
+# Task 2: QC Card Builder
+# ---------------------------------------------------------------------------
+
+from hemera.services.qc_sampling import build_qc_card, build_qc_cards
+
+
+def test_build_qc_card_has_all_sections(sample_transactions):
+    txn = sample_transactions[0]
+    card = build_qc_card(txn, card_number=1, total_cards=6, top_10_threshold=5000.0)
+    assert card["card_number"] == 1
+    assert card["total_cards"] == 6
+    assert card["remaining"] == 6
+    assert "sampling_reasons" in card
+    assert "raw_data" in card
+    assert "decisions" in card
+    assert "checks" in card
+
+
+def test_build_qc_card_raw_data(sample_transactions):
+    txn = sample_transactions[0]
+    card = build_qc_card(txn, card_number=1, total_cards=6, top_10_threshold=50000.0)
+    raw = card["raw_data"]
+    assert raw["row_number"] == 1
+    assert raw["raw_description"] == "Office bits"
+    assert raw["raw_supplier"] == "Generic Supplies Ltd"
+    assert raw["raw_amount"] == 5000.0
+    assert raw["raw_category"] == "Sundries"
+
+
+def test_build_qc_card_decisions(sample_transactions):
+    txn = sample_transactions[0]
+    card = build_qc_card(txn, card_number=1, total_cards=6, top_10_threshold=50000.0)
+    decisions = card["decisions"]
+    assert decisions["classification"]["scope"] == 3
+    assert decisions["classification"]["category_name"] == "Purchased goods — office supplies"
+    assert decisions["emission_factor"]["source"] == "defra"
+    assert decisions["emission_factor"]["level"] == 4
+    assert decisions["calculation"]["arithmetic_verified"] is True
+    assert decisions["pedigree"]["gsd_total"] == 1.82
+
+
+def test_build_qc_card_arithmetic_flag(sample_transactions):
+    txn = sample_transactions[0]  # 5000 * 0.5 = 2500
+    card = build_qc_card(txn, card_number=1, total_cards=6, top_10_threshold=50000.0)
+    assert card["decisions"]["calculation"]["arithmetic_verified"] is True
+
+
+def test_build_qc_card_checks_list(sample_transactions):
+    txn = sample_transactions[0]
+    card = build_qc_card(txn, card_number=1, total_cards=6, top_10_threshold=50000.0)
+    assert card["checks"] == ["classification", "emission_factor", "arithmetic", "supplier_match", "pedigree"]
+
+
+def test_build_qc_cards_numbering(sample_transactions):
+    cards = build_qc_cards(sample_transactions, top_10_threshold=5000.0)
+    for i, card in enumerate(cards, 1):
+        assert card["card_number"] == i
+        assert card["total_cards"] == len(sample_transactions)
+        assert card["remaining"] == len(sample_transactions) - i + 1
