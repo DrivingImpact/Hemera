@@ -11,6 +11,7 @@ Sources:
 
 from pathlib import Path
 import openpyxl
+import pandas as pd
 
 
 # Rows with these scopes are excluded (biogenic CO2, not GHG Protocol)
@@ -78,4 +79,48 @@ def parse_activity_factors(file_path: str, year: int) -> list[dict]:
         })
 
     wb.close()
+    return factors
+
+
+def parse_eeio_factors(file_path: str, year: int) -> list[dict]:
+    """Parse the DEFRA EEIO spend-based factors (kgCO2e per GBP by SIC code).
+
+    Args:
+        file_path: Path to the EEIO ODS file.
+        year: The factor year (e.g. 2022).
+
+    Returns:
+        List of dicts with keys matching EmissionFactor model fields.
+    """
+    df = pd.read_excel(file_path, engine="odf", header=None)
+
+    factors = []
+    for _, row in df.iterrows():
+        sic_code = str(row.iloc[0]).strip() if pd.notna(row.iloc[0]) else None
+        description = str(row.iloc[1]).strip() if pd.notna(row.iloc[1]) else None
+        ghg_value = row.iloc[2]
+
+        # Skip header/empty rows
+        if sic_code is None or description is None:
+            continue
+        try:
+            factor_value = float(ghg_value)
+        except (ValueError, TypeError):
+            continue
+
+        keywords = description.lower()
+
+        factors.append({
+            "source": "defra-eeio",
+            "category": description,
+            "subcategory": sic_code,
+            "scope": 3,
+            "factor_value": factor_value,
+            "unit": "kgCO2e/GBP",
+            "factor_type": "spend",
+            "year": year,
+            "region": "UK",
+            "keywords": keywords,
+        })
+
     return factors
