@@ -152,3 +152,20 @@ def test_recommendations_have_required_fields(sample_transactions):
         assert "rank" in r
         assert "impact_score" in r
         assert "explanation" in r
+
+
+# --- Task 6: Full Report Assembly ---
+
+def test_full_report_structure(sample_transactions, sample_engagement):
+    report = generate_data_quality_report(sample_transactions, sample_engagement.id)
+    assert report["engagement_id"] == sample_engagement.id
+    assert "generated_at" in report
+    assert "summary" in report
+    assert "cascade_distribution" in report
+    assert "uncertainty_contributors" in report
+    assert "pedigree_breakdown" in report
+    assert "recommendations" in report
+
+def test_full_report_summary_grade(sample_transactions, sample_engagement):
+    report = generate_data_quality_report(sample_transactions, sample_engagement.id)
+    assert report["summary"]["data_quality_grade"] in ("A", "B", "C", "D", "E")

@@ -413,3 +413,19 @@ def generate_recommendations(transactions: list) -> list[dict]:
         r["rank"] = i
     return recs
 
+
+
+# ---------------------------------------------------------------------------
+# Task 6: Full Report Assembly
+# ---------------------------------------------------------------------------
+
+def generate_data_quality_report(transactions: list, engagement_id: int) -> dict:
+    return {
+        "engagement_id": engagement_id,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "summary": compute_summary(transactions),
+        "cascade_distribution": compute_cascade_distribution(transactions),
+        "uncertainty_contributors": compute_uncertainty_contributors(transactions),
+        "pedigree_breakdown": compute_pedigree_breakdown(transactions),
+        "recommendations": generate_recommendations(transactions),
+    }
