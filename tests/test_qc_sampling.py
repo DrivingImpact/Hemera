@@ -236,6 +236,8 @@ from hemera.database import Base, get_db
 from hemera.main import app
 from hemera.models.engagement import Engagement
 from hemera.models.transaction import Transaction
+from unittest.mock import patch
+from hemera.services.clerk import ClerkUser
 
 
 def _make_test_session():
@@ -274,8 +276,10 @@ def test_api_qc_generate():
         finally: pass
     app.dependency_overrides[get_db] = override_get_db
     eng = _seed_engagement_with_transactions(session, count=20)
-    client = TestClient(app)
-    response = client.post(f"/api/engagements/{eng.id}/qc/generate")
+    mock_admin = ClerkUser(clerk_id="test", email="admin@hemera.com", org_name="Hemera", role="admin")
+    with patch("hemera.dependencies.verify_clerk_token", return_value=mock_admin):
+        client = TestClient(app)
+        response = client.post(f"/api/engagements/{eng.id}/qc/generate", headers={"Authorization": "Bearer fake"})
     assert response.status_code == 200
     data = response.json()
     assert data["engagement_id"] == eng.id
@@ -297,9 +301,11 @@ def test_api_qc_generate_idempotent():
         finally: pass
     app.dependency_overrides[get_db] = override_get_db
     eng = _seed_engagement_with_transactions(session, count=20)
-    client = TestClient(app)
-    r1 = client.post(f"/api/engagements/{eng.id}/qc/generate")
-    r2 = client.post(f"/api/engagements/{eng.id}/qc/generate")
+    mock_admin = ClerkUser(clerk_id="test", email="admin@hemera.com", org_name="Hemera", role="admin")
+    with patch("hemera.dependencies.verify_clerk_token", return_value=mock_admin):
+        client = TestClient(app)
+        r1 = client.post(f"/api/engagements/{eng.id}/qc/generate", headers={"Authorization": "Bearer fake"})
+        r2 = client.post(f"/api/engagements/{eng.id}/qc/generate", headers={"Authorization": "Bearer fake"})
     assert r1.json()["sample_size"] == r2.json()["sample_size"]
     app.dependency_overrides.clear()
     session.close()
@@ -312,13 +318,15 @@ def test_api_qc_status():
         finally: pass
     app.dependency_overrides[get_db] = override_get_db
     eng = _seed_engagement_with_transactions(session, count=10)
-    client = TestClient(app)
-    r = client.get(f"/api/engagements/{eng.id}/qc")
-    assert r.status_code == 200
-    assert r.json()["status"] == "not_started"
-    client.post(f"/api/engagements/{eng.id}/qc/generate")
-    r = client.get(f"/api/engagements/{eng.id}/qc")
-    assert r.json()["status"] == "in_progress"
+    mock_admin = ClerkUser(clerk_id="test", email="admin@hemera.com", org_name="Hemera", role="admin")
+    with patch("hemera.dependencies.verify_clerk_token", return_value=mock_admin):
+        client = TestClient(app)
+        r = client.get(f"/api/engagements/{eng.id}/qc", headers={"Authorization": "Bearer fake"})
+        assert r.status_code == 200
+        assert r.json()["status"] == "not_started"
+        client.post(f"/api/engagements/{eng.id}/qc/generate", headers={"Authorization": "Bearer fake"})
+        r = client.get(f"/api/engagements/{eng.id}/qc", headers={"Authorization": "Bearer fake"})
+        assert r.json()["status"] == "in_progress"
     app.dependency_overrides.clear()
     session.close()
 
@@ -330,19 +338,21 @@ def test_api_qc_submit_and_gate():
         finally: pass
     app.dependency_overrides[get_db] = override_get_db
     eng = _seed_engagement_with_transactions(session, count=5)
-    client = TestClient(app)
-    gen_response = client.post(f"/api/engagements/{eng.id}/qc/generate")
-    cards = gen_response.json()["cards"]
-    for card in cards:
-        r = client.post(f"/api/engagements/{eng.id}/qc/submit", json={
-            "results": [{"transaction_id": card["transaction_id"],
-                "classification_pass": True, "emission_factor_pass": True,
-                "arithmetic_pass": True, "supplier_match_pass": True,
-                "pedigree_pass": True, "notes": ""}]
-        })
-        assert r.status_code == 200
-    status = client.get(f"/api/engagements/{eng.id}/qc").json()
-    assert status["status"] == "passed"
+    mock_admin = ClerkUser(clerk_id="test", email="admin@hemera.com", org_name="Hemera", role="admin")
+    with patch("hemera.dependencies.verify_clerk_token", return_value=mock_admin):
+        client = TestClient(app)
+        gen_response = client.post(f"/api/engagements/{eng.id}/qc/generate", headers={"Authorization": "Bearer fake"})
+        cards = gen_response.json()["cards"]
+        for card in cards:
+            r = client.post(f"/api/engagements/{eng.id}/qc/submit", headers={"Authorization": "Bearer fake"}, json={
+                "results": [{"transaction_id": card["transaction_id"],
+                    "classification_pass": True, "emission_factor_pass": True,
+                    "arithmetic_pass": True, "supplier_match_pass": True,
+                    "pedigree_pass": True, "notes": ""}]
+            })
+            assert r.status_code == 200
+        status = client.get(f"/api/engagements/{eng.id}/qc", headers={"Authorization": "Bearer fake"}).json()
+        assert status["status"] == "passed"
     eng_refreshed = session.query(Engagement).filter(Engagement.id == eng.id).first()
     assert eng_refreshed.status == "delivered"
     app.dependency_overrides.clear()
@@ -355,12 +365,14 @@ def test_api_qc_submit_not_found():
         try: yield session
         finally: pass
     app.dependency_overrides[get_db] = override_get_db
-    client = TestClient(app)
-    r = client.post("/api/engagements/99999/qc/submit", json={
-        "results": [{"transaction_id": 1, "classification_pass": True,
-            "emission_factor_pass": True, "arithmetic_pass": True,
-            "supplier_match_pass": True, "pedigree_pass": True, "notes": ""}]
-    })
+    mock_admin = ClerkUser(clerk_id="test", email="admin@hemera.com", org_name="Hemera", role="admin")
+    with patch("hemera.dependencies.verify_clerk_token", return_value=mock_admin):
+        client = TestClient(app)
+        r = client.post("/api/engagements/99999/qc/submit", headers={"Authorization": "Bearer fake"}, json={
+            "results": [{"transaction_id": 1, "classification_pass": True,
+                "emission_factor_pass": True, "arithmetic_pass": True,
+                "supplier_match_pass": True, "pedigree_pass": True, "notes": ""}]
+        })
     assert r.status_code == 404
     app.dependency_overrides.clear()
     session.close()

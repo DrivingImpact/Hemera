@@ -179,6 +179,8 @@ from hemera.main import app
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
+from unittest.mock import patch
+from hemera.services.clerk import ClerkUser
 
 
 def _make_test_session():
@@ -226,8 +228,10 @@ def test_api_data_quality_endpoint():
     session.add(txn)
     session.flush()
 
-    client = TestClient(app)
-    response = client.get(f"/api/reports/{eng.id}/data-quality")
+    mock_admin = ClerkUser(clerk_id="test", email="admin@hemera.com", org_name="Hemera", role="admin")
+    with patch("hemera.dependencies.verify_clerk_token", return_value=mock_admin):
+        client = TestClient(app)
+        response = client.get(f"/api/reports/{eng.id}/data-quality", headers={"Authorization": "Bearer fake"})
     assert response.status_code == 200
 
     data = response.json()
@@ -250,8 +254,10 @@ def test_api_data_quality_not_found():
 
     app.dependency_overrides[get_db] = override_get_db
 
-    client = TestClient(app)
-    response = client.get("/api/reports/99999/data-quality")
+    mock_admin = ClerkUser(clerk_id="test", email="admin@hemera.com", org_name="Hemera", role="admin")
+    with patch("hemera.dependencies.verify_clerk_token", return_value=mock_admin):
+        client = TestClient(app)
+        response = client.get("/api/reports/99999/data-quality", headers={"Authorization": "Bearer fake"})
     assert response.status_code == 404
 
     app.dependency_overrides.clear()
