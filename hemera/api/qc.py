@@ -11,6 +11,8 @@ from hemera.services.qc_sampling import (
     compute_qc_status, apply_qc_result, _compute_top_10_threshold,
     HARD_GATE_THRESHOLD,
 )
+from hemera.dependencies import require_admin
+from hemera.services.clerk import ClerkUser
 
 router = APIRouter()
 
@@ -41,7 +43,7 @@ def _get_transactions(engagement_id: int, db: Session) -> list[Transaction]:
 
 
 @router.post("/engagements/{engagement_id}/qc/generate")
-def generate_qc_sample(engagement_id: int, db: Session = Depends(get_db)):
+def generate_qc_sample(engagement_id: int, db: Session = Depends(get_db), current_user: ClerkUser = Depends(require_admin)):
     """Generate a stratified QC sample for analyst verification."""
     eng = _get_engagement_or_404(engagement_id, db)
     transactions = _get_transactions(engagement_id, db)
@@ -98,7 +100,7 @@ def _build_generate_response(eng, all_txns, sample, cards) -> dict:
 
 
 @router.get("/engagements/{engagement_id}/qc")
-def get_qc_status(engagement_id: int, db: Session = Depends(get_db)):
+def get_qc_status(engagement_id: int, db: Session = Depends(get_db), current_user: ClerkUser = Depends(require_admin)):
     """Get current QC status for an engagement."""
     _get_engagement_or_404(engagement_id, db)
     transactions = _get_transactions(engagement_id, db)
@@ -108,7 +110,7 @@ def get_qc_status(engagement_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/engagements/{engagement_id}/qc/submit")
-def submit_qc_results(engagement_id: int, body: QCSubmitRequest, db: Session = Depends(get_db)):
+def submit_qc_results(engagement_id: int, body: QCSubmitRequest, db: Session = Depends(get_db), current_user: ClerkUser = Depends(require_admin)):
     """Submit QC check results for sampled transactions."""
     eng = _get_engagement_or_404(engagement_id, db)
     transactions = _get_transactions(engagement_id, db)

@@ -171,3 +171,73 @@ def test_webhook_creates_user():
     assert user.role == "client"
     app.dependency_overrides.clear()
     session.close()
+
+
+# ---------------------------------------------------------------------------
+# Task 4: Org scoping and endpoint protection tests
+# ---------------------------------------------------------------------------
+
+from hemera.models.engagement import Engagement
+
+
+def test_engagements_scoped_to_org():
+    session = _make_test_session()
+    def override_get_db():
+        try: yield session
+        finally: pass
+    app.dependency_overrides[get_db] = override_get_db
+    e1 = Engagement(org_name="Imperial SU", status="delivered", transaction_count=5)
+    e2 = Engagement(org_name="Other SU", status="delivered", transaction_count=3)
+    session.add_all([e1, e2])
+    session.flush()
+    mock_user = ClerkUser(clerk_id="u1", email="a@imperial.ac.uk", org_name="Imperial SU", role="client")
+    with patch("hemera.dependencies.verify_clerk_token", return_value=mock_user):
+        client = TestClient(app)
+        r = client.get("/api/engagements", headers={"Authorization": "Bearer fake"})
+        assert r.status_code == 200
+        data = r.json()
+        assert len(data) == 1
+        assert data[0]["org_name"] == "Imperial SU"
+    app.dependency_overrides.clear()
+    session.close()
+
+
+def test_admin_sees_all_engagements():
+    session = _make_test_session()
+    def override_get_db():
+        try: yield session
+        finally: pass
+    app.dependency_overrides[get_db] = override_get_db
+    e1 = Engagement(org_name="Imperial SU", status="delivered", transaction_count=5)
+    e2 = Engagement(org_name="Other SU", status="delivered", transaction_count=3)
+    session.add_all([e1, e2])
+    session.flush()
+    mock_admin = ClerkUser(clerk_id="u1", email="admin@hemera.com", org_name="Hemera", role="admin")
+    with patch("hemera.dependencies.verify_clerk_token", return_value=mock_admin):
+        client = TestClient(app)
+        r = client.get("/api/engagements", headers={"Authorization": "Bearer fake"})
+        assert r.status_code == 200
+        assert len(r.json()) == 2
+    app.dependency_overrides.clear()
+    session.close()
+
+
+def test_qc_requires_admin():
+    session = _make_test_session()
+    def override_get_db():
+        try: yield session
+        finally: pass
+    app.dependency_overrides[get_db] = override_get_db
+    mock_client = ClerkUser(clerk_id="u1", email="a@su.ac.uk", org_name="Test SU", role="client")
+    with patch("hemera.dependencies.verify_clerk_token", return_value=mock_client):
+        client = TestClient(app)
+        r = client.post("/api/engagements/1/qc/generate", headers={"Authorization": "Bearer fake"})
+        assert r.status_code == 403
+    app.dependency_overrides.clear()
+    session.close()
+
+
+def test_upload_requires_auth():
+    client = TestClient(app)
+    r = client.post("/api/upload")
+    assert r.status_code in (401, 422)
