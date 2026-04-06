@@ -1,0 +1,34 @@
+<h2>Executive Summary</h2>
+
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="section-label">Total emissions</div>
+        <div class="metric-value metric-teal">{{ "%.1f"|format(total_co2e) }} <span class="metric-unit">tCO2e</span></div>
+    </div>
+    <div class="kpi-card">
+        <div class="section-label">95% confidence interval</div>
+        <div class="metric-value metric-slate">{{ "%.1f"|format(ci_lower) }} – {{ "%.1f"|format(ci_upper) }} <span class="metric-unit">tCO2e</span></div>
+    </div>
+    <div class="kpi-card {{ 'warning' if data_quality_grade in ('D', 'E') else '' }}">
+        <div class="section-label">Data quality grade</div>
+        <div class="metric-value {{ 'metric-amber' if data_quality_grade in ('C', 'D', 'E') else 'metric-teal' }}">{{ data_quality_grade }}</div>
+    </div>
+</div>
+
+<div class="two-col">
+    <div>
+        <h3>Scope Split</h3>
+        <div class="chart-container">{{ scope_donut_svg | safe }}</div>
+    </div>
+    <div>
+        <h3>Top Emission Categories</h3>
+        <div class="chart-container">{{ top_categories_mini_svg | safe }}</div>
+    </div>
+</div>
+
+<p style="margin-top: 12pt; color: #475569;">
+    {{ org_name }}'s total carbon footprint for the reporting period is <strong>{{ "%.1f"|format(total_co2e) }} tCO2e</strong>
+    (95% CI: {{ "%.1f"|format(ci_lower) }}–{{ "%.1f"|format(ci_upper) }}). Scope 3 value chain emissions account for
+    {{ "%.0f"|format(scope3_pct) }}% of the total. The data quality grade of <strong>{{ data_quality_grade }}</strong>
+    reflects the current mix of emission factor sources.
+</p>

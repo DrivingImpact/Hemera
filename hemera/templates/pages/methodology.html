@@ -1,0 +1,36 @@
+<h2>Methodology Note</h2>
+
+<h3>Standards Alignment</h3>
+<p>This report aligns with the GHG Protocol Corporate Standard, GHG Protocol Value Chain (Scope 3) Standard,
+ISO 14064-1:2018, and DEFRA/DESNZ Environmental Reporting Guidelines. It is prepared for UK Streamlined Energy
+and Carbon Reporting (SECR) and readiness for UK Sustainability Reporting Standards (SRS S2, effective January 2027)
+and ISSA 5000 assurance (effective December 2026).</p>
+
+<h3>Calculation Approach</h3>
+<p>Hemera uses a hybrid approach: activity-based calculations where physical data exists (kWh, litres, km),
+with spend-based EEIO estimates as a baseline for all other categories. The methodology progressively replaces
+generic estimates with supplier-specific verified data over successive reporting periods.</p>
+
+<h3>6-Level Emission Factor Cascade</h3>
+<table class="data-table">
+    <thead><tr><th>Level</th><th>Source</th><th>Data Required</th><th>Uncertainty</th></tr></thead>
+    <tbody>
+        <tr><td>1</td><td>Supplier-specific verified</td><td>CDP/actual emission intensity</td><td>Lowest</td></tr>
+        <tr><td>2</td><td>DEFRA/DESNZ activity-based</td><td>Physical quantities (kWh, litres)</td><td>Low-moderate</td></tr>
+        <tr><td>3</td><td>Exiobase MRIO</td><td>Spend + country of origin</td><td>Moderate</td></tr>
+        <tr><td>4</td><td>DEFRA supplementary EEIO</td><td>Spend in GBP</td><td>Moderate-high</td></tr>
+        <tr><td>5</td><td>USEEIO</td><td>Spend on US goods</td><td>Moderate</td></tr>
+        <tr><td>6</td><td>Climatiq API</td><td>Any (fallback)</td><td>Variable</td></tr>
+    </tbody>
+</table>
+
+<h3>Uncertainty Quantification</h3>
+<p>Every emission estimate carries a pedigree-scored uncertainty using the ecoinvent methodology
+(Ciroth et al., 2016). Five indicators (reliability, completeness, temporal, geographical, technological)
+each scored 1–5, combined under a lognormal distribution to produce a Geometric Standard Deviation (GSD).
+The 95% confidence interval is [central / GSD², central × GSD²].</p>
+
+<h3>Data Sources</h3>
+<p>Emission factors: DEFRA/DESNZ GHG Conversion Factors {{ ef_years|join(', ') }}.
+EEIO spend-based factors: DEFRA UK Carbon Footprint 2022.
+Quality control: ISO 19011 statistical sampling at 95% confidence, 5% acceptable error rate.</p>

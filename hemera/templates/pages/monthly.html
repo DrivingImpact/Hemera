@@ -1,0 +1,16 @@
+{% if has_monthly_data %}
+<h2>Monthly Emission Pattern</h2>
+
+<h3>Monthly Emissions by Scope</h3>
+<div class="chart-container">{{ monthly_area_svg | safe }}</div>
+
+<h3>Cumulative Progress</h3>
+<div class="chart-container">{{ cumulative_line_svg | safe }}</div>
+{% else %}
+<h2>Monthly Emission Pattern</h2>
+<p style="color: #64748B; padding: 40pt 0;">
+    Monthly breakdown is not available for this engagement. Transaction dates were not present in
+    sufficient quantity (>50% required). Providing dated transactions in future uploads will enable
+    seasonal analysis.
+</p>
+{% endif %}

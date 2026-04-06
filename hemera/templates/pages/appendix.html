@@ -1,0 +1,42 @@
+<h2>Appendix — Transaction Detail</h2>
+<p style="font-size: 8pt; color: #64748B; margin-bottom: 8pt;">
+    Full line-item audit trail. {{ transactions|length }} transactions sorted by tCO2e descending.
+</p>
+
+{% for chunk in transaction_chunks %}
+{% if not loop.first %}<div class="page-break"></div>{% endif %}
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Date</th>
+            <th>Description</th>
+            <th>Supplier</th>
+            <th class="num">Amount (GBP)</th>
+            <th>Scope</th>
+            <th>Category</th>
+            <th>EF Source</th>
+            <th>EF Level</th>
+            <th class="num">tCO2e</th>
+            <th class="num">GSD</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for t in chunk %}
+        <tr>
+            <td>{{ t.row_number }}</td>
+            <td>{{ t.transaction_date or '—' }}</td>
+            <td>{{ t.raw_description[:40] if t.raw_description else '—' }}</td>
+            <td>{{ t.raw_supplier[:25] if t.raw_supplier else '—' }}</td>
+            <td class="num">{{ "{:,.0f}"|format(t.amount_gbp or 0) }}</td>
+            <td>{{ t.scope or '—' }}</td>
+            <td>{{ t.category_name[:30] if t.category_name else '—' }}</td>
+            <td>{{ t.ef_source or '—' }}</td>
+            <td>{{ t.ef_level or '—' }}</td>
+            <td class="num">{{ "%.3f"|format((t.co2e_kg or 0) / 1000) }}</td>
+            <td class="num">{{ "%.2f"|format(t.gsd_total or 0) }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endfor %}

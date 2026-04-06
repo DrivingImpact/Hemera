@@ -1,0 +1,25 @@
+<h2>Quick Wins &amp; Strategic Actions</h2>
+
+<h3>Reduction Potential by Action</h3>
+<div class="chart-container">{{ reduction_bar_svg | safe }}</div>
+
+<table class="data-table">
+    <thead>
+        <tr><th>Rank</th><th>Action</th><th>Type</th><th class="num">Current tCO2e</th><th class="num">Reduction</th><th>Effort</th><th>Timeline</th></tr>
+    </thead>
+    <tbody>
+        {% for r in reduction_recs %}
+        <tr>
+            <td>{{ loop.index }}</td>
+            <td>{{ r.action }}</td>
+            <td><span class="badge badge-{{ 'teal' if r.type == 'energy' else ('amber' if r.type == 'transport' else 'green') }}">{{ r.type }}</span></td>
+            <td class="num">{{ "%.1f"|format(r.current_co2e_kg / 1000) }}</td>
+            <td class="num">{{ "%.1f"|format(r.potential_reduction_kg / 1000) }}t ({{ "%.0f"|format(r.potential_reduction_pct) }}%)</td>
+            <td>{{ r.effort }}</td>
+            <td>{{ r.timeline }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<p class="source-note">Reduction estimates are indicative, based on published benchmarks (Carbon Trust, BEIS, IEA). Actual reductions depend on implementation specifics.</p>

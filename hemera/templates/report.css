@@ -1,0 +1,135 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+@page {
+    size: A4;
+    margin: 20mm 18mm 25mm 18mm;
+    @bottom-center {
+        content: "Confidential  |  Page " counter(page) " of " counter(pages);
+        font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+        font-size: 8pt;
+        color: #94A3B8;
+    }
+}
+
+@page cover {
+    margin: 0;
+    @bottom-center { content: none; }
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    font-size: 10pt;
+    color: #1E293B;
+    line-height: 1.6;
+    background: #FFFFFF;
+}
+
+.page-break { page-break-before: always; }
+.no-break { page-break-inside: avoid; }
+
+h1 { font-size: 20pt; font-weight: 800; margin-bottom: 8pt; }
+h2 { font-size: 14pt; font-weight: 700; margin-bottom: 6pt; color: #1E293B; }
+h3 { font-size: 11pt; font-weight: 600; margin-bottom: 4pt; color: #64748B; }
+
+.section-label {
+    font-size: 8pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5pt;
+    color: #64748B;
+    margin-bottom: 4pt;
+}
+
+.metric-value {
+    font-size: 24pt;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+.metric-unit {
+    font-size: 10pt;
+    font-weight: 400;
+    color: #94A3B8;
+}
+.metric-teal { color: #0D9488; }
+.metric-slate { color: #1E293B; }
+.metric-amber { color: #F59E0B; }
+
+.kpi-grid {
+    display: flex;
+    gap: 12pt;
+    margin-bottom: 16pt;
+}
+.kpi-card {
+    flex: 1;
+    background: #F5F5F0;
+    border-radius: 6pt;
+    padding: 12pt 16pt;
+}
+.kpi-card.warning {
+    background: #FEF3C7;
+}
+
+.chart-container {
+    margin: 12pt 0;
+    text-align: center;
+}
+.chart-container svg {
+    max-width: 100%;
+    height: auto;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 8pt;
+    margin: 8pt 0;
+}
+.data-table th {
+    text-align: left;
+    padding: 6pt 8pt;
+    background: #F5F5F0;
+    font-weight: 600;
+    font-size: 7pt;
+    text-transform: uppercase;
+    letter-spacing: 0.5pt;
+    color: #64748B;
+    border-bottom: 1.5pt solid #E5E5E0;
+}
+.data-table td {
+    padding: 5pt 8pt;
+    border-bottom: 0.5pt solid #F0F0EB;
+    vertical-align: top;
+}
+.data-table td.num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+.data-table tr:nth-child(even) td {
+    background: #FAFAF7;
+}
+
+.badge {
+    display: inline-block;
+    padding: 1pt 6pt;
+    border-radius: 3pt;
+    font-size: 7pt;
+    font-weight: 600;
+}
+.badge-teal { background: #CCFBF1; color: #0F766E; }
+.badge-amber { background: #FEF3C7; color: #92400E; }
+.badge-red { background: #FEE2E2; color: #991B1B; }
+.badge-green { background: #D1FAE5; color: #065F46; }
+
+.source-note {
+    font-size: 7pt;
+    color: #94A3B8;
+    margin-top: 8pt;
+}
+
+.two-col {
+    display: flex;
+    gap: 16pt;
+}
+.two-col > * { flex: 1; }

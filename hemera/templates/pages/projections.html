@@ -1,0 +1,29 @@
+<h2>Your Footprint Journey — Projections</h2>
+
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="section-label">Year 3 projected target</div>
+        <div class="metric-value metric-teal">{{ "%.1f"|format(year3_target) }} <span class="metric-unit">tCO2e</span></div>
+    </div>
+    <div class="kpi-card">
+        <div class="section-label">Projected CI reduction</div>
+        <div class="metric-value metric-teal">{{ "%.0f"|format(ci_reduction_pct) }}% <span class="metric-unit">narrower</span></div>
+    </div>
+</div>
+
+<div class="two-col">
+    <div>
+        <h3>3-Year Projection</h3>
+        <div class="chart-container">{{ fan_chart_svg | safe }}</div>
+    </div>
+    <div>
+        <h3>Improvement Pathway</h3>
+        <div class="chart-container">{{ projection_waterfall_svg | safe }}</div>
+    </div>
+</div>
+
+<p style="color: #475569; font-size: 9pt;">
+    Projections are indicative and assume implementation of the recommended reduction actions and data quality improvements.
+    Year 2 shows the effect of better data alone — the central estimate may remain unchanged but the confidence interval narrows,
+    revealing your true footprint. Year 3 includes the combined effect of data improvement and emission reductions.
+</p>

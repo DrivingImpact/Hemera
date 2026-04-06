@@ -1,0 +1,44 @@
+<h2>Scope Breakdown</h2>
+
+<div class="two-col">
+    <div>
+        <h3>Emissions by Scope</h3>
+        <div class="chart-container">{{ scope_stacked_bar_svg | safe }}</div>
+    </div>
+    <div>
+        <table class="data-table">
+            <thead>
+                <tr><th>Scope</th><th class="num">tCO2e</th><th class="num">% of Total</th><th class="num">95% CI</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Scope 1 — Direct emissions</td>
+                    <td class="num">{{ "%.1f"|format(scope1) }}</td>
+                    <td class="num">{{ "%.0f"|format(scope1_pct) }}%</td>
+                    <td class="num">{{ scope1_ci }}</td>
+                </tr>
+                <tr>
+                    <td>Scope 2 — Purchased energy</td>
+                    <td class="num">{{ "%.1f"|format(scope2) }}</td>
+                    <td class="num">{{ "%.0f"|format(scope2_pct) }}%</td>
+                    <td class="num">{{ scope2_ci }}</td>
+                </tr>
+                <tr>
+                    <td>Scope 3 — Value chain</td>
+                    <td class="num">{{ "%.1f"|format(scope3) }}</td>
+                    <td class="num">{{ "%.0f"|format(scope3_pct) }}%</td>
+                    <td class="num">{{ scope3_ci }}</td>
+                </tr>
+                <tr style="font-weight: 700;">
+                    <td>Total</td>
+                    <td class="num">{{ "%.1f"|format(total_co2e) }}</td>
+                    <td class="num">100%</td>
+                    <td class="num">{{ total_ci }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<h3>Category Distribution</h3>
+<div class="chart-container">{{ treemap_svg | safe }}</div>

@@ -1,0 +1,17 @@
+<h2>Uncertainty Analysis</h2>
+
+<h3>95% Confidence Intervals by Scope</h3>
+<div class="chart-container">{{ error_bars_svg | safe }}</div>
+
+<div class="two-col">
+    <div>
+        <h3>Pedigree Indicator Scores</h3>
+        <p style="font-size: 8pt; color: #64748B; margin-bottom: 4pt;">1 = best quality, 5 = worst. Weighted by emission contribution.</p>
+        <div class="chart-container">{{ radar_svg | safe }}</div>
+    </div>
+    <div>
+        <h3>Uncertainty Sources</h3>
+        <p style="font-size: 8pt; color: #64748B; margin-bottom: 4pt;">Which data quality indicators drive the most uncertainty.</p>
+        <div class="chart-container">{{ pedigree_bar_svg | safe }}</div>
+    </div>
+</div>

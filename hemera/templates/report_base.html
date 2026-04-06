@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="report.css">
+    <title>{{ org_name }} — Carbon Footprint Report</title>
+</head>
+<body>
+    {% include "pages/cover.html" %}
+    {% for page in pages %}
+    <div class="page-break"></div>
+    {% include page %}
+    {% endfor %}
+</body>
+</html>
