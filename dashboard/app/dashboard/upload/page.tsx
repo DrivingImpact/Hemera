@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { listEngagements } from "@/lib/api";
 import { UploadDropzone } from "@/components/upload/dropzone";
+import { DeleteEngagement } from "@/components/upload/delete-engagement";
 import type { EngagementListItem } from "@/lib/types";
 
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
@@ -64,6 +65,9 @@ export default async function UploadPage() {
                 <th className="text-right px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.5px] text-muted">
                   View
                 </th>
+                <th className="text-right px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.5px] text-muted">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -98,6 +102,11 @@ export default async function UploadPage() {
                         <span className="text-[#CBCBC5] text-xs">—</span>
                       )}
                     </td>
+                    <td className="px-5 py-3 text-right">
+                      {eng.status !== "qc_passed" && (
+                        <DeleteEngagement engagementId={eng.id} />
+                      )}
+                    </td>
                   </tr>
                 );
               })}
@@ -106,34 +115,6 @@ export default async function UploadPage() {
         </div>
       )}
 
-      <div className="bg-paper rounded-lg border border-[#E5E5E0] p-4">
-        <h4 className="text-xs font-semibold uppercase tracking-[0.5px] mb-3">
-          Expected Format
-        </h4>
-        <table className="w-full text-xs border-collapse">
-          <thead>
-            <tr>
-              {["date", "supplier", "description", "amount_gbp"].map((col) => (
-                <th
-                  key={col}
-                  className="text-left px-2 py-1.5 bg-[#F0F0EB] font-mono font-semibold border border-[#E5E5E0]"
-                >
-                  {col}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              {["2024-01-15", "Heathrow Express", "Rail travel LHR", "42.50"].map((v, i) => (
-                <td key={i} className="px-2 py-1.5 border border-[#E5E5E0] text-muted font-mono">
-                  {v}
-                </td>
-              ))}
-            </tr>
-          </tbody>
-        </table>
-      </div>
     </div>
   );
 }

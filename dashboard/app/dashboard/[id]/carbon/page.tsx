@@ -44,20 +44,36 @@ export default async function CarbonPage({
         <PendingBanner status={engagement.status} />
         <div className="grid grid-cols-2 gap-4">
           <ChartCard title="Top 10 Categories by Emissions">
-            <div className="flex items-center justify-center h-40 text-2xl text-muted">—</div>
+            <div className="space-y-2 mt-2 px-2">
+              {[90, 75, 65, 55, 45, 38, 30, 24, 18, 12].map((w, i) => (
+                <div key={i} className="h-4 rounded bg-[#E5E5E0] opacity-40" style={{ width: `${w}%` }} />
+              ))}
+            </div>
           </ChartCard>
           <ChartCard title="Spend vs Emissions">
-            <div className="flex items-center justify-center h-40 text-2xl text-muted">—</div>
+            <div className="flex items-end justify-around h-40 px-4 pb-2">
+              {[40, 60, 30, 75, 50, 85, 45].map((h, i) => (
+                <div key={i} className="w-6 rounded-t bg-[#E5E5E0] opacity-40" style={{ height: `${h}%` }} />
+              ))}
+            </div>
           </ChartCard>
         </div>
         <ChartCard title="Monthly Emissions by Scope">
-          <div className="flex items-center justify-center h-40 text-2xl text-muted">—</div>
+          <div className="flex items-end justify-around h-40 px-4 pb-2">
+            {[30, 45, 40, 55, 50, 65, 60, 70, 55, 45, 50, 40].map((h, i) => (
+              <div key={i} className="w-5 rounded-t bg-[#E5E5E0] opacity-40" style={{ height: `${h}%` }} />
+            ))}
+          </div>
         </ChartCard>
         <div className="bg-surface rounded-lg border border-[#E5E5E0] overflow-hidden">
           <div className="px-4 py-3 border-b border-[#E5E5E0]">
             <h4 className="text-xs font-semibold">All Categories</h4>
           </div>
-          <div className="flex items-center justify-center h-24 text-2xl text-muted">—</div>
+          <div className="p-4 space-y-2">
+            {[85, 70, 60, 50, 40].map((w, i) => (
+              <div key={i} className="h-3 rounded bg-[#E5E5E0] opacity-30" style={{ width: `${w}%` }} />
+            ))}
+          </div>
         </div>
       </div>
     );

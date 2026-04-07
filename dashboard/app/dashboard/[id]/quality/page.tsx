@@ -39,18 +39,28 @@ export default async function DataQualityPage({
         <PendingBanner status={engagement.status} />
         <div className="grid grid-cols-2 gap-4">
           <ChartCard title="Data Quality Grade">
-            <div className="flex items-center justify-center h-24 text-2xl text-muted">—</div>
+            <div className="flex items-center justify-center h-24">
+              <div className="w-16 h-16 rounded-lg bg-[#E5E5E0] opacity-40" />
+            </div>
           </ChartCard>
           <ChartCard title="Average GSD">
-            <div className="flex items-center justify-center h-24 text-2xl text-muted">—</div>
+            <div className="flex items-center justify-center h-24">
+              <div className="w-16 h-16 rounded-lg bg-[#E5E5E0] opacity-40" />
+            </div>
           </ChartCard>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <ChartCard title="Pedigree Matrix Scores">
-            <div className="flex items-center justify-center h-40 text-2xl text-muted">—</div>
+            <div className="flex items-center justify-center h-40">
+              <div className="w-32 h-32 rounded-full border-4 border-[#E5E5E0] opacity-40" />
+            </div>
           </ChartCard>
           <ChartCard title="Cascade Distribution (Current vs Target)">
-            <div className="flex items-center justify-center h-40 text-2xl text-muted">—</div>
+            <div className="flex items-end justify-around h-40 px-4 pb-2">
+              {[50, 70, 40, 65, 55].map((h, i) => (
+                <div key={i} className="w-8 rounded-t bg-[#E5E5E0] opacity-40" style={{ height: `${h}%` }} />
+              ))}
+            </div>
           </ChartCard>
         </div>
       </div>

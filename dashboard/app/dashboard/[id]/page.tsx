@@ -31,17 +31,30 @@ export default async function OverviewPage({
   if (engagement.status !== "qc_passed") {
     return (
       <div className="space-y-5">
-        <HeroBanner engagement={engagement} />
+        <div className="bg-slate rounded-xl px-7 py-6 mb-5">
+          <div className="text-[10px] uppercase tracking-[1px] text-[#94A3B8]">HEMERA</div>
+          <div className="text-2xl font-bold text-white mt-1">{engagement.org_name}</div>
+        </div>
         <PendingBanner status={engagement.status} />
         <div className="grid grid-cols-[1.5fr_1fr] gap-4">
           <ChartCard title="Emissions by Scope" className="row-span-2">
-            <div className="flex items-center justify-center h-40 text-2xl text-muted">—</div>
+            <div className="flex items-center justify-center h-48">
+              <div className="w-36 h-36 rounded-full bg-[#E5E5E0] opacity-40" />
+            </div>
           </ChartCard>
           <ChartCard title="Top 5 Emission Hotspots">
-            <div className="flex items-center justify-center h-24 text-2xl text-muted">—</div>
+            <div className="space-y-2 mt-2">
+              {[80, 60, 45, 30, 20].map((w, i) => (
+                <div key={i} className="h-4 rounded-full bg-[#E5E5E0] opacity-40" style={{ width: `${w}%` }} />
+              ))}
+            </div>
           </ChartCard>
           <ChartCard title="Supplier Risk Overview">
-            <div className="flex items-center justify-center h-24 text-2xl text-muted">—</div>
+            <div className="space-y-2 mt-2">
+              {[70, 45, 25].map((w, i) => (
+                <div key={i} className="h-4 rounded-full bg-[#E5E5E0] opacity-40" style={{ width: `${w}%` }} />
+              ))}
+            </div>
           </ChartCard>
         </div>
       </div>

@@ -43,25 +43,41 @@ export default async function ReductionPage({
         <PendingBanner status={engagement.status} />
         <div className="grid grid-cols-2 gap-4">
           <ChartCard title="Year 3 Target">
-            <div className="flex items-center justify-center h-24 text-2xl text-muted">—</div>
+            <div className="flex items-center justify-center h-24">
+              <div className="w-16 h-16 rounded-lg bg-[#E5E5E0] opacity-40" />
+            </div>
           </ChartCard>
           <ChartCard title="Total Reduction Potential">
-            <div className="flex items-center justify-center h-24 text-2xl text-muted">—</div>
+            <div className="flex items-center justify-center h-24">
+              <div className="w-16 h-16 rounded-lg bg-[#E5E5E0] opacity-40" />
+            </div>
           </ChartCard>
         </div>
         <div className="grid grid-cols-2 gap-4">
           <ChartCard title="Impact vs Effort">
-            <div className="flex items-center justify-center h-40 text-2xl text-muted">—</div>
+            <div className="flex items-end justify-around h-40 px-4 pb-2">
+              {[30, 55, 70, 45, 80, 60, 35].map((h, i) => (
+                <div key={i} className="w-6 rounded-t bg-[#E5E5E0] opacity-40" style={{ height: `${h}%` }} />
+              ))}
+            </div>
           </ChartCard>
           <ChartCard title="Reduction Waterfall">
-            <div className="flex items-center justify-center h-40 text-2xl text-muted">—</div>
+            <div className="flex items-end justify-around h-40 px-4 pb-2">
+              {[100, 85, 72, 62, 54, 48, 43].map((h, i) => (
+                <div key={i} className="w-6 rounded-t bg-[#E5E5E0] opacity-40" style={{ height: `${h}%` }} />
+              ))}
+            </div>
           </ChartCard>
         </div>
         <div className="bg-surface rounded-lg border border-[#E5E5E0]">
           <div className="px-5 py-4 border-b border-[#E5E5E0]">
             <h4 className="text-xs font-semibold uppercase tracking-[0.5px]">All Recommendations</h4>
           </div>
-          <div className="flex items-center justify-center h-24 text-2xl text-muted">—</div>
+          <div className="p-4 space-y-2">
+            {[80, 65, 55, 45, 35].map((w, i) => (
+              <div key={i} className="h-3 rounded bg-[#E5E5E0] opacity-30" style={{ width: `${w}%` }} />
+            ))}
+          </div>
         </div>
       </div>
     );

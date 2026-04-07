@@ -45,7 +45,14 @@ export default async function SuppliersPage({
         </div>
         <PendingBanner status={engagement.status} />
         <div className="bg-surface rounded-lg border border-[#E5E5E0] overflow-hidden">
-          <div className="flex items-center justify-center h-40 text-2xl text-muted">—</div>
+          <div className="p-4 space-y-3">
+            {[90, 75, 65, 55, 45, 35].map((w, i) => (
+              <div key={i} className="flex gap-3 items-center">
+                <div className="h-3 rounded bg-[#E5E5E0] opacity-40 flex-1" style={{ width: `${w}%` }} />
+                <div className="h-3 w-12 rounded bg-[#E5E5E0] opacity-30" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
