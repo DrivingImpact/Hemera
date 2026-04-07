@@ -1,9 +1,19 @@
 <h2>Scope Breakdown</h2>
 
+<p style="color: #475569; margin-bottom: 8pt; font-size: 9pt;">
+    Emissions are classified into three scopes following the GHG Protocol Corporate Standard.
+    <strong>Scope 1</strong> covers direct emissions from owned or controlled sources (e.g., gas boilers, company vehicles).
+    <strong>Scope 2</strong> covers indirect emissions from purchased electricity, heat, and steam.
+    <strong>Scope 3</strong> covers all other indirect emissions in the organisation's value chain, across 15 categories.
+</p>
+
 <div class="two-col">
     <div>
         <h3>Emissions by Scope</h3>
-        <div class="chart-container">{{ scope_stacked_bar_svg | safe }}</div>
+        <div class="chart-container">
+            {{ scope_stacked_bar_svg | safe }}
+            <div class="figure-caption"><span class="figure-number">Figure 3.</span> Stacked bar showing the contribution of each scope to total emissions, with 95% confidence interval error whiskers on the total.</div>
+        </div>
     </div>
     <div>
         <table class="data-table">
@@ -41,4 +51,11 @@
 </div>
 
 <h3>Category Distribution</h3>
-<div class="chart-container">{{ treemap_svg | safe }}</div>
+<p style="color: #475569; margin-bottom: 4pt; font-size: 9pt;">
+    The treemap below represents each emission category as a rectangle whose area is proportional to its tCO2e contribution.
+    Categories are nested within their parent scope, enabling visual comparison of relative magnitude at a glance.
+</p>
+<div class="chart-container">
+    {{ treemap_svg | safe }}
+    <div class="figure-caption"><span class="figure-number">Figure 4.</span> Treemap of emission categories nested by scope. Rectangle area is proportional to tCO2e. Colour indicates scope classification.</div>
+</div>

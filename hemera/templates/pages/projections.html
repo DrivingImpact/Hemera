@@ -11,14 +11,26 @@
     </div>
 </div>
 
+<p style="color: #475569; margin-bottom: 8pt; font-size: 9pt;">
+    Projections are modelled in two stages: (1) data quality improvement narrows the confidence interval without necessarily changing
+    the central estimate, and (2) emission reduction actions lower the central estimate itself. The fan chart shows both effects
+    over a three-year horizon. The waterfall decomposes the pathway into discrete improvement steps.
+</p>
+
 <div class="two-col">
     <div>
         <h3>3-Year Projection</h3>
-        <div class="chart-container">{{ fan_chart_svg | safe }}</div>
+        <div class="chart-container">
+            {{ fan_chart_svg | safe }}
+            <div class="figure-caption"><span class="figure-number">Figure 12.</span> Three-year emission projection with narrowing confidence bands. The shaded area represents the 95% CI; the dashed line shows a "do nothing" baseline.</div>
+        </div>
     </div>
     <div>
         <h3>Improvement Pathway</h3>
-        <div class="chart-container">{{ projection_waterfall_svg | safe }}</div>
+        <div class="chart-container">
+            {{ projection_waterfall_svg | safe }}
+            <div class="figure-caption"><span class="figure-number">Figure 13.</span> Waterfall decomposition from Year 1 baseline through data quality improvement and emission reductions to the Year 3 projected total.</div>
+        </div>
     </div>
 </div>
 

@@ -14,8 +14,8 @@ SCOPE_COLOURS = {1: "#1E293B", 2: "#0D9488", 3: "#F59E0B"}
 HEMERA_THEME = {
     "layout": {
         "font": {"family": "Plus Jakarta Sans, system-ui, sans-serif", "size": 12, "color": "#1E293B"},
-        "paper_bgcolor": "#FFFFFF",
-        "plot_bgcolor": "#FFFFFF",
+        "paper_bgcolor": "#F5F5F0",
+        "plot_bgcolor": "#FAFAF7",
         "colorway": ["#1E293B", "#0D9488", "#F59E0B", "#10B981", "#EF4444", "#64748B"],
         "margin": {"l": 60, "r": 20, "t": 40, "b": 40},
     }
@@ -44,10 +44,11 @@ def chart_scope_donut(scope1: float, scope2: float, scope3: float) -> str:
         hoverinfo="label+value",
     )])
     fig.update_layout(
-        showlegend=False,
-        margin=dict(l=20, r=20, t=20, b=20),
+        showlegend=True,
+        legend=dict(orientation="h", yanchor="top", y=-0.05, xanchor="center", x=0.5),
+        margin=dict(l=20, r=20, t=20, b=40),
     )
-    return _to_svg(fig, width=360, height=300)
+    return _to_svg(fig, width=360, height=320)
 
 
 def chart_top_categories_bar(categories: list[dict], limit: int = 10) -> str:
@@ -80,16 +81,17 @@ def chart_scope_stacked_bar(
     fig = go.Figure()
     for scope, val, name in [(1, scope1, "Scope 1"), (2, scope2, "Scope 2"), (3, scope3, "Scope 3")]:
         fig.add_trace(go.Bar(
-            x=["Emissions"],
-            y=[val],
+            y=["Emissions"],
+            x=[val],
             name=name,
+            orientation="h",
             marker_color=SCOPE_COLOURS[scope],
         ))
     # CI whiskers as invisible scatter with error bars
     fig.add_trace(go.Scatter(
-        x=["Emissions"],
-        y=[total],
-        error_y=dict(
+        y=["Emissions"],
+        x=[total],
+        error_x=dict(
             type="data",
             symmetric=False,
             array=[ci_upper - total],
@@ -102,8 +104,8 @@ def chart_scope_stacked_bar(
         marker=dict(size=0.1, color="rgba(0,0,0,0)"),
         showlegend=False,
     ))
-    fig.update_layout(barmode="stack", yaxis_title="tCO2e")
-    return _to_svg(fig, width=400, height=400)
+    fig.update_layout(barmode="stack", xaxis_title="tCO2e")
+    return _to_svg(fig, width=500, height=250)
 
 
 def chart_category_treemap(categories: list[dict]) -> str:
@@ -143,25 +145,33 @@ def chart_category_treemap(categories: list[dict]) -> str:
 def chart_spend_vs_emissions_scatter(categories: list[dict]) -> str:
     """Scatter: spend (x) vs tCO2e (y), bubble size = GSD uncertainty."""
     fig = go.Figure()
+    # Group by scope for legend
+    scope_groups: dict[int, list[dict]] = {}
     for c in categories:
+        scope_groups.setdefault(c["scope"], []).append(c)
+    scope_names = {1: "Scope 1", 2: "Scope 2", 3: "Scope 3"}
+    for scope in sorted(scope_groups.keys()):
+        cats = scope_groups[scope]
         fig.add_trace(go.Scatter(
-            x=[c["spend_gbp"]],
-            y=[c["co2e_tonnes"]],
+            x=[c["spend_gbp"] for c in cats],
+            y=[c["co2e_tonnes"] for c in cats],
             mode="markers+text",
             marker=dict(
-                size=max(c.get("gsd", 1.0) * 20, 10),
-                color=SCOPE_COLOURS.get(c["scope"], "#64748B"),
+                size=[max(c.get("gsd", 1.0) * 20, 10) for c in cats],
+                color=SCOPE_COLOURS.get(scope, "#64748B"),
                 opacity=0.7,
             ),
-            text=[c["name"]],
+            text=[c["name"] for c in cats],
             textposition="top center",
             textfont=dict(size=9),
-            showlegend=False,
+            name=scope_names.get(scope, f"Scope {scope}"),
+            showlegend=True,
         ))
     fig.update_layout(
         xaxis_title="Spend (GBP)",
         yaxis_title="tCO2e",
         margin=dict(l=60, r=20, t=20, b=50),
+        legend=dict(orientation="h", yanchor="bottom", y=1.02),
     )
     return _to_svg(fig, width=700, height=400)
 
@@ -228,22 +238,31 @@ def chart_cumulative_line(monthly_data: list[dict]) -> str:
 def chart_error_bars(scopes: list[dict]) -> str:
     """Error bar chart showing central estimate ± 95% CI per scope + total."""
     fig = go.Figure()
-    colours = [SCOPE_COLOURS.get(i + 1, "#64748B") for i in range(len(scopes))]
-    fig.add_trace(go.Bar(
-        x=[s["name"] for s in scopes],
-        y=[s["value"] for s in scopes],
-        error_y=dict(
-            type="data",
-            symmetric=False,
-            array=[s["ci_upper"] - s["value"] for s in scopes],
-            arrayminus=[s["value"] - s["ci_lower"] for s in scopes],
-            color="#64748B",
-            thickness=2,
-            width=6,
-        ),
-        marker_color=colours,
-    ))
-    fig.update_layout(yaxis_title="tCO2e", showlegend=False)
+    scope_names = {1: "Scope 1", 2: "Scope 2", 3: "Scope 3"}
+    for i, s in enumerate(scopes):
+        scope_num = i + 1
+        colour = SCOPE_COLOURS.get(scope_num, "#64748B")
+        fig.add_trace(go.Bar(
+            x=[s["name"]],
+            y=[s["value"]],
+            error_y=dict(
+                type="data",
+                symmetric=False,
+                array=[s["ci_upper"] - s["value"]],
+                arrayminus=[s["value"] - s["ci_lower"]],
+                color="#64748B",
+                thickness=2,
+                width=6,
+            ),
+            marker_color=colour,
+            name=scope_names.get(scope_num, s["name"]),
+            showlegend=True,
+        ))
+    fig.update_layout(
+        yaxis_title="tCO2e",
+        showlegend=True,
+        legend=dict(orientation="h", yanchor="bottom", y=1.02),
+    )
     return _to_svg(fig, width=500, height=350)
 
 
@@ -308,21 +327,24 @@ def chart_cascade_grouped_bar(current_pct: dict, target_pct: dict) -> str:
 
     fig = go.Figure()
     fig.add_trace(go.Bar(
-        x=level_labels,
-        y=[current_pct.get(l, 0) for l in levels],
+        y=level_labels,
+        x=[current_pct.get(l, 0) for l in levels],
         name="Current",
+        orientation="h",
         marker_color="#F59E0B",
     ))
     fig.add_trace(go.Bar(
-        x=level_labels,
-        y=[target_pct.get(l, 0) for l in levels],
+        y=level_labels,
+        x=[target_pct.get(l, 0) for l in levels],
         name="Target",
+        orientation="h",
         marker_color="#0D9488",
     ))
     fig.update_layout(
         barmode="group",
-        yaxis_title="% of spend",
+        xaxis_title="% of spend",
         legend=dict(orientation="h", yanchor="bottom", y=1.02),
+        margin=dict(l=120, r=20, t=40, b=40),
     )
     return _to_svg(fig, width=700, height=350)
 
@@ -339,17 +361,27 @@ TYPE_COLOURS = {
 def chart_reduction_quadrant(reductions: list[dict]) -> str:
     """Quadrant scatter: impact (y) vs effort (x). Labelled quadrants."""
     fig = go.Figure()
+    # Group by type for legend
+    type_groups: dict[str, list[dict]] = {}
     for r in reductions:
-        effort_val = EFFORT_MAP.get(r["effort"], 2)
+        type_groups.setdefault(r["type"], []).append(r)
+    for type_name in sorted(type_groups.keys()):
+        items = type_groups[type_name]
+        colour = TYPE_COLOURS.get(type_name, "#64748B")
         fig.add_trace(go.Scatter(
-            x=[effort_val],
-            y=[r["reduction_tonnes"]],
+            x=[EFFORT_MAP.get(r["effort"], 2) for r in items],
+            y=[r["reduction_tonnes"] for r in items],
             mode="markers+text",
-            marker=dict(size=max(r["reduction_tonnes"] * 8, 15), color=TYPE_COLOURS.get(r["type"], "#64748B"), opacity=0.7),
-            text=[r["action"]],
+            marker=dict(
+                size=[max(r["reduction_tonnes"] * 8, 15) for r in items],
+                color=colour,
+                opacity=0.7,
+            ),
+            text=[r["action"] for r in items],
             textposition="top center",
             textfont=dict(size=9),
-            showlegend=False,
+            name=type_name.capitalize(),
+            showlegend=True,
         ))
     fig.add_hline(y=sum(r["reduction_tonnes"] for r in reductions) / len(reductions), line_dash="dot", line_color="#CBD5E1")
     fig.add_vline(x=2, line_dash="dot", line_color="#CBD5E1")
@@ -358,6 +390,7 @@ def chart_reduction_quadrant(reductions: list[dict]) -> str:
     fig.update_layout(
         xaxis=dict(title="Effort", tickvals=[1, 2, 3], ticktext=["Low", "Medium", "High"], range=[0.5, 3.5]),
         yaxis_title="Reduction potential (tCO2e)",
+        legend=dict(orientation="h", yanchor="bottom", y=1.02),
     )
     return _to_svg(fig, width=600, height=400)
 

@@ -1,11 +1,23 @@
 {% if has_monthly_data %}
 <h2>Monthly Emission Pattern</h2>
 
+<p style="color: #475569; margin-bottom: 8pt; font-size: 9pt;">
+    Monthly patterns can reveal seasonal drivers of emissions — for example, higher heating-related Scope 1 emissions in winter
+    months, or increased business travel during peak trading periods. Identifying these patterns enables targeted interventions
+    at the times of year when they will have the greatest impact.
+</p>
+
 <h3>Monthly Emissions by Scope</h3>
-<div class="chart-container">{{ monthly_area_svg | safe }}</div>
+<div class="chart-container">
+    {{ monthly_area_svg | safe }}
+    <div class="figure-caption"><span class="figure-number">Figure 7.</span> Monthly emissions stacked by scope, showing seasonal variation. Scope 1 = slate, Scope 2 = teal, Scope 3 = amber.</div>
+</div>
 
 <h3>Cumulative Progress</h3>
-<div class="chart-container">{{ cumulative_line_svg | safe }}</div>
+<div class="chart-container">
+    {{ cumulative_line_svg | safe }}
+    <div class="figure-caption"><span class="figure-number">Figure 8.</span> Cumulative actual emissions versus a linear projection. Deviation above the line indicates periods of higher-than-average emission intensity.</div>
+</div>
 {% else %}
 <h2>Monthly Emission Pattern</h2>
 <p style="color: #64748B; padding: 40pt 0;">

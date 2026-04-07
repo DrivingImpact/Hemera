@@ -1,8 +1,21 @@
 <h2>Data Quality Improvement</h2>
 
+<p style="color: #475569; margin-bottom: 8pt; font-size: 9pt;">
+    Hemera uses a six-level emission factor cascade model to select the most accurate available factor for each line item.
+    Level 1 (supplier-specific) provides the highest precision, while Level 6 (generic fallback) carries the greatest uncertainty.
+    Moving spend up the cascade — by obtaining supplier-specific data or switching to activity-based measurement — reduces
+    uncertainty and improves the overall data quality grade.
+</p>
+
 <h3>Emission Factor Cascade — Current vs Target</h3>
 <p style="font-size: 8pt; color: #64748B; margin-bottom: 4pt;">Level 1 (supplier-specific) is most accurate. Level 6 (fallback) is least. Moving spend up the cascade reduces uncertainty.</p>
-<div class="chart-container">{{ cascade_bar_svg | safe }}</div>
+<div class="chart-container">
+    {{ cascade_bar_svg | safe }}
+    <div class="figure-caption"><span class="figure-number">Figure 17.</span> Current and target distribution of spend across the six emission factor cascade levels. Shifting spend towards L1–L2 (left) reduces uncertainty and improves data quality grade.</div>
+</div>
 
 <h3>Top Actions to Reduce Uncertainty</h3>
-<div class="chart-container">{{ impact_bar_svg | safe }}</div>
+<div class="chart-container">
+    {{ impact_bar_svg | safe }}
+    <div class="figure-caption"><span class="figure-number">Figure 18.</span> Prioritised data quality improvement actions ranked by their estimated impact on reducing total uncertainty. Higher scores indicate greater potential to narrow the confidence interval.</div>
+</div>

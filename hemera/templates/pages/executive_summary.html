@@ -1,34 +1,62 @@
 <h2>Executive Summary</h2>
 
+<p style="color: #475569; margin-bottom: 12pt;">
+    This report presents the organisational carbon footprint of <strong>{{ org_name }}</strong> for the reporting period
+    {{ fiscal_year_start }} to {{ fiscal_year_end }}, calculated in accordance with the GHG Protocol Corporate Standard
+    and DEFRA/DESNZ Environmental Reporting Guidelines. All emissions are expressed in tonnes of carbon dioxide equivalent
+    (tCO2e), a standardised unit that accounts for the global warming potential of all greenhouse gases.
+</p>
+
 <div class="kpi-grid">
     <div class="kpi-card">
         <div class="section-label">Total emissions</div>
         <div class="metric-value metric-teal">{{ "%.1f"|format(total_co2e) }} <span class="metric-unit">tCO2e</span></div>
+        <p style="font-size: 7pt; color: #64748B; margin-top: 4pt;">Carbon dioxide equivalent: a measure that expresses the impact of all greenhouse gases in terms of the equivalent amount of CO2.</p>
     </div>
     <div class="kpi-card">
         <div class="section-label">95% confidence interval</div>
         <div class="metric-value metric-slate">{{ "%.1f"|format(ci_lower) }} – {{ "%.1f"|format(ci_upper) }} <span class="metric-unit">tCO2e</span></div>
+        <p style="font-size: 7pt; color: #64748B; margin-top: 4pt;">The range within which the true footprint lies with 95% statistical confidence, derived from the ecoinvent pedigree matrix uncertainty quantification.</p>
     </div>
     <div class="kpi-card {{ 'warning' if data_quality_grade in ('D', 'E') else '' }}">
         <div class="section-label">Data quality grade</div>
         <div class="metric-value {{ 'metric-amber' if data_quality_grade in ('C', 'D', 'E') else 'metric-teal' }}">{{ data_quality_grade }}</div>
+        <p style="font-size: 7pt; color: #64748B; margin-top: 4pt;">Grades A–E based on the proportion of emissions calculated using high-precision data sources (supplier-specific or activity-based) versus spend-based estimates.</p>
     </div>
 </div>
 
 <div class="two-col">
     <div>
-        <h3>Scope Split</h3>
-        <div class="chart-container">{{ scope_donut_svg | safe }}</div>
+        <h3>Emissions by Scope</h3>
+        <div class="chart-container">
+            {{ scope_donut_svg | safe }}
+            <div class="figure-caption"><span class="figure-number">Figure 1.</span> Distribution of emissions across Scope 1 (direct), Scope 2 (purchased energy), and Scope 3 (value chain). Scope definitions follow the GHG Protocol Corporate Standard.</div>
+        </div>
     </div>
     <div>
         <h3>Top Emission Categories</h3>
-        <div class="chart-container">{{ top_categories_mini_svg | safe }}</div>
+        <div class="chart-container">
+            {{ top_categories_mini_svg | safe }}
+            <div class="figure-caption"><span class="figure-number">Figure 2.</span> The five largest emission categories by tCO2e contribution. Colour indicates scope classification. Categories are defined per GHG Protocol Scope 3 Technical Guidance.</div>
+        </div>
     </div>
 </div>
 
-<p style="margin-top: 12pt; color: #475569;">
-    {{ org_name }}'s total carbon footprint for the reporting period is <strong>{{ "%.1f"|format(total_co2e) }} tCO2e</strong>
-    (95% CI: {{ "%.1f"|format(ci_lower) }}–{{ "%.1f"|format(ci_upper) }}). Scope 3 value chain emissions account for
-    {{ "%.0f"|format(scope3_pct) }}% of the total. The data quality grade of <strong>{{ data_quality_grade }}</strong>
-    reflects the current mix of emission factor sources.
+<h3 style="margin-top: 12pt;">Key Findings</h3>
+<p style="color: #475569; margin-bottom: 6pt;">
+    {{ org_name }}'s total organisational carbon footprint for the reporting period is <strong>{{ "%.1f"|format(total_co2e) }} tCO2e</strong>,
+    with a 95% confidence interval of {{ "%.1f"|format(ci_lower) }}–{{ "%.1f"|format(ci_upper) }} tCO2e. This uncertainty range reflects
+    the current mix of emission factor data sources — improving data quality will narrow this range in future reporting periods
+    (see Section 8: Data Quality Improvement).
+</p>
+<p style="color: #475569; margin-bottom: 6pt;">
+    <strong>Scope 3 value chain emissions account for {{ "%.0f"|format(scope3_pct) }}% of the total footprint</strong>, which is typical
+    for service-sector and SME organisations where purchased goods and business travel dominate. Direct emissions (Scope 1) and
+    purchased energy (Scope 2) together represent {{ "%.0f"|format(scope1_pct + scope2_pct) }}% — these are under the organisation's
+    direct operational control and are typically the first targets for reduction initiatives.
+</p>
+<p style="color: #475569;">
+    The data quality grade of <strong>{{ data_quality_grade }}</strong> reflects the current reliance on spend-based emission factors
+    (Level 4 in the cascade model). Sections 6–7 of this report present specific, prioritised actions to reduce emissions,
+    and Section 9 details how data quality improvements will increase the precision of future reports.
 </p>

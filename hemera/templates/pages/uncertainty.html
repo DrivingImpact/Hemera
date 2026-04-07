@@ -1,17 +1,34 @@
 <h2>Uncertainty Analysis</h2>
 
+<p style="color: #475569; margin-bottom: 8pt; font-size: 9pt;">
+    Every emission estimate in this report carries a quantified uncertainty, calculated using the ecoinvent pedigree matrix
+    (Ciroth et al., 2016). Each line item is scored across five data quality indicators — reliability, completeness, temporal
+    correlation, geographical correlation, and technological correlation — each on a scale of 1 (best) to 5 (worst). These scores
+    are combined under a lognormal distribution to produce a Geometric Standard Deviation (GSD), from which the 95% confidence
+    interval is derived as [estimate / GSD², estimate × GSD²].
+</p>
+
 <h3>95% Confidence Intervals by Scope</h3>
-<div class="chart-container">{{ error_bars_svg | safe }}</div>
+<div class="chart-container">
+    {{ error_bars_svg | safe }}
+    <div class="figure-caption"><span class="figure-number">Figure 14.</span> Central emission estimate with 95% confidence interval error bars for each scope and the total. Wider bars indicate greater measurement uncertainty.</div>
+</div>
 
 <div class="two-col">
     <div>
         <h3>Pedigree Indicator Scores</h3>
         <p style="font-size: 8pt; color: #64748B; margin-bottom: 4pt;">1 = best quality, 5 = worst. Weighted by emission contribution.</p>
-        <div class="chart-container">{{ radar_svg | safe }}</div>
+        <div class="chart-container">
+            {{ radar_svg | safe }}
+            <div class="figure-caption"><span class="figure-number">Figure 15.</span> Radar chart of weighted average pedigree scores across the five data quality indicators. Scores closer to the centre (1) indicate higher quality data.</div>
+        </div>
     </div>
     <div>
         <h3>Uncertainty Sources</h3>
         <p style="font-size: 8pt; color: #64748B; margin-bottom: 4pt;">Which data quality indicators drive the most uncertainty.</p>
-        <div class="chart-container">{{ pedigree_bar_svg | safe }}</div>
+        <div class="chart-container">
+            {{ pedigree_bar_svg | safe }}
+            <div class="figure-caption"><span class="figure-number">Figure 16.</span> Contribution of each pedigree indicator to total uncertainty. Improving the highest-contributing indicator will have the greatest effect on narrowing confidence intervals.</div>
+        </div>
     </div>
 </div>
