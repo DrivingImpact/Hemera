@@ -52,7 +52,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "https://*.vercel.app",
+        "https://hemera-nx8p.vercel.app",
+        "https://hemera-nx8p-drivingimpacts-projects.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
