@@ -2,6 +2,7 @@ import { getDataQuality, getEngagement } from "@/lib/api";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { ChartCard } from "@/components/ui/chart-card";
 import { Badge } from "@/components/ui/badge";
+import { PendingBanner } from "@/components/ui/pending-banner";
 import { PlotlyChart } from "@/components/charts/plotly-wrapper";
 
 export default async function DataQualityPage({
@@ -12,10 +13,51 @@ export default async function DataQualityPage({
   const { id } = await params;
   const engagementId = Number(id);
 
-  const [report, engagement] = await Promise.all([
-    getDataQuality(engagementId),
-    getEngagement(engagementId),
-  ]);
+  let engagement;
+  try {
+    engagement = await getEngagement(engagementId);
+  } catch {
+    return (
+      <div className="space-y-5">
+        <div>
+          <h1 className="text-2xl font-bold">Data Quality</h1>
+        </div>
+        <div className="bg-surface rounded-xl border border-[#E5E5E0] p-8 text-center">
+          <p className="text-muted text-sm">No data yet.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (engagement.status !== "qc_passed") {
+    return (
+      <div className="space-y-5">
+        <div>
+          <h1 className="text-2xl font-bold">Data Quality</h1>
+          <p className="text-muted text-sm mt-0.5">{engagement.org_name}</p>
+        </div>
+        <PendingBanner status={engagement.status} />
+        <div className="grid grid-cols-2 gap-4">
+          <ChartCard title="Data Quality Grade">
+            <div className="flex items-center justify-center h-24 text-2xl text-muted">—</div>
+          </ChartCard>
+          <ChartCard title="Average GSD">
+            <div className="flex items-center justify-center h-24 text-2xl text-muted">—</div>
+          </ChartCard>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <ChartCard title="Pedigree Matrix Scores">
+            <div className="flex items-center justify-center h-40 text-2xl text-muted">—</div>
+          </ChartCard>
+          <ChartCard title="Cascade Distribution (Current vs Target)">
+            <div className="flex items-center justify-center h-40 text-2xl text-muted">—</div>
+          </ChartCard>
+        </div>
+      </div>
+    );
+  }
+
+  const report = await getDataQuality(engagementId);
 
   // Pull nested data out safely
   const summary = (report.summary ?? {}) as Record<string, unknown>;

@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { getEngagementSuppliers } from "@/lib/api";
+import { getEngagement, getEngagementSuppliers } from "@/lib/api";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
+import { PendingBanner } from "@/components/ui/pending-banner";
 import { fmtTonnes, fmtGBP, fmtNumber } from "@/lib/format";
 import type { EngagementSupplier } from "@/lib/types";
 
@@ -18,6 +19,37 @@ export default async function SuppliersPage({
 }) {
   const { id } = await params;
   const engagementId = Number(id);
+
+  let engagement;
+  try {
+    engagement = await getEngagement(engagementId);
+  } catch {
+    return (
+      <div className="space-y-5">
+        <div>
+          <h1 className="text-2xl font-bold">Suppliers</h1>
+        </div>
+        <div className="bg-surface rounded-xl border border-[#E5E5E0] p-8 text-center">
+          <p className="text-muted text-sm">No data yet.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (engagement.status !== "qc_passed") {
+    return (
+      <div className="space-y-5">
+        <div>
+          <h1 className="text-2xl font-bold">Suppliers</h1>
+          <p className="text-muted text-sm mt-0.5">{engagement.org_name}</p>
+        </div>
+        <PendingBanner status={engagement.status} />
+        <div className="bg-surface rounded-lg border border-[#E5E5E0] overflow-hidden">
+          <div className="flex items-center justify-center h-40 text-2xl text-muted">—</div>
+        </div>
+      </div>
+    );
+  }
 
   const suppliers = await getEngagementSuppliers(engagementId);
 

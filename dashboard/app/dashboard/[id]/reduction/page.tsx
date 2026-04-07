@@ -3,6 +3,7 @@ import { KpiCard } from "@/components/ui/kpi-card";
 import { ChartCard } from "@/components/ui/chart-card";
 import { DataTable } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
+import { PendingBanner } from "@/components/ui/pending-banner";
 import { ReductionWaterfall } from "@/components/charts/waterfall";
 import { ImpactEffortQuadrant } from "@/components/charts/quadrant";
 import { fmtTonnes, fmtPct } from "@/lib/format";
@@ -16,9 +17,58 @@ export default async function ReductionPage({
   const { id } = await params;
   const engagementId = Number(id);
 
-  const [data, engagement] = await Promise.all([
+  let engagement;
+  try {
+    engagement = await getEngagement(engagementId);
+  } catch {
+    return (
+      <div className="space-y-5">
+        <div>
+          <h1 className="text-2xl font-bold">Reduction Roadmap</h1>
+        </div>
+        <div className="bg-surface rounded-xl border border-[#E5E5E0] p-8 text-center">
+          <p className="text-muted text-sm">No data yet.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (engagement.status !== "qc_passed") {
+    return (
+      <div className="space-y-5">
+        <div>
+          <h1 className="text-2xl font-bold">Reduction Roadmap</h1>
+          <p className="text-muted text-sm mt-0.5">{engagement.org_name}</p>
+        </div>
+        <PendingBanner status={engagement.status} />
+        <div className="grid grid-cols-2 gap-4">
+          <ChartCard title="Year 3 Target">
+            <div className="flex items-center justify-center h-24 text-2xl text-muted">—</div>
+          </ChartCard>
+          <ChartCard title="Total Reduction Potential">
+            <div className="flex items-center justify-center h-24 text-2xl text-muted">—</div>
+          </ChartCard>
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <ChartCard title="Impact vs Effort">
+            <div className="flex items-center justify-center h-40 text-2xl text-muted">—</div>
+          </ChartCard>
+          <ChartCard title="Reduction Waterfall">
+            <div className="flex items-center justify-center h-40 text-2xl text-muted">—</div>
+          </ChartCard>
+        </div>
+        <div className="bg-surface rounded-lg border border-[#E5E5E0]">
+          <div className="px-5 py-4 border-b border-[#E5E5E0]">
+            <h4 className="text-xs font-semibold uppercase tracking-[0.5px]">All Recommendations</h4>
+          </div>
+          <div className="flex items-center justify-center h-24 text-2xl text-muted">—</div>
+        </div>
+      </div>
+    );
+  }
+
+  const [data] = await Promise.all([
     getReduction(engagementId),
-    getEngagement(engagementId),
   ]);
 
   const { recommendations, projections } = data;

@@ -2,6 +2,7 @@ import { getEngagement, getCategories, getMonthly } from "@/lib/api";
 import { ChartCard } from "@/components/ui/chart-card";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
+import { PendingBanner } from "@/components/ui/pending-banner";
 import { CategoryBar } from "@/components/charts/category-bar";
 import { ScatterBubble } from "@/components/charts/scatter-bubble";
 import { MonthlyArea } from "@/components/charts/monthly-area";
@@ -17,8 +18,52 @@ export default async function CarbonPage({
   const { id } = await params;
   const engagementId = Number(id);
 
-  const [engagement, categories, monthly] = await Promise.all([
-    getEngagement(engagementId),
+  let engagement;
+  try {
+    engagement = await getEngagement(engagementId);
+  } catch {
+    return (
+      <div className="space-y-5">
+        <div>
+          <h1 className="text-2xl font-bold">Carbon Footprint</h1>
+        </div>
+        <div className="bg-surface rounded-xl border border-[#E5E5E0] p-8 text-center">
+          <p className="text-muted text-sm">No data yet.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (engagement.status !== "qc_passed") {
+    return (
+      <div className="space-y-5">
+        <div>
+          <h1 className="text-2xl font-bold">Carbon Footprint</h1>
+          <p className="text-muted text-sm mt-0.5">{engagement.org_name}</p>
+        </div>
+        <PendingBanner status={engagement.status} />
+        <div className="grid grid-cols-2 gap-4">
+          <ChartCard title="Top 10 Categories by Emissions">
+            <div className="flex items-center justify-center h-40 text-2xl text-muted">—</div>
+          </ChartCard>
+          <ChartCard title="Spend vs Emissions">
+            <div className="flex items-center justify-center h-40 text-2xl text-muted">—</div>
+          </ChartCard>
+        </div>
+        <ChartCard title="Monthly Emissions by Scope">
+          <div className="flex items-center justify-center h-40 text-2xl text-muted">—</div>
+        </ChartCard>
+        <div className="bg-surface rounded-lg border border-[#E5E5E0] overflow-hidden">
+          <div className="px-4 py-3 border-b border-[#E5E5E0]">
+            <h4 className="text-xs font-semibold">All Categories</h4>
+          </div>
+          <div className="flex items-center justify-center h-24 text-2xl text-muted">—</div>
+        </div>
+      </div>
+    );
+  }
+
+  const [categories, monthly] = await Promise.all([
     getCategories(engagementId),
     getMonthly(engagementId),
   ]);
