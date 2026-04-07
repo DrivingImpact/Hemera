@@ -1,0 +1,36 @@
+date,supplier,description,amount
+2025-04-15,British Gas,Electricity - office Q1,1250.00
+2025-05-01,British Gas,Electricity - office Q2,1180.00
+2025-06-01,British Gas,Gas heating - office,890.00
+2025-07-15,British Gas,Electricity - office Q3,1320.00
+2025-04-20,Shell UK,Diesel - company vehicles,2340.00
+2025-06-10,Shell UK,Diesel - company vehicles,1870.00
+2025-08-22,Shell UK,Petrol - company vehicles,1560.00
+2025-04-10,Heathrow Express,Rail travel LHR,42.50
+2025-05-18,British Airways,Flight London to Edinburgh,189.00
+2025-06-25,British Airways,Flight London to Manchester,145.00
+2025-07-03,Trainline,Rail travel Birmingham,67.80
+2025-08-14,EasyJet,Flight London to Amsterdam,210.00
+2025-09-02,British Airways,Flight London to Paris,178.00
+2025-04-05,Amazon Business,Office supplies,456.00
+2025-05-12,Staples,Printer paper and toner,234.00
+2025-06-08,Viking Direct,Office furniture - desks,1890.00
+2025-07-20,Amazon Business,IT equipment - monitors,2100.00
+2025-08-01,Dell,Laptop computers x3,3450.00
+2025-04-28,Sodexo,Catering - team event,780.00
+2025-05-30,Pret A Manger,Staff lunches,125.00
+2025-06-15,Thames Water,Water supply Q2,340.00
+2025-07-10,Biffa,Waste collection Q2,567.00
+2025-08-25,Biffa,Waste collection Q3,589.00
+2025-09-10,Thames Water,Water supply Q3,355.00
+2025-04-02,Royal Mail,Postage and courier,123.00
+2025-05-20,DHL,International shipping,890.00
+2025-06-30,FedEx,Express delivery service,456.00
+2025-07-28,DHL,Freight - product shipment,1230.00
+2025-08-15,Kuehne Nagel,Freight forwarding,2340.00
+2025-09-05,Royal Mail,Postage and courier,98.00
+2025-05-05,WeWork,Office rent Q2,4500.00
+2025-08-05,WeWork,Office rent Q3,4500.00
+2025-06-20,Vodafone,Mobile phone contracts,345.00
+2025-07-15,BT Business,Internet and phone,289.00
+2025-09-01,Microsoft,Cloud services Azure,1200.00
