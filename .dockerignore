@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.env.example
+.git/
+.gitignore
+*.pdf
+tests/
+docs/
+.superpowers/
+.DS_Store
+test-report*.pdf

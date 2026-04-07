@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: hemera-api
+    runtime: docker
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: CLERK_SECRET_KEY
+        sync: false
+      - key: CLERK_PUBLISHABLE_KEY
+        sync: false
+      - key: CLERK_WEBHOOK_SECRET
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: COMPANIES_HOUSE_API_KEY
+        sync: false
