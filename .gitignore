@@ -9,3 +9,11 @@ __pycache__/
 !data/defra/*.xlsx
 !data/defra/*.xls
 !data/defra/*.ods
+
+# Dashboard
+dashboard/.env.local
+dashboard/node_modules/
+dashboard/.next/
+
+# Superpowers
+.superpowers/
