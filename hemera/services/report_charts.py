@@ -112,8 +112,8 @@ def chart_top_categories_bar(categories: list[dict], limit: int = 10) -> str:
     fig.update_layout(
         xaxis_title="tCO2e",
         xaxis=dict(title_font=dict(size=12), tickfont=dict(size=11)),
-        yaxis=dict(tickfont=dict(size=11)),
-        margin=dict(l=200, r=50, t=20, b=40),
+        yaxis=dict(tickfont=dict(size=13)),
+        margin=dict(l=220, r=60, t=20, b=40),
     )
     return _to_svg(fig, width=700, height=400)
 
@@ -160,18 +160,26 @@ def chart_scope_stacked_bar(
 
 def chart_category_treemap(categories: list[dict]) -> str:
     """Treemap of categories nested by scope. Size = tCO2e."""
-    labels = ["Total"]
-    parents = [""]
-    values = [0]
-    colours = ["#E5E5E0"]
+    scope_names = {1: "Scope 1 — Direct", 2: "Scope 2 — Energy", 3: "Scope 3 — Value chain"}
+    # Use branchvalues="total": parent value must equal sum of children
+    labels = []
+    parents = []
+    values = []
+    colours = []
 
-    scope_names = {1: "Scope 1", 2: "Scope 2", 3: "Scope 3"}
+    total_val = sum(c["co2e_tonnes"] for c in categories)
+    labels.append("Total")
+    parents.append("")
+    values.append(total_val)
+    colours.append("#E5E5E0")
+
     for s in [1, 2, 3]:
         scope_cats = [c for c in categories if c["scope"] == s]
         if scope_cats:
+            scope_total = sum(c["co2e_tonnes"] for c in scope_cats)
             labels.append(scope_names[s])
             parents.append("Total")
-            values.append(0)  # remainder mode: parent value = 0 means auto-sum
+            values.append(scope_total)
             colours.append(SCOPE_COLOURS[s])
             for c in scope_cats:
                 labels.append(c["name"])
@@ -186,7 +194,8 @@ def chart_category_treemap(categories: list[dict]) -> str:
         marker=dict(colors=colours),
         textinfo="label+value",
         texttemplate="%{label}<br>%{value:.1f}t",
-        branchvalues="remainder",
+        textfont=dict(size=13),
+        branchvalues="total",
     ))
     fig.update_layout(margin=dict(l=10, r=10, t=10, b=10))
     return _to_svg(fig, width=700, height=350)
@@ -507,8 +516,12 @@ def chart_reduction_waterfall(current_total: float, reductions: list[dict]) -> s
     labels = ["Current"] + [r["action"][:30] for r in sorted_recs] + ["Projected"]
     measures = ["absolute"] + ["relative"] * len(sorted_recs) + ["total"]
     values = [current_total] + [-r["reduction_tonnes"] for r in sorted_recs] + [0]
-    # Custom text: show projected value on the total bar
-    text_vals = [f"{current_total:.1f}t"] + [f"-{r['reduction_tonnes']:.1f}t" for r in sorted_recs] + [f"{projected:.1f}t"]
+    # Custom text: show projected value on total bar, suppress tiny values
+    text_vals = [f"{current_total:.1f}t"]
+    for r in sorted_recs:
+        val = r["reduction_tonnes"]
+        text_vals.append(f"-{val:.1f}t" if val >= 0.5 else "")
+    text_vals.append(f"{projected:.1f}t")
 
     fig = go.Figure(go.Waterfall(
         x=labels, y=values, measure=measures,

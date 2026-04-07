@@ -6,6 +6,7 @@
     <title>{{ org_name }} — Carbon Footprint Report</title>
 </head>
 <body>
+    <span style="string-set: client-name '{{ org_name }}'; display: none;"></span>
     {% include "pages/cover.html" %}
     {% for page in pages %}
     <div class="page-break"></div>

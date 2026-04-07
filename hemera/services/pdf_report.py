@@ -29,6 +29,22 @@ from hemera.services.data_quality import (
 TEMPLATES_DIR = Path(__file__).resolve().parent.parent / "templates"
 ROWS_PER_APPENDIX_PAGE = 30
 
+TYPE_LABELS = {
+    "chart_of_accounts": "Split code",
+    "activity_data": "Collect activity data",
+    "supplier_engagement": "Engage supplier",
+}
+
+
+def _format_dq_rec_label(rec: dict) -> str:
+    """Format a data quality recommendation into a readable chart label."""
+    rec_type = rec.get("type", "")
+    prefix = TYPE_LABELS.get(rec_type, "Improve")
+    target = rec.get("current_code", rec.get("category", ""))
+    if target:
+        return f"{prefix}: {target[:30]}"
+    return prefix
+
 
 def generate_report_data(engagement, transactions: list) -> dict:
     """Gather all data and generate all chart SVGs for the report."""
@@ -194,7 +210,7 @@ def generate_report_data(engagement, transactions: list) -> dict:
             cascade["target_by_spend_pct"],
         ),
         "impact_bar_svg": chart_impact_bar([
-            {"action": r.get("current_code", r.get("category", "Unknown"))[:40],
+            {"action": _format_dq_rec_label(r),
              "impact_score": r.get("impact_score", 0)}
             for r in dq_recs[:5]
         ]) if dq_recs else "",
