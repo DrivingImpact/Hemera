@@ -1,9 +1,11 @@
 """Hemera — FastAPI application."""
 
 import logging
+import traceback
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 from hemera.api import upload, engagements, suppliers, reports, qc, auth
@@ -66,6 +68,14 @@ app.include_router(engagements.router, prefix="/api", tags=["engagements"])
 app.include_router(suppliers.router, prefix="/api", tags=["suppliers"])
 app.include_router(reports.router, prefix="/api", tags=["reports"])
 app.include_router(qc.router, prefix="/api", tags=["qc"])
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """Log unhandled errors and return details (visible in Render logs)."""
+    logger.error(f"Unhandled error on {request.method} {request.url.path}: {exc}")
+    logger.error(traceback.format_exc())
+    return JSONResponse(status_code=500, content={"detail": str(exc)})
 
 
 @app.get("/health")
