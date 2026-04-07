@@ -1,7 +1,14 @@
 import { redirect } from "next/navigation";
+import { getHemeraUser } from "@/lib/auth";
 import { listEngagements } from "@/lib/api";
 
 export default async function DashboardPage() {
+  const user = await getHemeraUser();
+
+  if (user?.role === "admin") {
+    redirect("/dashboard/clients");
+  }
+
   let engagements: Awaited<ReturnType<typeof listEngagements>> = [];
   try {
     engagements = await listEngagements();

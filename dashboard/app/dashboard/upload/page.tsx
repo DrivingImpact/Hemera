@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getHemeraUser } from "@/lib/auth";
 import { listEngagements } from "@/lib/api";
 import { UploadDropzone } from "@/components/upload/dropzone";
 import { DeleteEngagement } from "@/components/upload/delete-engagement";
@@ -24,11 +25,18 @@ const STATUS_BADGE: Record<string, { label: string; className: string }> = {
 };
 
 export default async function UploadPage() {
+  const user = await getHemeraUser();
+  const isAdmin = user?.role === "admin";
+
   let engagements: EngagementListItem[] = [];
   try {
-    engagements = await listEngagements();
+    const all = await listEngagements();
+    // Clients only see their own org's engagements
+    engagements = isAdmin
+      ? all
+      : all.filter((e) => !user?.orgName || e.org_name === user.orgName);
   } catch {
-    // silently fall through — show upload form without engagement list
+    // silently fall through
   }
 
   return (
@@ -48,7 +56,9 @@ export default async function UploadPage() {
       {engagements.length > 0 && (
         <div className="bg-surface rounded-xl border border-[#E5E5E0] overflow-hidden">
           <div className="px-5 py-4 border-b border-[#E5E5E0]">
-            <h4 className="text-xs font-semibold uppercase tracking-[0.5px]">Your Uploads</h4>
+            <h4 className="text-xs font-semibold uppercase tracking-[0.5px]">
+              {isAdmin ? "All Uploads" : "Your Uploads"}
+            </h4>
           </div>
           <table className="w-full text-sm">
             <thead>
@@ -114,7 +124,6 @@ export default async function UploadPage() {
           </table>
         </div>
       )}
-
     </div>
   );
 }

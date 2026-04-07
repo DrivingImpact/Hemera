@@ -17,3 +17,15 @@
 
   --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
 }
+
+@media print {
+  aside, nav, header, footer, .print\:hidden {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+  }
+  main {
+    padding: 0 !important;
+  }
+}

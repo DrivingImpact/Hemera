@@ -3,7 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const NAV_SECTIONS = [
+interface NavItem {
+  name: string;
+  href: string;
+  icon: string;
+  absolute?: boolean;
+}
+
+const CLIENT_SECTIONS: { label: string; items: NavItem[] }[] = [
   {
     label: "Analysis",
     items: [
@@ -22,18 +29,55 @@ const NAV_SECTIONS = [
   },
 ];
 
-export function Sidebar({ engagementId, orgName }: { engagementId?: number; orgName: string }) {
+const ADMIN_SECTIONS: { label: string; items: NavItem[] }[] = [
+  {
+    label: "Admin",
+    items: [
+      { name: "Clients", href: "/clients", icon: "◉", absolute: true },
+      { name: "Upload", href: "/upload", icon: "◯", absolute: true },
+    ],
+  },
+  {
+    label: "Review",
+    items: [
+      { name: "Overview", href: "", icon: "◯" },
+      { name: "Carbon", href: "/carbon", icon: "◯" },
+      { name: "Suppliers", href: "/suppliers", icon: "◯" },
+      { name: "Data Quality", href: "/quality", icon: "◯" },
+      { name: "QC Review", href: "/qc", icon: "◯" },
+    ],
+  },
+];
+
+export function Sidebar({
+  engagementId,
+  orgName,
+  role,
+}: {
+  engagementId?: number;
+  orgName: string;
+  role: string;
+}) {
   const pathname = usePathname();
   const basePath = engagementId ? `/dashboard/${engagementId}` : "/dashboard";
+  const isAdmin = role === "admin";
+  const sections = isAdmin ? ADMIN_SECTIONS : CLIENT_SECTIONS;
 
   return (
     <aside className="w-[220px] bg-slate flex flex-col flex-shrink-0 min-h-screen">
       <div className="px-5 pt-5 pb-4 border-b border-white/10">
         <div className="text-teal text-[11px] font-bold uppercase tracking-[2px]">Hemera</div>
         <div className="text-[#94A3B8] text-xs mt-1">{orgName}</div>
+        {isAdmin && (
+          <div className="mt-1.5">
+            <span className="text-[9px] font-bold uppercase tracking-[1px] px-1.5 py-0.5 rounded bg-teal/15 text-teal">
+              Admin
+            </span>
+          </div>
+        )}
       </div>
       <nav className="mt-3 flex-1">
-        {NAV_SECTIONS.map((section) => (
+        {sections.map((section) => (
           <div key={section.label}>
             <div className="px-5 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-[1px] text-[#475569]">
               {section.label}
