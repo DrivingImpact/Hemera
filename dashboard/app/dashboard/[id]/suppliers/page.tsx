@@ -6,6 +6,15 @@ import { PendingBanner } from "@/components/ui/pending-banner";
 import { fmtTonnes, fmtGBP, fmtNumber } from "@/lib/format";
 import type { EngagementSupplier } from "@/lib/types";
 
+const SUPPLIER_PLACEHOLDER_COLUMNS = [
+  { key: "name", label: "Supplier" },
+  { key: "spend_gbp", label: "Spend", align: "right" as const },
+  { key: "co2e_tonnes", label: "tCO₂e", align: "right" as const },
+  { key: "intensity_kg_per_gbp", label: "Intensity (kg/£)", align: "right" as const },
+  { key: "transaction_count", label: "Transactions", align: "right" as const },
+  { key: "risk", label: "Risk" },
+];
+
 function getRiskVariant(intensity: number): { variant: "red" | "amber" | "green"; label: string } {
   if (intensity > 2) return { variant: "red", label: "High" };
   if (intensity > 0.5) return { variant: "amber", label: "Medium" };
@@ -45,14 +54,7 @@ export default async function SuppliersPage({
         </div>
         <PendingBanner status={engagement.status} />
         <div className="bg-surface rounded-lg border border-[#E5E5E0] overflow-hidden">
-          <div className="p-4 space-y-3">
-            {[90, 75, 65, 55, 45, 35].map((w, i) => (
-              <div key={i} className="flex gap-3 items-center">
-                <div className="h-3 rounded bg-[#E5E5E0] opacity-40 flex-1" style={{ width: `${w}%` }} />
-                <div className="h-3 w-12 rounded bg-[#E5E5E0] opacity-30" />
-              </div>
-            ))}
-          </div>
+          <DataTable columns={SUPPLIER_PLACEHOLDER_COLUMNS} rows={[]} />
         </div>
       </div>
     );

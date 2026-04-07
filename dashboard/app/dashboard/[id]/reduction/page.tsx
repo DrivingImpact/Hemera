@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { PendingBanner } from "@/components/ui/pending-banner";
 import { ReductionWaterfall } from "@/components/charts/waterfall";
 import { ImpactEffortQuadrant } from "@/components/charts/quadrant";
+import { PlotlyChart } from "@/components/charts/plotly-wrapper";
 import { fmtTonnes, fmtPct } from "@/lib/format";
 import type { ReductionRec } from "@/lib/types";
 
@@ -34,6 +35,13 @@ export default async function ReductionPage({
   }
 
   if (engagement.status !== "qc_passed") {
+    const pendingAnnotation = [{
+      text: "Data pending",
+      xref: "paper" as const, yref: "paper" as const,
+      x: 0.5, y: 0.5,
+      showarrow: false,
+      font: { size: 14, color: "#94A3B8" },
+    }];
     return (
       <div className="space-y-5">
         <div>
@@ -55,29 +63,45 @@ export default async function ReductionPage({
         </div>
         <div className="grid grid-cols-2 gap-4">
           <ChartCard title="Impact vs Effort">
-            <div className="flex items-end justify-around h-40 px-4 pb-2">
-              {[30, 55, 70, 45, 80, 60, 35].map((h, i) => (
-                <div key={i} className="w-6 rounded-t bg-[#E5E5E0] opacity-40" style={{ height: `${h}%` }} />
-              ))}
-            </div>
+            <PlotlyChart
+              data={[{ type: "scatter", mode: "markers", x: [], y: [] }]}
+              layout={{
+                height: 250,
+                xaxis: { title: { text: "Effort" }, showticklabels: false },
+                yaxis: { title: { text: "Reduction (tCO₂e)" }, showticklabels: false },
+                margin: { l: 50, r: 20, t: 10, b: 40 },
+                annotations: pendingAnnotation,
+              }}
+            />
           </ChartCard>
           <ChartCard title="Reduction Waterfall">
-            <div className="flex items-end justify-around h-40 px-4 pb-2">
-              {[100, 85, 72, 62, 54, 48, 43].map((h, i) => (
-                <div key={i} className="w-6 rounded-t bg-[#E5E5E0] opacity-40" style={{ height: `${h}%` }} />
-              ))}
-            </div>
+            <PlotlyChart
+              data={[{ type: "waterfall", x: [], y: [] }]}
+              layout={{
+                height: 250,
+                xaxis: { title: { text: "Action" }, showticklabels: false },
+                yaxis: { title: { text: "tCO₂e" }, showticklabels: false },
+                margin: { l: 50, r: 20, t: 10, b: 40 },
+                annotations: pendingAnnotation,
+              }}
+            />
           </ChartCard>
         </div>
         <div className="bg-surface rounded-lg border border-[#E5E5E0]">
           <div className="px-5 py-4 border-b border-[#E5E5E0]">
             <h4 className="text-xs font-semibold uppercase tracking-[0.5px]">All Recommendations</h4>
           </div>
-          <div className="p-4 space-y-2">
-            {[80, 65, 55, 45, 35].map((w, i) => (
-              <div key={i} className="h-3 rounded bg-[#E5E5E0] opacity-30" style={{ width: `${w}%` }} />
-            ))}
-          </div>
+          <DataTable
+            columns={[
+              { key: "action", label: "Action" },
+              { key: "type", label: "Type" },
+              { key: "current_co2e_kg", label: "Current tCO₂e", align: "right" as const },
+              { key: "potential_reduction_kg", label: "Reduction", align: "right" as const },
+              { key: "effort", label: "Effort" },
+              { key: "timeline", label: "Timeline" },
+            ]}
+            rows={[]}
+          />
         </div>
       </div>
     );

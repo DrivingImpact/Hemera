@@ -1,17 +1,17 @@
 const STATUS_CONFIG: Record<string, { title: string; description: string; color: string }> = {
   uploaded: {
     title: "Your data has been uploaded",
-    description: "Our team will review your submission and be in touch if we have any questions. Your analyst will begin work shortly.",
+    description: "We'll review your submission and be in touch if we have any questions. An analyst will begin work shortly.",
     color: "border-amber bg-amber-tint",
   },
   processing: {
     title: "Your data is being analysed",
-    description: "Our analysts are classifying your transactions and calculating your carbon footprint.",
+    description: "An analyst is classifying your transactions and calculating your carbon footprint.",
     color: "border-teal bg-teal-tint",
   },
   delivered: {
     title: "Your data is under review",
-    description: "Our analysts are reviewing your carbon footprint for quality assurance. We'll notify you when it's ready.",
+    description: "An analyst is reviewing your carbon footprint for quality assurance. We'll let you know when it's ready.",
     color: "border-teal bg-teal-tint",
   },
 };

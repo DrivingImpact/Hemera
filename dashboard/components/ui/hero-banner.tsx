@@ -1,7 +1,7 @@
 import type { Engagement } from "@/lib/types";
 import { fmtNumber } from "@/lib/format";
 
-export function HeroBanner({ engagement }: { engagement: Engagement }) {
+export function HeroBanner({ engagement, pending }: { engagement: Engagement; pending?: boolean }) {
   const total = engagement.total_co2e || 0;
   const ciLower = engagement.ci_lower || 0;
   const ciUpper = engagement.ci_upper || 0;
@@ -13,17 +13,17 @@ export function HeroBanner({ engagement }: { engagement: Engagement }) {
           Total Carbon Footprint
         </div>
         <div className="text-4xl font-extrabold text-teal mt-0.5">
-          {fmtNumber(total)}
+          {pending ? "—" : fmtNumber(total)}
         </div>
         <div className="text-xs text-[#94A3B8] mt-0.5">
-          tCO₂e · 95% CI: {fmtNumber(ciLower)} – {fmtNumber(ciUpper)}
+          {pending ? "tCO₂e · 95% CI: Pending" : `tCO₂e · 95% CI: ${fmtNumber(ciLower)} – ${fmtNumber(ciUpper)}`}
         </div>
       </div>
       <div className="ml-auto flex gap-5">
         <div className="text-center">
           <div className="text-[9px] text-[#94A3B8] uppercase tracking-[0.5px]">Suppliers</div>
           <div className="text-xl font-bold text-amber mt-0.5">
-            {engagement.supplier_count || 0}
+            {pending ? "—" : (engagement.supplier_count || 0)}
           </div>
         </div>
         <div className="text-center">

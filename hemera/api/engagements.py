@@ -55,10 +55,10 @@ def delete_engagement(
     db: Session = Depends(get_db),
     current_user: ClerkUser = Depends(get_current_user),
 ):
-    """Delete an engagement and its transactions. Only allowed for non-approved engagements."""
+    """Delete an engagement and its transactions. Only allowed for uploaded/processing engagements."""
     e = _load_engagement(engagement_id, db, current_user)
-    if e.status == "qc_passed":
-        raise HTTPException(status_code=400, detail="Cannot delete an approved engagement")
+    if e.status not in ("uploaded", "processing"):
+        raise HTTPException(status_code=400, detail="Cannot delete an engagement that is being reviewed or approved")
     db.query(Transaction).filter(Transaction.engagement_id == engagement_id).delete()
     db.delete(e)
     db.commit()

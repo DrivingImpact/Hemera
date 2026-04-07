@@ -30,6 +30,13 @@ export default async function DataQualityPage({
   }
 
   if (engagement.status !== "qc_passed") {
+    const pendingAnnotation = [{
+      text: "Data pending",
+      xref: "paper" as const, yref: "paper" as const,
+      x: 0.5, y: 0.5,
+      showarrow: false,
+      font: { size: 14, color: "#94A3B8" },
+    }];
     return (
       <div className="space-y-5">
         <div>
@@ -51,16 +58,43 @@ export default async function DataQualityPage({
         </div>
         <div className="grid grid-cols-2 gap-4">
           <ChartCard title="Pedigree Matrix Scores">
-            <div className="flex items-center justify-center h-40">
-              <div className="w-32 h-32 rounded-full border-4 border-[#E5E5E0] opacity-40" />
-            </div>
+            <PlotlyChart
+              data={[{
+                type: "scatterpolar",
+                fill: "toself",
+                r: [],
+                theta: [],
+                line: { color: "#E5E5E0" },
+              }]}
+              layout={{
+                polar: {
+                  radialaxis: { range: [0, 5], showticklabels: false },
+                  angularaxis: { showticklabels: false },
+                },
+                showlegend: false,
+                margin: { l: 50, r: 50, t: 20, b: 20 },
+                height: 250,
+                annotations: pendingAnnotation,
+              }}
+            />
           </ChartCard>
           <ChartCard title="Cascade Distribution (Current vs Target)">
-            <div className="flex items-end justify-around h-40 px-4 pb-2">
-              {[50, 70, 40, 65, 55].map((h, i) => (
-                <div key={i} className="w-8 rounded-t bg-[#E5E5E0] opacity-40" style={{ height: `${h}%` }} />
-              ))}
-            </div>
+            <PlotlyChart
+              data={[
+                { type: "bar", name: "Current", x: ["L1", "L2", "L3", "L4", "L5"], y: [0, 0, 0, 0, 0], marker: { color: "#0D9488" } },
+                { type: "bar", name: "Target", x: ["L1", "L2", "L3", "L4", "L5"], y: [0, 0, 0, 0, 0], marker: { color: "#F59E0B" } },
+              ]}
+              layout={{
+                barmode: "group",
+                xaxis: { title: { text: "Level" } },
+                yaxis: { title: { text: "% Spend" }, showticklabels: false },
+                margin: { l: 50, r: 20, t: 10, b: 40 },
+                height: 250,
+                showlegend: true,
+                legend: { orientation: "h", y: -0.25 },
+                annotations: pendingAnnotation,
+              }}
+            />
           </ChartCard>
         </div>
       </div>

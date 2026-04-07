@@ -6,6 +6,7 @@ import { PendingBanner } from "@/components/ui/pending-banner";
 import { CategoryBar } from "@/components/charts/category-bar";
 import { ScatterBubble } from "@/components/charts/scatter-bubble";
 import { MonthlyArea } from "@/components/charts/monthly-area";
+import { PlotlyChart } from "@/components/charts/plotly-wrapper";
 import { fmtTonnes, fmtGBP, fmtPct } from "@/lib/format";
 import { SCOPE_LABELS } from "@/lib/plotly-theme";
 import type { CategorySummary } from "@/lib/types";
@@ -35,6 +36,13 @@ export default async function CarbonPage({
   }
 
   if (engagement.status !== "qc_passed") {
+    const pendingAnnotation = [{
+      text: "Data pending",
+      xref: "paper" as const, yref: "paper" as const,
+      x: 0.5, y: 0.5,
+      showarrow: false,
+      font: { size: 14, color: "#94A3B8" },
+    }];
     return (
       <div className="space-y-5">
         <div>
@@ -44,36 +52,57 @@ export default async function CarbonPage({
         <PendingBanner status={engagement.status} />
         <div className="grid grid-cols-2 gap-4">
           <ChartCard title="Top 10 Categories by Emissions">
-            <div className="space-y-2 mt-2 px-2">
-              {[90, 75, 65, 55, 45, 38, 30, 24, 18, 12].map((w, i) => (
-                <div key={i} className="h-4 rounded bg-[#E5E5E0] opacity-40" style={{ width: `${w}%` }} />
-              ))}
-            </div>
+            <PlotlyChart
+              data={[{ type: "bar", orientation: "h" as const, x: [], y: [] }]}
+              layout={{
+                height: 280,
+                xaxis: { title: { text: "tCO₂e" }, showticklabels: false },
+                yaxis: { showticklabels: false },
+                margin: { l: 10, r: 20, t: 10, b: 40 },
+                annotations: pendingAnnotation,
+              }}
+            />
           </ChartCard>
           <ChartCard title="Spend vs Emissions">
-            <div className="flex items-end justify-around h-40 px-4 pb-2">
-              {[40, 60, 30, 75, 50, 85, 45].map((h, i) => (
-                <div key={i} className="w-6 rounded-t bg-[#E5E5E0] opacity-40" style={{ height: `${h}%` }} />
-              ))}
-            </div>
+            <PlotlyChart
+              data={[{ type: "scatter", mode: "markers", x: [], y: [] }]}
+              layout={{
+                height: 280,
+                xaxis: { title: { text: "Spend (£)" }, showticklabels: false },
+                yaxis: { title: { text: "tCO₂e" }, showticklabels: false },
+                margin: { l: 50, r: 20, t: 10, b: 40 },
+                annotations: pendingAnnotation,
+              }}
+            />
           </ChartCard>
         </div>
         <ChartCard title="Monthly Emissions by Scope">
-          <div className="flex items-end justify-around h-40 px-4 pb-2">
-            {[30, 45, 40, 55, 50, 65, 60, 70, 55, 45, 50, 40].map((h, i) => (
-              <div key={i} className="w-5 rounded-t bg-[#E5E5E0] opacity-40" style={{ height: `${h}%` }} />
-            ))}
-          </div>
+          <PlotlyChart
+            data={[{ type: "scatter", mode: "lines", fill: "tozeroy", x: [], y: [] }]}
+            layout={{
+              height: 220,
+              xaxis: { title: { text: "Month" }, showticklabels: false },
+              yaxis: { title: { text: "tCO₂e" }, showticklabels: false },
+              margin: { l: 50, r: 20, t: 10, b: 40 },
+              annotations: pendingAnnotation,
+            }}
+          />
         </ChartCard>
         <div className="bg-surface rounded-lg border border-[#E5E5E0] overflow-hidden">
           <div className="px-4 py-3 border-b border-[#E5E5E0]">
             <h4 className="text-xs font-semibold">All Categories</h4>
           </div>
-          <div className="p-4 space-y-2">
-            {[85, 70, 60, 50, 40].map((w, i) => (
-              <div key={i} className="h-3 rounded bg-[#E5E5E0] opacity-30" style={{ width: `${w}%` }} />
-            ))}
-          </div>
+          <DataTable
+            columns={[
+              { key: "name", label: "Category" },
+              { key: "scope", label: "Scope" },
+              { key: "spend_gbp", label: "Spend", align: "right" as const },
+              { key: "co2e_tonnes", label: "tCO₂e", align: "right" as const },
+              { key: "pct", label: "% of Total", align: "right" as const },
+              { key: "gsd", label: "GSD", align: "right" as const },
+            ]}
+            rows={[]}
+          />
         </div>
       </div>
     );

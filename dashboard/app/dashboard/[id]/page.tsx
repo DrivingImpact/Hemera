@@ -3,6 +3,7 @@ import { HeroBanner } from "@/components/ui/hero-banner";
 import { ChartCard } from "@/components/ui/chart-card";
 import { PendingBanner } from "@/components/ui/pending-banner";
 import { ScopeDonut } from "@/components/charts/scope-donut";
+import { PlotlyChart } from "@/components/charts/plotly-wrapper";
 import { SCOPE_COLORS } from "@/lib/plotly-theme";
 import { fmtTonnes, fmtGBP } from "@/lib/format";
 import type { CategorySummary, EngagementSupplier } from "@/lib/types";
@@ -29,32 +30,47 @@ export default async function OverviewPage({
   }
 
   if (engagement.status !== "qc_passed") {
+    const pendingAnnotation = [{
+      text: "Data pending",
+      xref: "paper" as const, yref: "paper" as const,
+      x: 0.5, y: 0.5,
+      showarrow: false,
+      font: { size: 14, color: "#94A3B8" },
+    }];
     return (
       <div className="space-y-5">
-        <div className="bg-slate rounded-xl px-7 py-6 mb-5">
-          <div className="text-[10px] uppercase tracking-[1px] text-[#94A3B8]">HEMERA</div>
-          <div className="text-2xl font-bold text-white mt-1">{engagement.org_name}</div>
-        </div>
+        <HeroBanner engagement={engagement} pending />
         <PendingBanner status={engagement.status} />
         <div className="grid grid-cols-[1.5fr_1fr] gap-4">
           <ChartCard title="Emissions by Scope" className="row-span-2">
-            <div className="flex items-center justify-center h-48">
-              <div className="w-36 h-36 rounded-full bg-[#E5E5E0] opacity-40" />
-            </div>
+            <PlotlyChart
+              data={[{ type: "pie", hole: 0.6, values: [1], labels: [""], marker: { colors: ["#E5E5E0"] }, hoverinfo: "none", textinfo: "none" }]}
+              layout={{ height: 250, showlegend: false, margin: { l: 20, r: 20, t: 20, b: 20 }, annotations: pendingAnnotation }}
+            />
           </ChartCard>
           <ChartCard title="Top 5 Emission Hotspots">
-            <div className="space-y-2 mt-2">
-              {[80, 60, 45, 30, 20].map((w, i) => (
-                <div key={i} className="h-4 rounded-full bg-[#E5E5E0] opacity-40" style={{ width: `${w}%` }} />
-              ))}
-            </div>
+            <PlotlyChart
+              data={[{ type: "bar", orientation: "h" as const, x: [], y: [] }]}
+              layout={{
+                height: 180,
+                xaxis: { title: { text: "tCO₂e" }, showticklabels: false },
+                yaxis: { showticklabels: false },
+                margin: { l: 10, r: 20, t: 10, b: 40 },
+                annotations: pendingAnnotation,
+              }}
+            />
           </ChartCard>
           <ChartCard title="Supplier Risk Overview">
-            <div className="space-y-2 mt-2">
-              {[70, 45, 25].map((w, i) => (
-                <div key={i} className="h-4 rounded-full bg-[#E5E5E0] opacity-40" style={{ width: `${w}%` }} />
-              ))}
-            </div>
+            <PlotlyChart
+              data={[{ type: "bar", x: ["Low", "Medium", "High"], y: [0, 0, 0], marker: { color: ["#10B981", "#F59E0B", "#EF4444"] } }]}
+              layout={{
+                height: 180,
+                xaxis: { title: { text: "Risk" } },
+                yaxis: { title: { text: "Suppliers" }, showticklabels: false },
+                margin: { l: 30, r: 20, t: 10, b: 40 },
+                annotations: pendingAnnotation,
+              }}
+            />
           </ChartCard>
         </div>
       </div>

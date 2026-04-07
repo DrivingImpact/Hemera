@@ -23,6 +23,9 @@ export default async function DashboardLayout({
       <div className="flex-1 flex flex-col">
         <Topbar engagements={engagements} currentId={currentId} />
         <main className="flex-1 p-6 bg-paper">{children}</main>
+        <footer className="px-6 py-4 border-t border-[#E5E5E0] text-center text-[11px] text-muted">
+          © 2026 Hemera · Supply Chain Carbon Intelligence · <a href="mailto:hello@hemera.co" className="text-teal hover:underline">hello@hemera.co</a>
+        </footer>
       </div>
     </div>
   );

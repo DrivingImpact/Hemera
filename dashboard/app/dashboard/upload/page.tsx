@@ -103,7 +103,7 @@ export default async function UploadPage() {
                       )}
                     </td>
                     <td className="px-5 py-3 text-right">
-                      {eng.status !== "qc_passed" && (
+                      {(eng.status === "uploaded" || eng.status === "processing") && (
                         <DeleteEngagement engagementId={eng.id} />
                       )}
                     </td>

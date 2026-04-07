@@ -8,9 +8,15 @@ type UploadState = "idle" | "uploading" | "processing" | "done" | "error";
 
 interface UploadResult {
   engagement_id: number;
-  transaction_count: number;
-  total_co2e: number;
-  supplier_count: number;
+  filename: string;
+  status: string;
+  parsing: {
+    transactions_parsed: number;
+    duplicates_removed: number;
+    date_range: string;
+    total_spend_gbp: number;
+    unique_suppliers: number;
+  };
 }
 
 export function UploadDropzone() {
@@ -100,6 +106,7 @@ export function UploadDropzone() {
   };
 
   if (state === "done" && result) {
+    const p = result.parsing;
     return (
       <div className="text-center space-y-4 py-8">
         <div className="w-14 h-14 rounded-full bg-[#D1FAE5] flex items-center justify-center mx-auto">
@@ -108,15 +115,23 @@ export function UploadDropzone() {
           </svg>
         </div>
         <div>
-          <h3 className="text-lg font-semibold">Upload Complete!</h3>
-          <p className="text-muted text-sm mt-1">
-            Our team will review your data.
+          <h3 className="text-lg font-semibold">Upload complete!</h3>
+          <p className="text-muted text-sm mt-1 max-w-sm mx-auto">
+            Our team will review your data and be in touch shortly.
           </p>
         </div>
-        <div className="grid grid-cols-1 gap-4 mt-6 max-w-xs mx-auto">
+        <div className="grid grid-cols-3 gap-3 mt-6 max-w-sm mx-auto">
           <div className="bg-paper rounded-lg p-3 text-center">
-            <div className="text-2xl font-bold text-teal tabular-nums">{result.transaction_count.toLocaleString()}</div>
-            <div className="text-[11px] text-muted mt-0.5">Transactions uploaded</div>
+            <div className="text-2xl font-bold text-teal tabular-nums">{p.transactions_parsed.toLocaleString()}</div>
+            <div className="text-[11px] text-muted mt-0.5">Transactions</div>
+          </div>
+          <div className="bg-paper rounded-lg p-3 text-center">
+            <div className="text-2xl font-bold text-teal tabular-nums">£{(p.total_spend_gbp / 1000).toFixed(0)}k</div>
+            <div className="text-[11px] text-muted mt-0.5">Total spend</div>
+          </div>
+          <div className="bg-paper rounded-lg p-3 text-center">
+            <div className="text-2xl font-bold text-teal tabular-nums">{p.unique_suppliers}</div>
+            <div className="text-[11px] text-muted mt-0.5">Suppliers</div>
           </div>
         </div>
         <div className="flex justify-center mt-6">
