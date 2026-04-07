@@ -6,7 +6,6 @@ and converts to PDF via WeasyPrint.
 
 from datetime import datetime, timezone
 from pathlib import Path
-from collections import defaultdict
 
 from jinja2 import Environment, FileSystemLoader
 import weasyprint
@@ -20,6 +19,7 @@ from hemera.services.report_charts import (
     chart_reduction_waterfall, chart_reduction_potential_bar,
     chart_projection_fan, chart_projection_waterfall, chart_impact_bar,
 )
+from hemera.services.engagement_data import build_category_summary, build_monthly_summary
 from hemera.services.reduction_recs import generate_reduction_recommendations, compute_projections
 from hemera.services.data_quality import (
     compute_cascade_distribution, compute_pedigree_breakdown,
@@ -56,40 +56,12 @@ def generate_report_data(engagement, transactions: list) -> dict:
     ci_upper = engagement.ci_upper or total_co2e * 1.4
 
     # Build category summaries
-    cat_groups = defaultdict(lambda: {"co2e_kg": 0, "spend_gbp": 0, "gsd_values": [], "scope": 3})
-    for t in transactions:
-        if t.co2e_kg and not t.is_duplicate:
-            key = t.category_name or "Unclassified"
-            cat_groups[key]["co2e_kg"] += t.co2e_kg
-            cat_groups[key]["spend_gbp"] += abs(t.amount_gbp or 0)
-            if t.gsd_total:
-                cat_groups[key]["gsd_values"].append(t.gsd_total)
-            cat_groups[key]["scope"] = t.scope or 3
-
-    categories = []
-    for name, data in cat_groups.items():
-        gsd_vals = data["gsd_values"]
-        categories.append({
-            "name": name,
-            "scope": data["scope"],
-            "co2e_tonnes": data["co2e_kg"] / 1000,
-            "spend_gbp": data["spend_gbp"],
-            "gsd": sum(gsd_vals) / len(gsd_vals) if gsd_vals else 1.5,
-        })
-    categories.sort(key=lambda c: c["co2e_tonnes"], reverse=True)
+    categories = build_category_summary(transactions)
 
     # Monthly data
-    monthly_groups = defaultdict(lambda: {"scope1": 0, "scope2": 0, "scope3": 0})
-    dated_count = sum(1 for t in transactions if t.transaction_date)
-    has_monthly = dated_count > len(transactions) * 0.5
-    if has_monthly:
-        for t in transactions:
-            if t.transaction_date and t.co2e_kg and not t.is_duplicate:
-                month_key = t.transaction_date.strftime("%Y-%m") if hasattr(t.transaction_date, "strftime") else str(t.transaction_date)[:7]
-                scope_key = f"scope{t.scope or 3}"
-                monthly_groups[month_key][scope_key] += t.co2e_kg / 1000
-
-    monthly_data = [{"month": k, **v} for k, v in sorted(monthly_groups.items())]
+    monthly_result = build_monthly_summary(transactions)
+    has_monthly = monthly_result["has_data"]
+    monthly_data = monthly_result["months"]
 
     # Existing data quality functions
     summary = compute_summary(transactions)
