@@ -2,7 +2,7 @@
 
 import { useAuth } from "@clerk/nextjs";
 import { useParams } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -42,13 +42,24 @@ interface SubmitResponse {
   failed_checks: number;
 }
 
-type PageState = "idle" | "loading" | "reviewing" | "submitting" | "submitted" | "error";
+type PageState =
+  | "loading_status"
+  | "uploaded"
+  | "triggering"
+  | "processing"
+  | "idle"
+  | "loading"
+  | "reviewing"
+  | "submitting"
+  | "submitted"
+  | "qc_passed"
+  | "error";
 
 export default function QCPage() {
   const { id } = useParams<{ id: string }>();
   const { getToken } = useAuth();
 
-  const [pageState, setPageState] = useState<PageState>("idle");
+  const [pageState, setPageState] = useState<PageState>("loading_status");
   const [errorMsg, setErrorMsg] = useState("");
   const [transactions, setTransactions] = useState<SampledTransaction[]>([]);
   const [results, setResults] = useState<Record<number, Record<CheckKey, boolean>>>({});
@@ -73,6 +84,43 @@ export default function QCPage() {
     },
     [getToken]
   );
+
+  // Fetch engagement status on mount
+  useEffect(() => {
+    const fetchStatus = async () => {
+      try {
+        const data = await apiFetch<{ status: string }>(`/engagements/${id}`);
+        const status = data.status;
+        if (status === "uploaded") {
+          setPageState("uploaded");
+        } else if (status === "processing") {
+          setPageState("processing");
+        } else if (status === "delivered") {
+          setPageState("idle");
+        } else if (status === "qc_passed") {
+          setPageState("qc_passed");
+        } else {
+          setPageState("idle");
+        }
+      } catch (err) {
+        setErrorMsg(err instanceof Error ? err.message : "Failed to load engagement");
+        setPageState("error");
+      }
+    };
+    fetchStatus();
+  }, [apiFetch, id]);
+
+  const triggerProcessing = useCallback(async () => {
+    setPageState("triggering");
+    setErrorMsg("");
+    try {
+      await apiFetch(`/engagements/${id}/process`, { method: "POST" });
+      setPageState("processing");
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Failed to start processing");
+      setPageState("error");
+    }
+  }, [apiFetch, id]);
 
   const generateSample = useCallback(async () => {
     setPageState("loading");
@@ -135,6 +183,83 @@ export default function QCPage() {
   const totalFailed = Object.values(results).reduce((sum, checks) => {
     return sum + Object.values(checks).filter((v) => !v).length;
   }, 0);
+
+  if (pageState === "loading_status") {
+    return (
+      <div className="max-w-2xl mx-auto space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">QC Review</h1>
+        </div>
+        <div className="bg-surface rounded-xl border border-[#E5E5E0] p-8 text-center">
+          <div className="w-10 h-10 rounded-full border-4 border-teal/20 border-t-teal animate-spin mx-auto" />
+          <p className="text-muted text-sm mt-3">Loading…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (pageState === "uploaded" || pageState === "triggering") {
+    return (
+      <div className="max-w-2xl mx-auto space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">QC Review</h1>
+          <p className="text-muted text-sm mt-0.5">Process this engagement to begin QC.</p>
+        </div>
+        <div className="bg-surface rounded-xl border border-[#E5E5E0] p-8 text-center space-y-4">
+          <p className="text-muted text-sm">
+            This engagement has been uploaded and is ready to process. Click below to classify
+            transactions and calculate the carbon footprint.
+          </p>
+          <button
+            onClick={triggerProcessing}
+            disabled={pageState === "triggering"}
+            className="px-5 py-2.5 bg-teal text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {pageState === "triggering" ? "Starting…" : "Start Processing"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (pageState === "processing") {
+    return (
+      <div className="max-w-2xl mx-auto space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">QC Review</h1>
+        </div>
+        <div className="bg-surface rounded-xl border border-[#E5E5E0] p-8 text-center space-y-4">
+          <div className="w-10 h-10 rounded-full border-4 border-teal/20 border-t-teal animate-spin mx-auto" />
+          <p className="font-medium">Processing…</p>
+          <p className="text-muted text-sm">
+            Classifying transactions and calculating carbon footprint. This may take a few minutes.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (pageState === "qc_passed") {
+    return (
+      <div className="max-w-2xl mx-auto space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">QC Review</h1>
+        </div>
+        <div className="bg-surface rounded-xl border border-[#E5E5E0] p-8 text-center space-y-4">
+          <div className="w-14 h-14 rounded-full bg-[#D1FAE5] flex items-center justify-center mx-auto">
+            <svg className="w-7 h-7 text-[#065F46]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold">QC Complete</h3>
+          <p className="text-muted text-sm">
+            This engagement has passed quality control and is approved.
+          </p>
+          <Badge variant="green">Approved</Badge>
+        </div>
+      </div>
+    );
+  }
 
   if (pageState === "submitted" && submitResponse) {
     const errorRate = submitResponse.error_rate * 100;
@@ -261,6 +386,8 @@ export default function QCPage() {
                       );
                     })}
                   </div>
+                  {/* suppress unused variable warning */}
+                  {failedCount > 0 && null}
                 </div>
               );
             })}
