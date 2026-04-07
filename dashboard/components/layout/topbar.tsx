@@ -43,7 +43,7 @@ export function Topbar({
             ↓ PDF Report
           </a>
         )}
-        <UserButton afterSignOutUrl="/" />
+        <UserButton />
       </div>
     </div>
   );
