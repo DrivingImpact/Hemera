@@ -2,33 +2,45 @@
 
 <p style="color: #475569; margin-bottom: 8pt; font-size: 9pt;">
     Every emission estimate in this report carries a quantified uncertainty, calculated using the ecoinvent pedigree matrix
-    (Ciroth et al., 2016). Each line item is scored across five data quality indicators — reliability, completeness, temporal
-    correlation, geographical correlation, and technological correlation — each on a scale of 1 (best) to 5 (worst). These scores
-    are combined under a lognormal distribution to produce a Geometric Standard Deviation (GSD), from which the 95% confidence
-    interval is derived as [estimate / GSD², estimate × GSD²].
+    methodology (Ciroth et al., 2016, <em>The International Journal of Life Cycle Assessment</em>, 21, 1338–1348). This approach
+    is widely adopted in Life Cycle Assessment and provides a systematic, reproducible framework for uncertainty quantification —
+    avoiding the arbitrary "plus or minus 20%" ranges that lack scientific basis.
+</p>
+<p style="color: #475569; margin-bottom: 8pt; font-size: 9pt;">
+    The pedigree matrix scores each data point across five indicators of data quality: <strong>Reliability</strong> (how the data
+    was measured or estimated — direct measurement scores 1, qualified estimate scores 3, rough estimate scores 5),
+    <strong>Completeness</strong> (whether the data represents the full population of interest),
+    <strong>Temporal correlation</strong> (how closely the emission factor year matches the reporting period),
+    <strong>Geographical correlation</strong> (whether the factor is specific to the UK or a proxy from another region), and
+    <strong>Technological correlation</strong> (whether the factor matches the specific process or is a sector average).
+    Each indicator is scored on a scale of 1 (best) to 5 (worst).
+</p>
+<p style="color: #475569; margin-bottom: 8pt; font-size: 9pt;">
+    These five scores are converted into a Geometric Standard Deviation (GSD) using the formula:
+    GSD = exp(sqrt(sum of squared uncertainty contributions from each indicator)). The GSD captures the spread of the
+    lognormal probability distribution around the central emission estimate. From the GSD, the 95% confidence interval is
+    derived as [estimate / GSD<sup>2</sup>, estimate x GSD<sup>2</sup>]. This means a GSD of 1.5 implies the true value could
+    be roughly half to double the central estimate at 95% confidence. Lower GSD values (closer to 1.0) indicate higher-quality
+    data and tighter confidence intervals. The lognormal distribution is used because emission data is inherently non-negative
+    and typically right-skewed — physical emissions cannot be less than zero.
 </p>
 
 <h3>95% Confidence Intervals by Scope</h3>
 <div class="chart-container">
     {{ error_bars_svg | safe }}
-    <div class="figure-caption"><span class="figure-number">Figure 14.</span> Central emission estimate with 95% confidence interval error bars for each scope and the total. Wider bars indicate greater measurement uncertainty.</div>
+    <div class="figure-caption"><span class="figure-number">Figure 14.</span> Central emission estimate with 95% confidence interval error bars for {{ org_name }}. Scope 3 ({{ "%.1f"|format(scope3) }} tCO2e) carries the widest interval, reflecting reliance on spend-based factors. Total range: {{ "%.1f"|format(ci_lower) }}–{{ "%.1f"|format(ci_upper) }} tCO2e.</div>
 </div>
 
-<div class="two-col">
-    <div>
-        <h3>Pedigree Indicator Scores</h3>
-        <p style="font-size: 8pt; color: #64748B; margin-bottom: 4pt;">1 = best quality, 5 = worst. Weighted by emission contribution.</p>
-        <div class="chart-container">
-            {{ radar_svg | safe }}
-            <div class="figure-caption"><span class="figure-number">Figure 15.</span> Radar chart of weighted average pedigree scores across the five data quality indicators. Scores closer to the centre (1) indicate higher quality data.</div>
-        </div>
-    </div>
-    <div>
-        <h3>Uncertainty Sources</h3>
-        <p style="font-size: 8pt; color: #64748B; margin-bottom: 4pt;">Which data quality indicators drive the most uncertainty.</p>
-        <div class="chart-container">
-            {{ pedigree_bar_svg | safe }}
-            <div class="figure-caption"><span class="figure-number">Figure 16.</span> Contribution of each pedigree indicator to total uncertainty. Improving the highest-contributing indicator will have the greatest effect on narrowing confidence intervals.</div>
-        </div>
-    </div>
+<h3>Pedigree Indicator Scores</h3>
+<p style="font-size: 8pt; color: #64748B; margin-bottom: 4pt;">1 = best quality, 5 = worst. Weighted by emission contribution. Indicators furthest from the centre represent the greatest data quality gaps.</p>
+<div class="chart-container">
+    {{ radar_svg | safe }}
+    <div class="figure-caption"><span class="figure-number">Figure 15.</span> Weighted average pedigree scores for {{ org_name }}'s {{ "%.1f"|format(total_co2e) }} tCO2e footprint. Scores closer to the centre (1) indicate higher quality data. The most extended axis reveals the priority area for data improvement.</div>
+</div>
+
+<h3>Uncertainty Sources</h3>
+<p style="font-size: 8pt; color: #64748B; margin-bottom: 4pt;">Which data quality indicators drive the most uncertainty in the overall footprint.</p>
+<div class="chart-container">
+    {{ pedigree_bar_svg | safe }}
+    <div class="figure-caption"><span class="figure-number">Figure 16.</span> Contribution of each pedigree indicator to {{ org_name }}'s total uncertainty. Improving the highest-contributing indicator will have the greatest effect on narrowing the {{ "%.1f"|format(ci_upper - ci_lower) }} tCO2e confidence interval.</div>
 </div>

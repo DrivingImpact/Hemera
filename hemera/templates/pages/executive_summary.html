@@ -30,14 +30,14 @@
         <h3>Emissions by Scope</h3>
         <div class="chart-container">
             {{ scope_donut_svg | safe }}
-            <div class="figure-caption"><span class="figure-number">Figure 1.</span> Distribution of emissions across Scope 1 (direct), Scope 2 (purchased energy), and Scope 3 (value chain). Scope definitions follow the GHG Protocol Corporate Standard.</div>
+            <div class="figure-caption"><span class="figure-number">Figure 1.</span> Distribution of {{ org_name }}'s {{ "%.1f"|format(total_co2e) }} tCO2e across scopes. Scope 3 (value chain) dominates at {{ "%.0f"|format(scope3_pct) }}%, with Scope 1 at {{ "%.0f"|format(scope1_pct) }}% and Scope 2 at {{ "%.0f"|format(scope2_pct) }}%.</div>
         </div>
     </div>
     <div>
         <h3>Top Emission Categories</h3>
         <div class="chart-container">
             {{ top_categories_mini_svg | safe }}
-            <div class="figure-caption"><span class="figure-number">Figure 2.</span> The five largest emission categories by tCO2e contribution. Colour indicates scope classification. Categories are defined per GHG Protocol Scope 3 Technical Guidance.</div>
+            <div class="figure-caption"><span class="figure-number">Figure 2.</span> The five largest emission categories for {{ org_name }}, together accounting for the majority of the {{ "%.1f"|format(total_co2e) }} tCO2e total. Colour indicates scope: slate = Scope 1, teal = Scope 2, amber = Scope 3.</div>
         </div>
     </div>
 </div>
@@ -53,10 +53,28 @@
     <strong>Scope 3 value chain emissions account for {{ "%.0f"|format(scope3_pct) }}% of the total footprint</strong>, which is typical
     for service-sector and SME organisations where purchased goods and business travel dominate. Direct emissions (Scope 1) and
     purchased energy (Scope 2) together represent {{ "%.0f"|format(scope1_pct + scope2_pct) }}% — these are under the organisation's
-    direct operational control and are typically the first targets for reduction initiatives.
+    direct operational control and are typically the first targets for reduction initiatives. However, the dominance of Scope 3
+    means that meaningful decarbonisation requires engagement with the supply chain: working with key suppliers to obtain
+    specific emission data, switching to lower-carbon alternatives, and optimising procurement decisions.
+</p>
+<p style="color: #475569; margin-bottom: 6pt;">
+    Emission factors are sourced from the UK Government's DEFRA/DESNZ Greenhouse Gas Conversion Factors (2023, 2024) and the
+    DEFRA supplementary EEIO spend-based factors by SIC code (2022). These are the UK's official factors for corporate carbon
+    reporting and are updated annually by the Department for Energy Security and Net Zero. Where activity data is unavailable,
+    Hemera applies spend-based factors from this dataset, with each estimate carrying a quantified uncertainty score.
+</p>
+<p style="color: #475569; margin-bottom: 6pt;">
+    The 95% confidence interval of {{ "%.1f"|format(ci_lower) }}–{{ "%.1f"|format(ci_upper) }} tCO2e means the true footprint is
+    statistically likely to fall within this range. The width of the interval ({{ "%.1f"|format(ci_upper - ci_lower) }} tCO2e) reflects
+    current reliance on spend-based emission factors rather than activity-based or supplier-specific data. For decision-making,
+    this means reduction targets should be set against the central estimate while acknowledging that actual emissions could be
+    meaningfully higher or lower. As data quality improves over successive reporting periods, this interval will narrow,
+    giving greater confidence in reported figures and reduction claims.
 </p>
 <p style="color: #475569;">
     The data quality grade of <strong>{{ data_quality_grade }}</strong> reflects the current reliance on spend-based emission factors
     (Level 4 in the cascade model). Sections 6–7 of this report present specific, prioritised actions to reduce emissions,
-    and Section 9 details how data quality improvements will increase the precision of future reports.
+    and Section 9 details how data quality improvements will increase the precision of future reports. The recommended next
+    steps are: (1) engage top suppliers for specific emission data, (2) collect activity-based measurements for energy and
+    travel, and (3) re-assess after 12 months with improved data to track both emission reductions and uncertainty narrowing.
 </p>

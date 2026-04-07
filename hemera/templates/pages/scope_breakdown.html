@@ -12,7 +12,7 @@
         <h3>Emissions by Scope</h3>
         <div class="chart-container">
             {{ scope_stacked_bar_svg | safe }}
-            <div class="figure-caption"><span class="figure-number">Figure 3.</span> Stacked bar showing the contribution of each scope to total emissions, with 95% confidence interval error whiskers on the total.</div>
+            <div class="figure-caption"><span class="figure-number">Figure 3.</span> {{ org_name }}'s {{ "%.1f"|format(total_co2e) }} tCO2e broken down by scope. The 95% confidence interval whiskers span {{ "%.1f"|format(ci_lower) }}–{{ "%.1f"|format(ci_upper) }} tCO2e.</div>
         </div>
     </div>
     <div>
@@ -57,5 +57,5 @@
 </p>
 <div class="chart-container">
     {{ treemap_svg | safe }}
-    <div class="figure-caption"><span class="figure-number">Figure 4.</span> Treemap of emission categories nested by scope. Rectangle area is proportional to tCO2e. Colour indicates scope classification.</div>
+    <div class="figure-caption"><span class="figure-number">Figure 4.</span> Treemap of {{ org_name }}'s {{ categories|length }} emission categories nested by scope. Rectangle area is proportional to tCO2e contribution out of {{ "%.1f"|format(total_co2e) }} tCO2e total.</div>
 </div>

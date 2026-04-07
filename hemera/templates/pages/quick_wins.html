@@ -7,7 +7,7 @@
 </p>
 <div class="chart-container">
     {{ reduction_bar_svg | safe }}
-    <div class="figure-caption"><span class="figure-number">Figure 11.</span> Estimated reduction potential (tCO2e) for each recommended action, coloured by type. Estimates are indicative and based on published sector benchmarks.</div>
+    <div class="figure-caption"><span class="figure-number">Figure 11.</span> Estimated reduction potential (tCO2e) for each of {{ org_name }}'s recommended actions, coloured by type. Combined potential: {{ "%.1f"|format(reduction_recs|sum(attribute='potential_reduction_kg') / 1000) }} tCO2e ({{ "%.0f"|format(reduction_recs|sum(attribute='potential_reduction_kg') / 1000 / total_co2e * 100) }}% of current footprint).</div>
 </div>
 
 <table class="data-table">

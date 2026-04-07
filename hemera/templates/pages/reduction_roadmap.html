@@ -9,11 +9,11 @@
 </p>
 <div class="chart-container">
     {{ quadrant_svg | safe }}
-    <div class="figure-caption"><span class="figure-number">Figure 9.</span> Reduction actions plotted by effort versus impact. Top-left = quick wins, top-right = strategic initiatives. Colour indicates type (energy, transport, operations, procurement).</div>
+    <div class="figure-caption"><span class="figure-number">Figure 9.</span> {{ org_name }}'s {{ reduction_recs|length }} reduction actions plotted by effort versus impact. Top-left = quick wins, top-right = strategic initiatives. Total addressable reduction: {{ "%.1f"|format(reduction_recs|sum(attribute='potential_reduction_kg') / 1000) }} tCO2e.</div>
 </div>
 
 <h3>Reduction Pathway</h3>
 <div class="chart-container">
     {{ reduction_waterfall_svg | safe }}
-    <div class="figure-caption"><span class="figure-number">Figure 10.</span> Waterfall chart showing the cumulative effect of each reduction action from the current total to the projected total after implementation.</div>
+    <div class="figure-caption"><span class="figure-number">Figure 10.</span> Waterfall showing {{ org_name }}'s pathway from {{ "%.1f"|format(total_co2e) }} tCO2e current total through each reduction action to the projected total of {{ "%.1f"|format(year3_target) }} tCO2e.</div>
 </div>

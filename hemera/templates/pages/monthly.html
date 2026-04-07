@@ -10,13 +10,13 @@
 <h3>Monthly Emissions by Scope</h3>
 <div class="chart-container">
     {{ monthly_area_svg | safe }}
-    <div class="figure-caption"><span class="figure-number">Figure 7.</span> Monthly emissions stacked by scope, showing seasonal variation. Scope 1 = slate, Scope 2 = teal, Scope 3 = amber.</div>
+    <div class="figure-caption"><span class="figure-number">Figure 7.</span> {{ org_name }}'s monthly emissions stacked by scope for the {{ fiscal_year_start }} to {{ fiscal_year_end }} reporting period. Scope 1 = slate, Scope 2 = teal, Scope 3 = amber.</div>
 </div>
 
 <h3>Cumulative Progress</h3>
 <div class="chart-container">
     {{ cumulative_line_svg | safe }}
-    <div class="figure-caption"><span class="figure-number">Figure 8.</span> Cumulative actual emissions versus a linear projection. Deviation above the line indicates periods of higher-than-average emission intensity.</div>
+    <div class="figure-caption"><span class="figure-number">Figure 8.</span> Cumulative actual emissions for {{ org_name }} versus a linear projection towards {{ "%.1f"|format(total_co2e) }} tCO2e annual total. Deviation above the line indicates periods of higher-than-average emission intensity.</div>
 </div>
 {% else %}
 <h2>Monthly Emission Pattern</h2>

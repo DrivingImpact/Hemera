@@ -4,7 +4,7 @@
     size: A4;
     margin: 20mm 18mm 25mm 18mm;
     @bottom-center {
-        content: "Confidential  |  Page " counter(page) " of " counter(pages);
+        content: "Hemera  |  Confidential  |  Page " counter(page);
         font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
         font-size: 8pt;
         color: #94A3B8;
@@ -75,13 +75,12 @@ h3 { font-size: 11pt; font-weight: 600; margin-bottom: 4pt; color: #64748B; }
     margin: 12pt 0;
     text-align: center;
     border: 0.5pt solid #E5E5E0;
-    background: #F5F5F0;
     border-radius: 4pt;
     padding: 8pt;
 }
 
 .figure-caption {
-    font-size: 8pt;
+    font-size: 9.5pt;
     color: #64748B;
     font-style: italic;
     margin-top: 4pt;
@@ -89,6 +88,7 @@ h3 { font-size: 11pt; font-weight: 600; margin-bottom: 4pt; color: #64748B; }
 }
 
 .figure-number {
+    font-size: 10pt;
     font-weight: 700;
     font-style: normal;
     color: #1E293B;

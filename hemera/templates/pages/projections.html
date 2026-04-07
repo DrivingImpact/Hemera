@@ -22,14 +22,14 @@
         <h3>3-Year Projection</h3>
         <div class="chart-container">
             {{ fan_chart_svg | safe }}
-            <div class="figure-caption"><span class="figure-number">Figure 12.</span> Three-year emission projection with narrowing confidence bands. The shaded area represents the 95% CI; the dashed line shows a "do nothing" baseline.</div>
+            <div class="figure-caption"><span class="figure-number">Figure 12.</span> {{ org_name }}'s three-year projection from {{ "%.1f"|format(total_co2e) }} tCO2e baseline to {{ "%.1f"|format(year3_target) }} tCO2e target. Shaded area = 95% CI; dashed line = "do nothing" baseline. Y-axis starts at zero for honest scale.</div>
         </div>
     </div>
     <div>
         <h3>Improvement Pathway</h3>
         <div class="chart-container">
             {{ projection_waterfall_svg | safe }}
-            <div class="figure-caption"><span class="figure-number">Figure 13.</span> Waterfall decomposition from Year 1 baseline through data quality improvement and emission reductions to the Year 3 projected total.</div>
+            <div class="figure-caption"><span class="figure-number">Figure 13.</span> Waterfall from {{ org_name }}'s Year 1 baseline ({{ "%.1f"|format(total_co2e) }} tCO2e) through data quality improvement and emission reductions to the Year 3 projected total of {{ "%.1f"|format(year3_target) }} tCO2e.</div>
         </div>
     </div>
 </div>
