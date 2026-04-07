@@ -1,6 +1,7 @@
 import { getEngagement, getCategories, getEngagementSuppliers } from "@/lib/api";
 import { HeroBanner } from "@/components/ui/hero-banner";
 import { ChartCard } from "@/components/ui/chart-card";
+import { PendingBanner } from "@/components/ui/pending-banner";
 import { ScopeDonut } from "@/components/charts/scope-donut";
 import { SCOPE_COLORS } from "@/lib/plotly-theme";
 import { fmtTonnes, fmtGBP } from "@/lib/format";
@@ -14,8 +15,40 @@ export default async function OverviewPage({
   const { id } = await params;
   const engagementId = Number(id);
 
-  const [engagement, categories, suppliers] = await Promise.all([
-    getEngagement(engagementId),
+  let engagement;
+  try {
+    engagement = await getEngagement(engagementId);
+  } catch {
+    return (
+      <div className="space-y-5">
+        <div className="bg-surface rounded-xl border border-[#E5E5E0] p-8 text-center">
+          <p className="text-muted text-sm">No data yet.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (engagement.status !== "qc_passed") {
+    return (
+      <div className="space-y-5">
+        <HeroBanner engagement={engagement} />
+        <PendingBanner status={engagement.status} />
+        <div className="grid grid-cols-[1.5fr_1fr] gap-4">
+          <ChartCard title="Emissions by Scope" className="row-span-2">
+            <div className="flex items-center justify-center h-40 text-2xl text-muted">—</div>
+          </ChartCard>
+          <ChartCard title="Top 5 Emission Hotspots">
+            <div className="flex items-center justify-center h-24 text-2xl text-muted">—</div>
+          </ChartCard>
+          <ChartCard title="Supplier Risk Overview">
+            <div className="flex items-center justify-center h-24 text-2xl text-muted">—</div>
+          </ChartCard>
+        </div>
+      </div>
+    );
+  }
+
+  const [categories, suppliers] = await Promise.all([
     getCategories(engagementId),
     getEngagementSuppliers(engagementId),
   ]);
