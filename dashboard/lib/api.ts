@@ -17,17 +17,21 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const { getToken } = await auth();
   const token = await getToken();
 
+  console.log(`[api] ${path} — token present: ${!!token}, token length: ${token?.length || 0}`);
+
   const res = await fetch(`${API_URL}/api${path}`, {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...options?.headers,
     },
   });
 
   if (!res.ok) {
-    throw new Error(`API error ${res.status}: ${await res.text()}`);
+    const body = await res.text();
+    console.error(`[api] ${path} — ${res.status}: ${body}`);
+    throw new Error(`API error ${res.status}: ${body}`);
   }
 
   return res.json();

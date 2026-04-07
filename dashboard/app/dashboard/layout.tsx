@@ -7,7 +7,13 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const engagements = await listEngagements();
+  let engagements: Awaited<ReturnType<typeof listEngagements>> = [];
+  try {
+    engagements = await listEngagements();
+  } catch (e) {
+    console.error("[dashboard] Failed to load engagements:", e);
+  }
+
   const currentId = engagements[0]?.id;
   const orgName = engagements[0]?.org_name || "Hemera";
 
