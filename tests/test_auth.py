@@ -25,12 +25,21 @@ def _make_token(claims: dict, expired: bool = False) -> str:
         "public_metadata": {"org_name": "Test SU", "role": "client"},
         **claims,
     }
-    return jwt.encode(payload, _private_pem, algorithm="RS256")
+    return jwt.encode(payload, _private_pem, algorithm="RS256", headers={"kid": "test-key-id"})
 
 
-@patch("hemera.services.clerk._get_clerk_public_key")
-def test_verify_valid_token(mock_get_key):
-    mock_get_key.return_value = _public_pem
+def _mock_jwks_client():
+    """Create a mock PyJWKClient that returns our test key."""
+    mock_client = MagicMock()
+    mock_signing_key = MagicMock()
+    mock_signing_key.key = _public_pem
+    mock_client.get_signing_key_from_jwt.return_value = mock_signing_key
+    return mock_client
+
+
+@patch("hemera.services.clerk._get_jwks_client")
+def test_verify_valid_token(mock_get_client):
+    mock_get_client.return_value = _mock_jwks_client()
     token = _make_token({})
     user = verify_clerk_token(token)
     assert user.clerk_id == "user_test123"
@@ -39,18 +48,18 @@ def test_verify_valid_token(mock_get_key):
     assert user.role == "client"
 
 
-@patch("hemera.services.clerk._get_clerk_public_key")
-def test_verify_admin_token(mock_get_key):
-    mock_get_key.return_value = _public_pem
+@patch("hemera.services.clerk._get_jwks_client")
+def test_verify_admin_token(mock_get_client):
+    mock_get_client.return_value = _mock_jwks_client()
     token = _make_token({"public_metadata": {"org_name": "Hemera", "role": "admin"}})
     user = verify_clerk_token(token)
     assert user.role == "admin"
     assert user.org_name == "Hemera"
 
 
-@patch("hemera.services.clerk._get_clerk_public_key")
-def test_verify_expired_token(mock_get_key):
-    mock_get_key.return_value = _public_pem
+@patch("hemera.services.clerk._get_jwks_client")
+def test_verify_expired_token(mock_get_client):
+    mock_get_client.return_value = _mock_jwks_client()
     token = _make_token({}, expired=True)
     user = verify_clerk_token(token)
     assert user is None
@@ -61,9 +70,9 @@ def test_verify_invalid_token():
     assert user is None
 
 
-@patch("hemera.services.clerk._get_clerk_public_key")
-def test_verify_missing_metadata(mock_get_key):
-    mock_get_key.return_value = _public_pem
+@patch("hemera.services.clerk._get_jwks_client")
+def test_verify_missing_metadata(mock_get_client):
+    mock_get_client.return_value = _mock_jwks_client()
     token = _make_token({"public_metadata": {}})
     user = verify_clerk_token(token)
     assert user is not None

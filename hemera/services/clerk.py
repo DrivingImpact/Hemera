@@ -1,7 +1,6 @@
 """Clerk JWT verification and user extraction."""
 
 import jwt
-import httpx
 from dataclasses import dataclass
 from functools import lru_cache
 from hemera.config import get_settings
@@ -16,28 +15,26 @@ class ClerkUser:
 
 
 @lru_cache(maxsize=1)
-def _fetch_jwks() -> bytes:
+def _get_jwks_client() -> jwt.PyJWKClient | None:
     settings = get_settings()
-    if not settings.clerk_secret_key:
-        return b""
     jwks_url = settings.clerk_jwks_url
     if not jwks_url:
-        return b""
-    response = httpx.get(jwks_url, timeout=10)
-    response.raise_for_status()
-    return response.content
-
-
-def _get_clerk_public_key() -> bytes:
-    return _fetch_jwks()
+        return None
+    return jwt.PyJWKClient(jwks_url)
 
 
 def verify_clerk_token(token: str) -> ClerkUser | None:
     try:
-        public_key = _get_clerk_public_key()
-        if not public_key:
+        client = _get_jwks_client()
+        if not client:
             return None
-        payload = jwt.decode(token, public_key, algorithms=["RS256"], options={"verify_aud": False})
+        signing_key = client.get_signing_key_from_jwt(token)
+        payload = jwt.decode(
+            token,
+            signing_key.key,
+            algorithms=["RS256"],
+            options={"verify_aud": False},
+        )
         metadata = payload.get("public_metadata", {})
         return ClerkUser(
             clerk_id=payload.get("sub", ""),
