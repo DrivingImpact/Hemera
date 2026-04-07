@@ -17,7 +17,7 @@ class Settings(BaseSettings):
 
     @property
     def clerk_jwks_url(self) -> str:
-        return ""
+        return "https://pleased-dolphin-42.clerk.accounts.dev/.well-known/jwks.json"
 
 
 @lru_cache
