@@ -49,6 +49,22 @@ def list_engagements(db: Session = Depends(get_db), current_user: ClerkUser = De
     ]
 
 
+@router.delete("/engagements/{engagement_id}")
+def delete_engagement(
+    engagement_id: int,
+    db: Session = Depends(get_db),
+    current_user: ClerkUser = Depends(get_current_user),
+):
+    """Delete an engagement and its transactions. Only allowed for non-approved engagements."""
+    e = _load_engagement(engagement_id, db, current_user)
+    if e.status == "qc_passed":
+        raise HTTPException(status_code=400, detail="Cannot delete an approved engagement")
+    db.query(Transaction).filter(Transaction.engagement_id == engagement_id).delete()
+    db.delete(e)
+    db.commit()
+    return {"detail": "Deleted"}
+
+
 @router.get("/engagements/{engagement_id}/categories")
 def get_engagement_categories(
     engagement_id: int,
