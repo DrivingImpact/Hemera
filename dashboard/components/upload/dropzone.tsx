@@ -53,6 +53,7 @@ export function UploadDropzone() {
         const data: UploadResult = await res.json();
         setResult(data);
         setState("done");
+        router.refresh();
       } catch (err) {
         setErrorMsg(err instanceof Error ? err.message : "Upload failed");
         setState("error");
@@ -107,33 +108,21 @@ export function UploadDropzone() {
           </svg>
         </div>
         <div>
-          <h3 className="text-lg font-semibold">Upload Complete</h3>
-          <p className="text-muted text-sm mt-1">Your data has been processed successfully.</p>
+          <h3 className="text-lg font-semibold">Upload Complete!</h3>
+          <p className="text-muted text-sm mt-1">
+            Our team will review your data.
+          </p>
         </div>
-        <div className="grid grid-cols-3 gap-4 mt-6 max-w-sm mx-auto">
+        <div className="grid grid-cols-1 gap-4 mt-6 max-w-xs mx-auto">
           <div className="bg-paper rounded-lg p-3 text-center">
             <div className="text-2xl font-bold text-teal tabular-nums">{result.transaction_count.toLocaleString()}</div>
-            <div className="text-[11px] text-muted mt-0.5">Transactions</div>
-          </div>
-          <div className="bg-paper rounded-lg p-3 text-center">
-            <div className="text-2xl font-bold text-teal tabular-nums">{result.total_co2e.toFixed(1)}</div>
-            <div className="text-[11px] text-muted mt-0.5">tCO₂e</div>
-          </div>
-          <div className="bg-paper rounded-lg p-3 text-center">
-            <div className="text-2xl font-bold text-teal tabular-nums">{result.supplier_count}</div>
-            <div className="text-[11px] text-muted mt-0.5">Suppliers</div>
+            <div className="text-[11px] text-muted mt-0.5">Transactions uploaded</div>
           </div>
         </div>
-        <div className="flex gap-3 justify-center mt-6">
-          <button
-            onClick={() => router.push(`/dashboard/${result.engagement_id}`)}
-            className="px-5 py-2.5 bg-teal text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
-          >
-            View Results
-          </button>
+        <div className="flex justify-center mt-6">
           <button
             onClick={reset}
-            className="px-5 py-2.5 bg-paper border border-[#E5E5E0] rounded-lg text-sm font-medium hover:bg-[#F0F0EB] transition-colors"
+            className="px-5 py-2.5 bg-teal text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
           >
             Upload Another
           </button>
