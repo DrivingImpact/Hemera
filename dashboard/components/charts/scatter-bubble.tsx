@@ -28,7 +28,8 @@ export function ScatterBubble({ categories }: ScatterBubbleProps) {
     const scope = Number(scopeStr);
     return {
       type: "scatter" as const,
-      mode: "markers+text" as const,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      mode: "markers+text" as any,
       name: SCOPE_LABELS[scope] ?? `Scope ${scope}`,
       x: cats.map((c) => c.spend_gbp),
       y: cats.map((c) => c.co2e_tonnes),

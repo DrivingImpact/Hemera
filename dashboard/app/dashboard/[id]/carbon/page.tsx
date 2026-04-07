@@ -32,7 +32,7 @@ export default async function CarbonPage({
       pct: (cat.co2e_tonnes / totalCo2e) * 100,
     }));
 
-  type TableRow = CategorySummary & { pct: number };
+  type TableRow = CategorySummary & { pct: number } & Record<string, unknown>;
 
   const columns = [
     { key: "name", label: "Category" },

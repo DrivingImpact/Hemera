@@ -23,7 +23,7 @@ export default async function SuppliersPage({
 
   const sorted = [...suppliers].sort((a, b) => b.co2e_tonnes - a.co2e_tonnes);
 
-  type SupplierRow = EngagementSupplier & { _id: string };
+  type SupplierRow = EngagementSupplier & { _id: string } & Record<string, unknown>;
   const rows: SupplierRow[] = sorted.map((s) => ({ ...s, _id: id }));
 
   const columns = [
