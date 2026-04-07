@@ -129,7 +129,7 @@ def submit_qc_results(engagement_id: int, body: QCSubmitRequest, db: Session = D
 
     status = compute_qc_status(transactions)
     if status["status"] == "passed":
-        eng.status = "delivered"
+        eng.status = "qc_passed"
         db.flush()
         db.commit()
 

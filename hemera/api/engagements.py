@@ -4,13 +4,14 @@ from sqlalchemy.orm import Session
 from hemera.database import get_db
 from hemera.models.engagement import Engagement
 from hemera.models.transaction import Transaction
-from hemera.dependencies import get_current_user
+from hemera.dependencies import get_current_user, require_admin
 from hemera.services.clerk import ClerkUser
 from hemera.services.engagement_data import (
     build_category_summary, build_monthly_summary, build_engagement_suppliers,
 )
 from hemera.services.reduction_recs import generate_reduction_recommendations, compute_projections
 from hemera.services.data_quality import generate_recommendations
+from hemera.services.pipeline import run_processing_pipeline
 
 router = APIRouter()
 
@@ -164,6 +165,24 @@ def get_engagement_transactions(
             for t in txns
         ],
     }
+
+
+@router.post("/engagements/{engagement_id}/process")
+def process_engagement(
+    engagement_id: int,
+    db: Session = Depends(get_db),
+    current_user: ClerkUser = Depends(require_admin),
+):
+    """Admin-only: trigger full classification + calculation pipeline."""
+    e = _load_engagement(engagement_id, db, current_user)
+    txns = _load_transactions(engagement_id, db)
+    if not txns:
+        raise HTTPException(status_code=404, detail="No transactions found")
+    try:
+        result = run_processing_pipeline(e, txns, db)
+    except ValueError as ex:
+        raise HTTPException(status_code=400, detail=str(ex))
+    return result
 
 
 @router.get("/engagements/{engagement_id}")

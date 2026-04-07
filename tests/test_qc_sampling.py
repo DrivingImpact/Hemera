@@ -354,7 +354,7 @@ def test_api_qc_submit_and_gate():
         status = client.get(f"/api/engagements/{eng.id}/qc", headers={"Authorization": "Bearer fake"}).json()
         assert status["status"] == "passed"
     eng_refreshed = session.query(Engagement).filter(Engagement.id == eng.id).first()
-    assert eng_refreshed.status == "delivered"
+    assert eng_refreshed.status == "qc_passed"
     app.dependency_overrides.clear()
     session.close()
 
