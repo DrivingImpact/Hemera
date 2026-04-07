@@ -112,6 +112,7 @@ export default function QCPage() {
   const [sampleData, setSampleData] = useState<GenerateResponse | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [verdicts, setVerdicts] = useState<Record<number, "pass" | "fail">>({});
+  const [cardOrder, setCardOrder] = useState<number[]>([]);  // indices into sampleData.cards
   const [submitResponse, setSubmitResponse] = useState<SubmitResponse | null>(null);
   const [swipeDir, setSwipeDir] = useState<"left" | "right" | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -198,6 +199,7 @@ export default function QCPage() {
         { method: "POST" }
       );
       setSampleData(data);
+      setCardOrder(data.cards.map((_: QCCard, i: number) => i));
       setCurrentIndex(0);
       setVerdicts({});
       setPageState("reviewing");
@@ -217,6 +219,22 @@ export default function QCPage() {
     }, 300);
   }, []);
 
+  /* --- Skip / come back later --- */
+  const skipCard = useCallback(() => {
+    setSwipeDir("right");
+    setTimeout(() => {
+      setCardOrder((prev) => {
+        const current = prev[currentIndex];
+        const next = [...prev];
+        next.splice(currentIndex, 1);
+        next.push(current);
+        return next;
+      });
+      setSwipeDir(null);
+      // currentIndex stays the same — the next card slides in
+    }, 300);
+  }, [currentIndex]);
+
   /* --- Keyboard shortcuts --- */
   useEffect(() => {
     if (pageState !== "reviewing" || !sampleData) return;
@@ -228,13 +246,15 @@ export default function QCPage() {
         setVerdict(card.transaction_id, "pass");
       } else if (e.key === "ArrowLeft" || e.key === "d") {
         setVerdict(card.transaction_id, "fail");
+      } else if (e.key === "ArrowDown" || e.key === "s") {
+        skipCard();
       } else if (e.key === "Backspace" && currentIndex > 0) {
         setCurrentIndex((prev) => prev - 1);
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [pageState, sampleData, currentIndex, setVerdict]);
+  }, [pageState, sampleData, currentIndex, setVerdict, skipCard]);
 
   /* --- Submit all verdicts --- */
   const submitAll = useCallback(async () => {
@@ -267,12 +287,11 @@ export default function QCPage() {
     if (
       pageState === "reviewing" &&
       sampleData &&
-      currentIndex >= sampleData.cards.length &&
       Object.keys(verdicts).length === sampleData.cards.length
     ) {
       submitAll();
     }
-  }, [pageState, sampleData, currentIndex, verdicts, submitAll]);
+  }, [pageState, sampleData, verdicts, submitAll]);
 
   /* ---------------------------------------------------------------- */
   /*  Render states                                                    */
@@ -450,9 +469,11 @@ export default function QCPage() {
 
   if (pageState !== "reviewing" || !sampleData) return null;
 
-  const card = sampleData.cards[currentIndex];
+  const cardIdx = cardOrder[currentIndex];
+  const card = cardIdx != null ? sampleData.cards[cardIdx] : undefined;
   const total = sampleData.cards.length;
   const reviewed = Object.keys(verdicts).length;
+  const remaining = total - reviewed;
   const failCount = Object.values(verdicts).filter((v) => v === "fail").length;
 
   // All reviewed — waiting for auto-submit
@@ -466,13 +487,19 @@ export default function QCPage() {
   }
 
   const d = card.decisions;
+  const p = d.pedigree;
+
+  // DEFRA conversion factors URL by year
+  const defraUrl = d.emission_factor.source?.toLowerCase().includes("defra")
+    ? `https://www.gov.uk/government/publications/greenhouse-gas-reporting-conversion-factors-${d.emission_factor.year}`
+    : null;
 
   return (
     <div className="max-w-2xl mx-auto space-y-4">
       {/* Progress bar */}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-xs text-muted">
-          <span>Card {currentIndex + 1} of {total}</span>
+          <span>Card {reviewed + 1} of {total}{remaining !== total - reviewed ? ` · ${remaining} remaining` : ""}</span>
           <span>
             {reviewed} reviewed
             {failCount > 0 && <span className="text-error ml-1">· {failCount} failed</span>}
@@ -535,13 +562,34 @@ export default function QCPage() {
             flag={d.classification.method === "none" || d.classification.confidence < 0.5}
           />
 
-          {/* Emission Factor */}
-          <CheckRow
-            label="Emission Factor"
-            value={`${d.emission_factor.value} ${d.emission_factor.unit}`}
-            detail={`${d.emission_factor.source} · Level ${d.emission_factor.level} · ${d.emission_factor.region} ${d.emission_factor.year}`}
-            flag={d.emission_factor.level >= 5}
-          />
+          {/* Emission Factor — with DEFRA link */}
+          <div className={`py-2 border-b border-[#F0F0EB] ${d.emission_factor.level >= 5 ? "bg-[#FFFBEB] -mx-6 px-6 border-amber/20" : ""}`}>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.5px] text-muted flex items-center gap-1.5">
+              Emission Factor
+              {d.emission_factor.level >= 5 && (
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-tint text-amber border border-amber/30 normal-case tracking-normal">
+                  Check
+                </span>
+              )}
+            </div>
+            <div className="text-sm mt-0.5">{d.emission_factor.value} {d.emission_factor.unit}</div>
+            <div className="text-[11px] text-muted mt-0.5 flex items-center gap-1.5">
+              <span>{d.emission_factor.source} · Level {d.emission_factor.level} · {d.emission_factor.region} {d.emission_factor.year}</span>
+              {defraUrl && (
+                <a
+                  href={defraUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-0.5 text-teal hover:underline font-medium"
+                >
+                  Verify
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </a>
+              )}
+            </div>
+          </div>
 
           {/* Arithmetic */}
           <CheckRow
@@ -559,18 +607,35 @@ export default function QCPage() {
             flag={!d.supplier_match.supplier_id}
           />
 
-          {/* Data Quality */}
-          <CheckRow
-            label="Data Quality"
-            value={`GSD ${d.pedigree.gsd_total?.toFixed(2) || "—"}`}
-            detail={`R${d.pedigree.reliability} C${d.pedigree.completeness} T${d.pedigree.temporal} G${d.pedigree.geographical} Te${d.pedigree.technological}`}
-            flag={(d.pedigree.gsd_total || 0) > 3}
-          />
+          {/* Data Quality — expanded */}
+          <div className={`py-2 border-b border-[#F0F0EB] ${(p.gsd_total || 0) > 3 ? "bg-[#FFFBEB] -mx-6 px-6 border-amber/20" : ""}`}>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.5px] text-muted flex items-center gap-1.5">
+              Data Quality (Pedigree Matrix)
+              {(p.gsd_total || 0) > 3 && (
+                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-tint text-amber border border-amber/30 normal-case tracking-normal">
+                  Check
+                </span>
+              )}
+            </div>
+            <div className="text-sm mt-0.5">
+              GSD {p.gsd_total?.toFixed(2) || "—"}
+              <span className="text-[11px] text-muted ml-1.5">
+                ({p.gsd_total && p.gsd_total <= 1.5 ? "High quality" : p.gsd_total && p.gsd_total <= 3 ? "Moderate quality" : "Low quality — high uncertainty"})
+              </span>
+            </div>
+            <div className="grid grid-cols-5 gap-2 mt-2">
+              <PedigreeIndicator label="Reliability" score={p.reliability} description={PEDIGREE_LABELS.reliability[p.reliability]} />
+              <PedigreeIndicator label="Completeness" score={p.completeness} description={PEDIGREE_LABELS.completeness[p.completeness]} />
+              <PedigreeIndicator label="Temporal" score={p.temporal} description={PEDIGREE_LABELS.temporal[p.temporal]} />
+              <PedigreeIndicator label="Geographic" score={p.geographical} description={PEDIGREE_LABELS.geographical[p.geographical]} />
+              <PedigreeIndicator label="Technology" score={p.technological} description={PEDIGREE_LABELS.technological[p.technological]} />
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Action buttons */}
-      <div className="flex items-center justify-center gap-6 py-4">
+      <div className="flex items-center justify-center gap-5 py-4">
         <button
           onClick={() => setVerdict(card.transaction_id, "fail")}
           className="group w-16 h-16 rounded-full border-2 border-[#FCA5A5] bg-white hover:bg-[#FEE2E2] transition-colors flex items-center justify-center shadow-sm"
@@ -594,6 +659,16 @@ export default function QCPage() {
         )}
 
         <button
+          onClick={skipCard}
+          className="group w-12 h-12 rounded-full border-2 border-[#E5E5E0] bg-white hover:bg-amber-tint transition-colors flex items-center justify-center shadow-sm"
+          title="Come back later (↓ or S)"
+        >
+          <svg className="w-5 h-5 text-amber group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </button>
+
+        <button
           onClick={() => setVerdict(card.transaction_id, "pass")}
           className="group w-16 h-16 rounded-full border-2 border-[#A7F3D0] bg-white hover:bg-[#D1FAE5] transition-colors flex items-center justify-center shadow-sm"
           title="Pass (→ or A)"
@@ -606,7 +681,7 @@ export default function QCPage() {
 
       {/* Keyboard hint */}
       <div className="text-center text-[10px] text-muted">
-        ← Fail · → Pass · Backspace to go back
+        ← Fail · → Pass · ↓ Come back later · Backspace to go back
       </div>
     </div>
   );
@@ -642,18 +717,89 @@ function CheckRow({
   flag?: boolean;
 }) {
   return (
-    <div className={`flex items-start justify-between py-2 border-b border-[#F0F0EB] ${flag ? "bg-[#FFFBEB] -mx-6 px-6 border-amber/20" : ""}`}>
-      <div className="min-w-0">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.5px] text-muted flex items-center gap-1.5">
-          {label}
-          {flag && (
-            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-tint text-amber border border-amber/30 normal-case tracking-normal">
-              Check
-            </span>
-          )}
-        </div>
-        <div className="text-sm mt-0.5">{value}</div>
-        <div className="text-[11px] text-muted mt-0.5">{detail}</div>
+    <div className={`py-2 border-b border-[#F0F0EB] ${flag ? "bg-[#FFFBEB] -mx-6 px-6 border-amber/20" : ""}`}>
+      <div className="text-[11px] font-semibold uppercase tracking-[0.5px] text-muted flex items-center gap-1.5">
+        {label}
+        {flag && (
+          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-amber-tint text-amber border border-amber/30 normal-case tracking-normal">
+            Check
+          </span>
+        )}
+      </div>
+      <div className="text-sm mt-0.5">{value}</div>
+      <div className="text-[11px] text-muted mt-0.5">{detail}</div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Pedigree matrix labels and indicator                               */
+/* ------------------------------------------------------------------ */
+
+const PEDIGREE_LABELS: Record<string, Record<number, string>> = {
+  reliability: {
+    1: "Verified data",
+    2: "Verified, partly based on assumptions",
+    3: "Non-verified, partly based on assumptions",
+    4: "Qualified estimate",
+    5: "Non-qualified estimate",
+  },
+  completeness: {
+    1: "All relevant sites over adequate period",
+    2: "More than 50% of sites over adequate period",
+    3: "Less than 50% of sites or shorter period",
+    4: "One site relevant to area",
+    5: "Unknown or incomplete data",
+  },
+  temporal: {
+    1: "Less than 3 years old",
+    2: "Less than 6 years old",
+    3: "Less than 10 years old",
+    4: "Less than 15 years old",
+    5: "More than 15 years old or unknown",
+  },
+  geographical: {
+    1: "Data from area under study",
+    2: "Average from larger area the study is part of",
+    3: "Data from area with similar conditions",
+    4: "Data from area with slightly similar conditions",
+    5: "Data from unknown or different area",
+  },
+  technological: {
+    1: "Data from identical process",
+    2: "Data from similar process, same technology",
+    3: "Data from similar process, different technology",
+    4: "Data from related process on lab scale",
+    5: "Data from related process, different technology",
+  },
+};
+
+const SCORE_COLORS: Record<number, string> = {
+  1: "bg-[#065F46] text-white",
+  2: "bg-[#D1FAE5] text-[#065F46]",
+  3: "bg-amber-tint text-amber",
+  4: "bg-[#FEE2E2] text-[#991B1B]",
+  5: "bg-[#991B1B] text-white",
+};
+
+function PedigreeIndicator({
+  label,
+  score,
+  description,
+}: {
+  label: string;
+  score: number;
+  description: string;
+}) {
+  return (
+    <div className="text-center group relative">
+      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold mx-auto ${SCORE_COLORS[score] || "bg-paper text-muted"}`}>
+        {score}
+      </div>
+      <div className="text-[9px] text-muted mt-1 leading-tight">{label}</div>
+      {/* Tooltip */}
+      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 bg-slate text-white text-[10px] rounded-lg whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10 shadow-lg">
+        {description}
       </div>
     </div>
   );
