@@ -30,24 +30,25 @@ export function ReductionWaterfall({
     "total",
   ];
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const trace: any = {
+    type: "waterfall",
+    orientation: "v",
+    x,
+    y,
+    measure,
+    decreasing: { marker: { color: "#0D9488" } },
+    totals: { marker: { color: "#1E293B" } },
+    increasing: { marker: { color: "#EF4444" } },
+    connector: { line: { color: "#94A3B8", width: 1, dash: "dot" } },
+    textposition: "outside",
+    text: y.map((v) => `${fmtTonnes(v)}t`),
+    hovertemplate: "<b>%{x}</b><br>%{y:.1f} tCO₂e<extra></extra>",
+  };
+
   return (
     <PlotlyChart
-      data={[
-        {
-          type: "waterfall" as const,
-          orientation: "v",
-          x,
-          y,
-          measure,
-          decreasing: { marker: { color: "#0D9488" } },
-          totals: { marker: { color: "#1E293B" } },
-          increasing: { marker: { color: "#EF4444" } },
-          connector: { line: { color: "#94A3B8", width: 1, dash: "dot" } },
-          textposition: "outside",
-          text: y.map((v) => `${fmtTonnes(v)}t`),
-          hovertemplate: "<b>%{x}</b><br>%{y:.1f} tCO₂e<extra></extra>",
-        },
-      ]}
+      data={[trace]}
       layout={{
         showlegend: false,
         xaxis: {

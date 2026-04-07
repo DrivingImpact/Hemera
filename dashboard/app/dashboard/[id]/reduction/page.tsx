@@ -126,9 +126,9 @@ export default async function ReductionPage({
           </h4>
         </div>
         <div className="overflow-x-auto">
-          <DataTable<ReductionRec>
+          <DataTable<ReductionRec & Record<string, unknown>>
             columns={columns}
-            rows={recommendations}
+            rows={recommendations as (ReductionRec & Record<string, unknown>)[]}
           />
         </div>
       </div>

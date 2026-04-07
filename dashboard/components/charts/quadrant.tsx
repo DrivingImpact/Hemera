@@ -31,7 +31,8 @@ export function ImpactEffortQuadrant({
       data={[
         {
           type: "scatter",
-          mode: "markers+text",
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          mode: "markers+text" as any,
           x: xs,
           y: ys,
           text: recommendations.map((r) =>
