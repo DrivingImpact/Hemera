@@ -1,19 +1,30 @@
 <h2>Reduction Roadmap</h2>
 
-<h3>Impact vs Effort</h3>
-<p style="font-size: 8pt; color: #64748B; margin-bottom: 4pt;">
-    The quadrant chart plots each reduction action by its implementation effort (x-axis) against its estimated emission reduction
-    (y-axis). Actions in the top-left quadrant are "quick wins" — high impact with low effort. Actions in the top-right are
-    "strategic" — high impact but requiring significant investment or organisational change. Bubble size is proportional to
-    reduction potential; colour indicates action type.
+<p style="color: #475569; margin-bottom: 8pt; font-size: 9pt;">
+    The reduction roadmap presents prioritised opportunities for lowering the organisation's carbon footprint. Actions are assessed on two dimensions: estimated emission reduction potential (based on published benchmarks from the Carbon Trust, BEIS, and IEA) and implementation effort. The quadrant framework helps prioritise: Quick Wins (high impact, low effort) should be implemented immediately, while Strategic actions (high impact, high effort) require planning and investment.
 </p>
-<div class="chart-container">
-    {{ quadrant_svg | safe }}
-    <div class="figure-caption"><span class="figure-number">Figure 9.</span> {{ org_name }}'s {{ reduction_recs|length }} reduction actions plotted by effort versus impact. Top-left = quick wins, top-right = strategic initiatives. Total addressable reduction: {{ "%.1f"|format(reduction_recs|sum(attribute='potential_reduction_kg') / 1000) }} tCO2e.</div>
+
+<div class="chart-section">
+    <h3>Impact vs Effort</h3>
+    <p style="font-size: 8pt; color: #64748B; margin-bottom: 4pt;">
+        The quadrant chart plots each reduction action by its implementation effort (x-axis) against its estimated emission reduction
+        (y-axis). Actions in the top-left quadrant are "quick wins" — high impact with low effort. Actions in the top-right are
+        "strategic" — high impact but requiring significant investment or organisational change. Bubble size is proportional to
+        reduction potential; colour indicates action type.
+    </p>
+    <div class="chart-container">
+        {{ quadrant_svg | safe }}
+        <div class="figure-caption"><span class="figure-number">Figure 9.</span> {{ org_name }}'s {{ reduction_recs|length }} reduction actions plotted by effort versus impact. Top-left = quick wins, top-right = strategic initiatives. Total addressable reduction: {{ "%.1f"|format(reduction_recs|sum(attribute='potential_reduction_kg') / 1000) }} tCO2e.</div>
+    </div>
 </div>
 
-<h3>Reduction Pathway</h3>
-<div class="chart-container">
-    {{ reduction_waterfall_svg | safe }}
-    <div class="figure-caption"><span class="figure-number">Figure 10.</span> Waterfall showing {{ org_name }}'s pathway from {{ "%.1f"|format(total_co2e) }} tCO2e current total through each reduction action to the projected total of {{ "%.1f"|format(year3_target) }} tCO2e.</div>
+<div class="chart-section">
+    <h3>Reduction Pathway</h3>
+    <p style="color: #475569; margin-bottom: 4pt; font-size: 9pt;">
+        The waterfall chart traces the path from the current footprint through each recommended action to a projected reduced total.
+    </p>
+    <div class="chart-container">
+        {{ reduction_waterfall_svg | safe }}
+        <div class="figure-caption"><span class="figure-number">Figure 10.</span> Waterfall showing {{ org_name }}'s pathway from {{ "%.1f"|format(total_co2e) }} tCO2e current total through each reduction action to the projected total of {{ "%.1f"|format(year3_target) }} tCO2e.</div>
+    </div>
 </div>

@@ -1,14 +1,29 @@
 <h2>Emission Hotspots</h2>
 
-<h3>Top 10 Categories by Carbon Impact</h3>
-<div class="chart-container">
-    {{ top_categories_bar_svg | safe }}
-    <div class="figure-caption"><span class="figure-number">Figure 5.</span> {{ org_name }}'s ten largest emission categories ranked by tCO2e. Colour intensity varies within each scope to distinguish categories: slate shades = Scope 1, teal shades = Scope 2, amber shades = Scope 3.</div>
+<p style="color: #475569; margin-bottom: 8pt; font-size: 9pt;">
+    Hotspot analysis identifies the emission categories and spending areas that contribute most to the total footprint. This analysis guides reduction strategy by highlighting where action will have the greatest impact. Categories are coloured by scope: slate for Scope 1 (direct), teal for Scope 2 (purchased energy), and amber for Scope 3 (value chain).
+</p>
+
+<div class="chart-section">
+    <h3>Top 10 Categories by Carbon Impact</h3>
+    <p style="color: #475569; margin-bottom: 4pt; font-size: 9pt;">
+        The bar chart ranks {{ org_name }}'s emission categories from largest to smallest by tCO2e. Colour shade varies within each scope to help distinguish individual categories.
+    </p>
+    <div class="chart-container">
+        {{ top_categories_bar_svg | safe }}
+        <div class="figure-caption"><span class="figure-number">Figure 5.</span> {{ org_name }}'s ten largest emission categories ranked by tCO2e. Colour intensity varies within each scope to distinguish categories: slate shades = Scope 1, teal shades = Scope 2, amber shades = Scope 3.</div>
+    </div>
 </div>
 
-<h3>Spend vs Emissions</h3>
-<p style="font-size: 8pt; color: #64748B; margin-bottom: 4pt;">Bubble size indicates measurement uncertainty (Geometric Standard Deviation). Larger bubbles represent categories where the emission estimate is less certain, typically due to reliance on spend-based rather than activity-based emission factors.</p>
-<div class="chart-container">
-    {{ spend_vs_emissions_svg | safe }}
-    <div class="figure-caption"><span class="figure-number">Figure 6.</span> Spend (GBP) versus emissions (tCO2e) for {{ org_name }}'s categories. Bubble size reflects GSD uncertainty. Categories in the top-left represent high carbon intensity per pound spent — priority targets for supplier engagement.</div>
+<p style="color: #475569; margin-bottom: 8pt; font-size: 9pt;">
+    The relationship between financial spend and carbon emissions reveals which categories are carbon-intensive relative to their cost. Categories in the upper-left (high emissions, low spend) represent the highest carbon intensity. Bubble size indicates measurement uncertainty — larger bubbles mean less precise estimates, highlighting where better data collection would be most valuable.
+</p>
+
+<div class="chart-section">
+    <h3>Spend vs Emissions</h3>
+    <p style="font-size: 8pt; color: #64748B; margin-bottom: 4pt;">Bubble size indicates measurement uncertainty (Geometric Standard Deviation). Larger bubbles represent categories where the emission estimate is less certain, typically due to reliance on spend-based rather than activity-based emission factors.</p>
+    <div class="chart-container">
+        {{ spend_vs_emissions_svg | safe }}
+        <div class="figure-caption"><span class="figure-number">Figure 6.</span> Spend (GBP) versus emissions (tCO2e) for {{ org_name }}'s categories. Bubble size reflects GSD uncertainty. Categories in the top-left represent high carbon intensity per pound spent — priority targets for supplier engagement.</div>
+    </div>
 </div>

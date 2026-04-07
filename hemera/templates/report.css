@@ -71,6 +71,11 @@ h3 { font-size: 11pt; font-weight: 600; margin-bottom: 4pt; color: #64748B; }
     background: #FEF3C7;
 }
 
+.chart-section {
+    page-break-inside: avoid;
+    margin-bottom: 16pt;
+}
+
 .chart-container {
     margin: 12pt 0;
     text-align: center;

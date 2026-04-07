@@ -3,7 +3,7 @@
 import pytest
 from hemera.services.report_charts import (
     HEMERA_THEME, chart_scope_donut, chart_top_categories_bar,
-    chart_scope_stacked_bar, chart_category_treemap, chart_spend_vs_emissions_scatter,
+    chart_scope_stacked_bar, chart_scope_category_bars, chart_spend_vs_emissions_scatter,
     chart_monthly_stacked_area, chart_cumulative_line,
     chart_error_bars, chart_pedigree_radar, chart_pedigree_contribution_bar,
     chart_cascade_grouped_bar, chart_reduction_quadrant, chart_reduction_waterfall,
@@ -68,9 +68,9 @@ class TestScopeStackedBar:
         assert "<svg" in svg.lower() or "svg" in svg.lower()
 
 
-class TestCategoryTreemap:
+class TestScopeCategoryBars:
     def test_returns_svg(self, sample_categories):
-        svg = chart_category_treemap(sample_categories)
+        svg = chart_scope_category_bars(sample_categories)
         assert "<svg" in svg.lower() or "svg" in svg.lower()
 
 

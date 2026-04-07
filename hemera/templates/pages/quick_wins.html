@@ -1,13 +1,19 @@
 <h2>Quick Wins &amp; Strategic Actions</h2>
 
-<h3>Reduction Potential by Action</h3>
-<p style="font-size: 8pt; color: #64748B; margin-bottom: 4pt;">
-    Reduction estimates are based on published benchmarks from the Carbon Trust, BEIS, and IEA. Actual savings will depend on
-    implementation specifics, baseline conditions, and the organisation's operational context.
+<p style="color: #475569; margin-bottom: 8pt; font-size: 9pt;">
+    The following table details each recommended reduction action with estimated impact, required effort, and implementation timeline. Reduction estimates are conservative, based on sector-average benchmarks. Actual reductions will depend on {{ org_name }}'s specific circumstances and the degree of implementation.
 </p>
-<div class="chart-container">
-    {{ reduction_bar_svg | safe }}
-    <div class="figure-caption"><span class="figure-number">Figure 11.</span> Estimated reduction potential (tCO2e) for each of {{ org_name }}'s recommended actions, coloured by type. Combined potential: {{ "%.1f"|format(reduction_recs|sum(attribute='potential_reduction_kg') / 1000) }} tCO2e ({{ "%.0f"|format(reduction_recs|sum(attribute='potential_reduction_kg') / 1000 / total_co2e * 100) }}% of current footprint).</div>
+
+<div class="chart-section">
+    <h3>Reduction Potential by Action</h3>
+    <p style="font-size: 8pt; color: #64748B; margin-bottom: 4pt;">
+        Reduction estimates are based on published benchmarks from the Carbon Trust, BEIS, and IEA. Actual savings will depend on
+        implementation specifics, baseline conditions, and the organisation's operational context.
+    </p>
+    <div class="chart-container">
+        {{ reduction_bar_svg | safe }}
+        <div class="figure-caption"><span class="figure-number">Figure 11.</span> Estimated reduction potential (tCO2e) for each of {{ org_name }}'s recommended actions, coloured by type. Combined potential: {{ "%.1f"|format(reduction_recs|sum(attribute='potential_reduction_kg') / 1000) }} tCO2e ({{ "%.0f"|format(reduction_recs|sum(attribute='potential_reduction_kg') / 1000 / total_co2e * 100) }}% of current footprint).</div>
+    </div>
 </div>
 
 <table class="data-table">

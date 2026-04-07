@@ -107,15 +107,15 @@ def chart_top_categories_bar(categories: list[dict], limit: int = 10) -> str:
         marker_color=bar_colours,
         text=[f'{c["co2e_tonnes"]:.1f}t' for c in cats],
         textposition="outside",
-        textfont=dict(size=11),
+        textfont=dict(size=13),
     )])
     fig.update_layout(
         xaxis_title="tCO2e",
         xaxis=dict(title_font=dict(size=12), tickfont=dict(size=11)),
-        yaxis=dict(tickfont=dict(size=13)),
-        margin=dict(l=220, r=60, t=20, b=40),
+        yaxis=dict(tickfont=dict(size=15)),
+        margin=dict(l=250, r=60, t=20, b=40),
     )
-    return _to_svg(fig, width=700, height=400)
+    return _to_svg(fig, width=700, height=450)
 
 
 def chart_scope_stacked_bar(
@@ -158,47 +158,45 @@ def chart_scope_stacked_bar(
     return _to_svg(fig, width=600, height=280)
 
 
-def chart_category_treemap(categories: list[dict]) -> str:
-    """Treemap of categories nested by scope. Size = tCO2e."""
-    scope_names = {1: "Scope 1 — Direct", 2: "Scope 2 — Energy", 3: "Scope 3 — Value chain"}
-    # Use branchvalues="total": parent value must equal sum of children
-    labels = []
-    parents = []
-    values = []
-    colours = []
+def chart_scope_category_bars(categories: list[dict]) -> str:
+    """Horizontal bar chart of all categories, visually grouped by scope."""
+    scope_names = {1: "SCOPE 1 — DIRECT", 2: "SCOPE 2 — ENERGY", 3: "SCOPE 3 — VALUE CHAIN"}
 
-    total_val = sum(c["co2e_tonnes"] for c in categories)
-    labels.append("Total")
-    parents.append("")
-    values.append(total_val)
-    colours.append("#E5E5E0")
+    # Build ordered list: scope header then categories
+    y_labels = []
+    x_values = []
+    bar_colours = []
 
-    for s in [1, 2, 3]:
-        scope_cats = [c for c in categories if c["scope"] == s]
+    for s in [3, 2, 1]:  # Reverse so Scope 1 appears at top when chart reverses
+        scope_cats = sorted([c for c in categories if c["scope"] == s], key=lambda c: c["co2e_tonnes"])
         if scope_cats:
-            scope_total = sum(c["co2e_tonnes"] for c in scope_cats)
-            labels.append(scope_names[s])
-            parents.append("Total")
-            values.append(scope_total)
-            colours.append(SCOPE_COLOURS[s])
             for c in scope_cats:
-                labels.append(c["name"])
-                parents.append(scope_names[s])
-                values.append(c["co2e_tonnes"])
-                colours.append(SCOPE_COLOURS[s])
+                y_labels.append(f"  {c['name'][:35]}")
+                x_values.append(c["co2e_tonnes"])
+                bar_colours.append(SCOPE_COLOURS[s])
+            # Add scope header (zero-width bar, just a label)
+            y_labels.append(f"<b>{scope_names[s]}</b>")
+            x_values.append(0)
+            bar_colours.append("rgba(0,0,0,0)")
 
-    fig = go.Figure(go.Treemap(
-        labels=labels,
-        parents=parents,
-        values=values,
-        marker=dict(colors=colours),
-        textinfo="label+value",
-        texttemplate="%{label}<br>%{value:.1f}t",
-        textfont=dict(size=13),
-        branchvalues="total",
-    ))
-    fig.update_layout(margin=dict(l=10, r=10, t=10, b=10))
-    return _to_svg(fig, width=700, height=350)
+    fig = go.Figure(data=[go.Bar(
+        y=y_labels,
+        x=x_values,
+        orientation="h",
+        marker_color=bar_colours,
+        text=[f"{v:.1f}t" if v > 0 else "" for v in x_values],
+        textposition="outside",
+        textfont=dict(size=12),
+    )])
+    fig.update_layout(
+        xaxis_title="tCO2e",
+        xaxis=dict(title_font=dict(size=12), tickfont=dict(size=11)),
+        yaxis=dict(tickfont=dict(size=13)),
+        margin=dict(l=260, r=60, t=10, b=40),
+        showlegend=False,
+    )
+    height = max(300, len(y_labels) * 28 + 60)
+    return _to_svg(fig, width=700, height=height)
 
 
 def chart_spend_vs_emissions_scatter(categories: list[dict]) -> str:

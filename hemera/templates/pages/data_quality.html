@@ -7,15 +7,26 @@
     uncertainty and improves the overall data quality grade.
 </p>
 
-<h3>Emission Factor Cascade — Current vs Target</h3>
-<p style="font-size: 8pt; color: #64748B; margin-bottom: 4pt;">Level 1 (supplier-specific) is most accurate. Level 6 (fallback) is least. Moving spend up the cascade reduces uncertainty.</p>
-<div class="chart-container">
-    {{ cascade_bar_svg | safe }}
-    <div class="figure-caption"><span class="figure-number">Figure 17.</span> {{ org_name }}'s current and target distribution of spend across the six emission factor cascade levels. Shifting spend towards L1–L2 will narrow the {{ "%.1f"|format(ci_upper - ci_lower) }} tCO2e confidence interval and improve the data quality grade from {{ data_quality_grade }}.</div>
+<div class="chart-section">
+    <h3>Emission Factor Cascade — Current vs Target</h3>
+    <p style="font-size: 8pt; color: #64748B; margin-bottom: 4pt;">Level 1 (supplier-specific) is most accurate. Level 6 (fallback) is least. Moving spend up the cascade reduces uncertainty.</p>
+    <div class="chart-container">
+        {{ cascade_bar_svg | safe }}
+        <div class="figure-caption"><span class="figure-number">Figure 17.</span> {{ org_name }}'s current and target distribution of spend across the six emission factor cascade levels. Shifting spend towards L1–L2 will narrow the {{ "%.1f"|format(ci_upper - ci_lower) }} tCO2e confidence interval and improve the data quality grade from {{ data_quality_grade }}.</div>
+    </div>
 </div>
 
-<h3>Prioritised Data Quality Improvements</h3>
-<div class="chart-container">
-    {{ impact_bar_svg | safe }}
-    <div class="figure-caption"><span class="figure-number">Figure 18.</span> Prioritised data quality improvement actions for {{ org_name }}, ranked by estimated impact on reducing total uncertainty. Implementing the top action alone could meaningfully narrow the confidence interval.</div>
+<div class="chart-section">
+    <h3>Prioritised Data Quality Improvements</h3>
+    <p style="color: #475569; margin-bottom: 4pt; font-size: 9pt;">
+        The chart below ranks the most impactful data quality improvements by their potential to reduce overall uncertainty in the footprint estimate.
+    </p>
+    <div class="chart-container">
+        {{ impact_bar_svg | safe }}
+        <div class="figure-caption"><span class="figure-number">Figure 18.</span> Prioritised data quality improvement actions for {{ org_name }}, ranked by estimated impact on reducing total uncertainty. Implementing the top action alone could meaningfully narrow the confidence interval.</div>
+    </div>
 </div>
+
+<p style="color: #475569; margin-top: 8pt; font-size: 9pt;">
+    Improving data quality is not just about precision — it reveals the true footprint. Organisations that move from spend-based estimates to activity-based measurement frequently discover their actual emissions are lower than estimated, because spend-based factors are designed to be conservative. Better data is both more accurate and often more favourable.
+</p>

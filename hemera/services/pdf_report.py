@@ -13,7 +13,7 @@ import weasyprint
 
 from hemera.services.report_charts import (
     chart_scope_donut, chart_top_categories_bar, chart_scope_stacked_bar,
-    chart_category_treemap, chart_spend_vs_emissions_scatter,
+    chart_scope_category_bars, chart_spend_vs_emissions_scatter,
     chart_monthly_stacked_area, chart_cumulative_line,
     chart_error_bars, chart_pedigree_radar, chart_pedigree_contribution_bar,
     chart_cascade_grouped_bar, chart_reduction_quadrant,
@@ -145,7 +145,7 @@ def generate_report_data(engagement, transactions: list) -> dict:
 
         # Charts — scope breakdown
         "scope_stacked_bar_svg": chart_scope_stacked_bar(scope1, scope2, scope3, ci_lower, ci_upper),
-        "treemap_svg": chart_category_treemap(categories),
+        "treemap_svg": chart_scope_category_bars(categories),
 
         # Charts — hotspots
         "top_categories_bar_svg": chart_top_categories_bar(categories, limit=10),

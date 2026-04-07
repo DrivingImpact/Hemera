@@ -26,14 +26,14 @@
 </div>
 
 <div class="two-col">
-    <div>
+    <div class="chart-section">
         <h3>Emissions by Scope</h3>
         <div class="chart-container">
             {{ scope_donut_svg | safe }}
             <div class="figure-caption"><span class="figure-number">Figure 1.</span> Distribution of {{ org_name }}'s {{ "%.1f"|format(total_co2e) }} tCO2e across scopes. Scope 3 (value chain) dominates at {{ "%.0f"|format(scope3_pct) }}%, with Scope 1 at {{ "%.0f"|format(scope1_pct) }}% and Scope 2 at {{ "%.0f"|format(scope2_pct) }}%.</div>
         </div>
     </div>
-    <div>
+    <div class="chart-section">
         <h3>Top Emission Categories</h3>
         <div class="chart-container">
             {{ top_categories_mini_svg | safe }}

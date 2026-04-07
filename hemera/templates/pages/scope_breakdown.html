@@ -8,7 +8,7 @@
 </p>
 
 <div class="two-col">
-    <div>
+    <div class="chart-section">
         <h3>Emissions by Scope</h3>
         <div class="chart-container">
             {{ scope_stacked_bar_svg | safe }}
@@ -50,12 +50,19 @@
     </div>
 </div>
 
-<h3>Category Distribution</h3>
-<p style="color: #475569; margin-bottom: 4pt; font-size: 9pt;">
-    The treemap below represents each emission category as a rectangle whose area is proportional to its tCO2e contribution.
-    Categories are nested within their parent scope, enabling visual comparison of relative magnitude at a glance.
+<p style="color: #475569; margin-bottom: 8pt; margin-top: 8pt; font-size: 9pt;">
+    Scope 3 dominance is typical for service-sector organisations where purchased goods and business travel outweigh direct operational emissions. While Scope 1 and 2 emissions are under {{ org_name }}'s direct operational control and are typically the first targets for reduction, the scale of Scope 3 means that meaningful long-term decarbonisation requires supply chain engagement and procurement strategy changes.
 </p>
-<div class="chart-container">
-    {{ treemap_svg | safe }}
-    <div class="figure-caption"><span class="figure-number">Figure 4.</span> Treemap of {{ org_name }}'s {{ categories|length }} emission categories nested by scope. Rectangle area is proportional to tCO2e contribution out of {{ "%.1f"|format(total_co2e) }} tCO2e total.</div>
+
+<div class="chart-section">
+    <h3>Emissions by Category and Scope</h3>
+    <p style="color: #475569; margin-bottom: 4pt; font-size: 9pt;">
+        The chart below shows every emission category grouped by scope. Bar colour indicates scope: slate for Scope 1 (direct),
+        teal for Scope 2 (purchased energy), and amber for Scope 3 (value chain). This view makes it easy to compare the
+        relative magnitude of categories both within and across scopes.
+    </p>
+    <div class="chart-container">
+        {{ treemap_svg | safe }}
+        <div class="figure-caption"><span class="figure-number">Figure 4.</span> {{ org_name }}'s {{ categories|length }} emission categories grouped by scope. Bar length is proportional to tCO2e contribution out of {{ "%.1f"|format(total_co2e) }} tCO2e total. Scope headers appear as labels with categories indented below.</div>
+    </div>
 </div>

@@ -25,22 +25,31 @@
     and typically right-skewed — physical emissions cannot be less than zero.
 </p>
 
-<h3>95% Confidence Intervals by Scope</h3>
-<div class="chart-container">
-    {{ error_bars_svg | safe }}
-    <div class="figure-caption"><span class="figure-number">Figure 14.</span> Central emission estimate with 95% confidence interval error bars for {{ org_name }}. Scope 3 ({{ "%.1f"|format(scope3) }} tCO2e) carries the widest interval, reflecting reliance on spend-based factors. Total range: {{ "%.1f"|format(ci_lower) }}–{{ "%.1f"|format(ci_upper) }} tCO2e.</div>
+<div class="chart-section">
+    <h3>95% Confidence Intervals by Scope</h3>
+    <p style="color: #475569; margin-bottom: 4pt; font-size: 9pt;">
+        The error bars show the range within which the true emissions are expected to fall at 95% confidence. Wider bars indicate greater uncertainty and lower data quality for that scope.
+    </p>
+    <div class="chart-container">
+        {{ error_bars_svg | safe }}
+        <div class="figure-caption"><span class="figure-number">Figure 14.</span> Central emission estimate with 95% confidence interval error bars for {{ org_name }}. Scope 3 ({{ "%.1f"|format(scope3) }} tCO2e) carries the widest interval, reflecting reliance on spend-based factors. Total range: {{ "%.1f"|format(ci_lower) }}–{{ "%.1f"|format(ci_upper) }} tCO2e.</div>
+    </div>
 </div>
 
-<h3>Pedigree Indicator Scores</h3>
-<p style="font-size: 8pt; color: #64748B; margin-bottom: 4pt;">1 = best quality, 5 = worst. Weighted by emission contribution. Indicators furthest from the centre represent the greatest data quality gaps.</p>
-<div class="chart-container">
-    {{ radar_svg | safe }}
-    <div class="figure-caption"><span class="figure-number">Figure 15.</span> Weighted average pedigree scores for {{ org_name }}'s {{ "%.1f"|format(total_co2e) }} tCO2e footprint. Scores closer to the centre (1) indicate higher quality data. The most extended axis reveals the priority area for data improvement.</div>
+<div class="chart-section">
+    <h3>Pedigree Indicator Scores</h3>
+    <p style="font-size: 8pt; color: #64748B; margin-bottom: 4pt;">1 = best quality, 5 = worst. Weighted by emission contribution. Indicators furthest from the centre represent the greatest data quality gaps.</p>
+    <div class="chart-container">
+        {{ radar_svg | safe }}
+        <div class="figure-caption"><span class="figure-number">Figure 15.</span> Weighted average pedigree scores for {{ org_name }}'s {{ "%.1f"|format(total_co2e) }} tCO2e footprint. Scores closer to the centre (1) indicate higher quality data. The most extended axis reveals the priority area for data improvement.</div>
+    </div>
 </div>
 
-<h3>Uncertainty Sources</h3>
-<p style="font-size: 8pt; color: #64748B; margin-bottom: 4pt;">Which data quality indicators drive the most uncertainty in the overall footprint.</p>
-<div class="chart-container">
-    {{ pedigree_bar_svg | safe }}
-    <div class="figure-caption"><span class="figure-number">Figure 16.</span> Contribution of each pedigree indicator to {{ org_name }}'s total uncertainty. Improving the highest-contributing indicator will have the greatest effect on narrowing the {{ "%.1f"|format(ci_upper - ci_lower) }} tCO2e confidence interval.</div>
+<div class="chart-section">
+    <h3>Uncertainty Sources</h3>
+    <p style="font-size: 8pt; color: #64748B; margin-bottom: 4pt;">Which data quality indicators drive the most uncertainty in the overall footprint.</p>
+    <div class="chart-container">
+        {{ pedigree_bar_svg | safe }}
+        <div class="figure-caption"><span class="figure-number">Figure 16.</span> Contribution of each pedigree indicator to {{ org_name }}'s total uncertainty. Improving the highest-contributing indicator will have the greatest effect on narrowing the {{ "%.1f"|format(ci_upper - ci_lower) }} tCO2e confidence interval.</div>
+    </div>
 </div>

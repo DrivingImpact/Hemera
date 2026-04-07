@@ -1,5 +1,9 @@
 <h2>Your Footprint Journey — Projections</h2>
 
+<p style="color: #475569; margin-bottom: 8pt; font-size: 9pt;">
+    The projections below illustrate three scenarios for {{ org_name }}'s carbon footprint over a three-year horizon. These are not forecasts — they are modelled scenarios showing the potential impact of data quality improvements and emission reduction actions identified in this report.
+</p>
+
 <div class="kpi-grid">
     <div class="kpi-card">
         <div class="section-label">Year 3 projected target</div>
@@ -18,15 +22,21 @@
 </p>
 
 <div class="two-col">
-    <div>
+    <div class="chart-section">
         <h3>3-Year Projection</h3>
+        <p style="color: #475569; margin-bottom: 4pt; font-size: 9pt;">
+            The shaded band narrows as data quality improves and emission reductions take effect.
+        </p>
         <div class="chart-container">
             {{ fan_chart_svg | safe }}
             <div class="figure-caption"><span class="figure-number">Figure 12.</span> {{ org_name }}'s three-year projection from {{ "%.1f"|format(total_co2e) }} tCO2e baseline to {{ "%.1f"|format(year3_target) }} tCO2e target. Shaded area = 95% CI; dashed line = "do nothing" baseline. Y-axis starts at zero for honest scale.</div>
         </div>
     </div>
-    <div>
+    <div class="chart-section">
         <h3>Improvement Pathway</h3>
+        <p style="color: #475569; margin-bottom: 4pt; font-size: 9pt;">
+            The waterfall decomposes the journey from baseline to target into discrete steps.
+        </p>
         <div class="chart-container">
             {{ projection_waterfall_svg | safe }}
             <div class="figure-caption"><span class="figure-number">Figure 13.</span> Waterfall from {{ org_name }}'s Year 1 baseline ({{ "%.1f"|format(total_co2e) }} tCO2e) through data quality improvement and emission reductions to the Year 3 projected total of {{ "%.1f"|format(year3_target) }} tCO2e.</div>

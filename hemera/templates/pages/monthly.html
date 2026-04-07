@@ -2,21 +2,29 @@
 <h2>Monthly Emission Pattern</h2>
 
 <p style="color: #475569; margin-bottom: 8pt; font-size: 9pt;">
-    Monthly patterns can reveal seasonal drivers of emissions — for example, higher heating-related Scope 1 emissions in winter
-    months, or increased business travel during peak trading periods. Identifying these patterns enables targeted interventions
-    at the times of year when they will have the greatest impact.
+    Temporal analysis reveals seasonal patterns, one-off spikes, and trends in emission generation throughout the reporting period. Understanding when emissions occur helps target interventions — for example, heating-driven Scope 1 peaks in winter months or travel-heavy periods that could be addressed through policy changes.
 </p>
 
-<h3>Monthly Emissions by Scope</h3>
-<div class="chart-container">
-    {{ monthly_area_svg | safe }}
-    <div class="figure-caption"><span class="figure-number">Figure 7.</span> {{ org_name }}'s monthly emissions stacked by scope for the {{ fiscal_year_start }} to {{ fiscal_year_end }} reporting period. Scope 1 = slate, Scope 2 = teal, Scope 3 = amber.</div>
+<div class="chart-section">
+    <h3>Monthly Emissions by Scope</h3>
+    <p style="color: #475569; margin-bottom: 4pt; font-size: 9pt;">
+        The stacked area chart shows how each scope contributes to monthly totals, making it easy to identify which scope drives seasonal variation.
+    </p>
+    <div class="chart-container">
+        {{ monthly_area_svg | safe }}
+        <div class="figure-caption"><span class="figure-number">Figure 7.</span> {{ org_name }}'s monthly emissions stacked by scope for the {{ fiscal_year_start }} to {{ fiscal_year_end }} reporting period. Scope 1 = slate, Scope 2 = teal, Scope 3 = amber.</div>
+    </div>
 </div>
 
-<h3>Cumulative Progress</h3>
-<div class="chart-container">
-    {{ cumulative_line_svg | safe }}
-    <div class="figure-caption"><span class="figure-number">Figure 8.</span> Cumulative actual emissions for {{ org_name }} versus a linear projection towards {{ "%.1f"|format(total_co2e) }} tCO2e annual total. Deviation above the line indicates periods of higher-than-average emission intensity.</div>
+<div class="chart-section">
+    <h3>Cumulative Progress</h3>
+    <p style="color: #475569; margin-bottom: 4pt; font-size: 9pt;">
+        The cumulative line tracks actual emissions against a linear projection, revealing whether emission intensity is accelerating or decelerating over the period.
+    </p>
+    <div class="chart-container">
+        {{ cumulative_line_svg | safe }}
+        <div class="figure-caption"><span class="figure-number">Figure 8.</span> Cumulative actual emissions for {{ org_name }} versus a linear projection towards {{ "%.1f"|format(total_co2e) }} tCO2e annual total. Deviation above the line indicates periods of higher-than-average emission intensity.</div>
+    </div>
 </div>
 {% else %}
 <h2>Monthly Emission Pattern</h2>
