@@ -89,8 +89,12 @@ export default async function UploadPage() {
                 return (
                   <tr key={eng.id} className="border-b border-[#F0F0EB] last:border-0 hover:bg-paper transition-colors">
                     <td className="px-5 py-3">
-                      <div className="font-medium">{eng.org_name}</div>
-                      <div className="text-[11px] text-muted">#{eng.id}</div>
+                      <div className="font-medium">{eng.display_name || eng.org_name}</div>
+                      <div className="text-[11px] text-muted">
+                        #{eng.id}
+                        {isAdmin && eng.uploaded_by_email && <span> · {eng.uploaded_by_email}</span>}
+                        {eng.created_at && <span> · {new Date(eng.created_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>}
+                      </div>
                     </td>
                     <td className="px-5 py-3 text-right tabular-nums text-muted">
                       {eng.transaction_count.toLocaleString()}
