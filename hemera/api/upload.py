@@ -35,6 +35,7 @@ async def upload_csv(
         org_name=current_user.org_name,
         upload_filename=filename,
         status="uploaded",
+        uploaded_by_email=current_user.email,
     )
     db.add(engagement)
     db.flush()

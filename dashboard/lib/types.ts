@@ -21,6 +21,9 @@ export interface EngagementListItem {
   transaction_count: number;
   total_co2e: number;
   created_at: string;
+  uploaded_by_email: string | null;
+  display_name: string | null;
+  admin_notes: string | null;
 }
 
 export interface CategorySummary {

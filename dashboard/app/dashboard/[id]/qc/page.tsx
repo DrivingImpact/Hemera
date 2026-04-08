@@ -109,6 +109,7 @@ export default function QCPage() {
 
   const [pageState, setPageState] = useState<PageState>("loading_status");
   const [errorMsg, setErrorMsg] = useState("");
+  const [engagementInfo, setEngagementInfo] = useState<{ transaction_count: number; org_name: string } | null>(null);
   const [sampleData, setSampleData] = useState<GenerateResponse | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [verdicts, setVerdicts] = useState<Record<number, "pass" | "fail">>({});
@@ -163,7 +164,8 @@ export default function QCPage() {
   useEffect(() => {
     const load = async () => {
       try {
-        const data = await apiFetch<{ status: string }>(`/engagements/${id}`);
+        const data = await apiFetch<{ status: string; transaction_count: number; org_name: string }>(`/engagements/${id}`);
+        setEngagementInfo({ transaction_count: data.transaction_count, org_name: data.org_name });
         if (data.status === "uploaded") setPageState("uploaded");
         else if (data.status === "processing") { setPageState("processing"); startPolling(); }
         else if (data.status === "delivered") setPageState("idle");
@@ -321,14 +323,21 @@ export default function QCPage() {
         <h2 className="text-lg font-semibold mt-4">Data Uploaded</h2>
         <p className="text-muted text-sm mt-1 max-w-sm">
           This engagement needs to be processed before QC review.
-          Processing classifies transactions and calculates the carbon footprint.
+          Processing will classify each transaction and calculate the carbon footprint.
         </p>
+        {engagementInfo && (
+          <div className="mt-3 text-xs text-muted bg-[#FAFAF7] rounded-lg px-4 py-2.5">
+            <span className="font-semibold text-slate">{engagementInfo.transaction_count.toLocaleString()}</span> transactions to classify & calculate
+          </div>
+        )}
         <button
           onClick={triggerProcessing}
           disabled={pageState === "triggering"}
-          className="mt-5 px-6 py-3 bg-slate text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+          className="mt-4 px-6 py-3 bg-slate text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
         >
-          {pageState === "triggering" ? "Starting..." : "Start Processing"}
+          {pageState === "triggering"
+            ? "Starting..."
+            : `Process ${engagementInfo?.transaction_count.toLocaleString() ?? ""} Transactions`}
         </button>
       </CenteredPanel>
     );

@@ -1,5 +1,6 @@
 """Engagement endpoints — CRUD for client reports."""
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from hemera.database import get_db
 from hemera.models.engagement import Engagement
@@ -44,6 +45,9 @@ def list_engagements(db: Session = Depends(get_db), current_user: ClerkUser = De
             "transaction_count": e.transaction_count,
             "total_co2e": e.total_co2e,
             "created_at": e.created_at.isoformat() if e.created_at else None,
+            "uploaded_by_email": e.uploaded_by_email,
+            "display_name": e.display_name,
+            "admin_notes": e.admin_notes,
         }
         for e in engagements
     ]
@@ -63,6 +67,29 @@ def delete_engagement(
     db.delete(e)
     db.commit()
     return {"detail": "Deleted"}
+
+
+class EngagementPatch(BaseModel):
+    display_name: str | None = None
+    admin_notes: str | None = None
+
+
+@router.patch("/engagements/{engagement_id}")
+def patch_engagement(
+    engagement_id: int,
+    body: EngagementPatch,
+    db: Session = Depends(get_db),
+    current_user: ClerkUser = Depends(require_admin),
+):
+    """Admin-only: update display name or notes on an engagement."""
+    e = _load_engagement(engagement_id, db, current_user)
+    if body.display_name is not None:
+        e.display_name = body.display_name
+    if body.admin_notes is not None:
+        e.admin_notes = body.admin_notes
+    db.flush()
+    db.commit()
+    return {"detail": "Updated", "id": e.id}
 
 
 @router.get("/engagements/{engagement_id}/categories")
@@ -222,4 +249,7 @@ def get_engagement(engagement_id: int, db: Session = Depends(get_db), current_us
         "ci_lower": e.ci_lower,
         "ci_upper": e.ci_upper,
         "created_at": e.created_at.isoformat() if e.created_at else None,
+        "uploaded_by_email": e.uploaded_by_email,
+        "display_name": e.display_name,
+        "admin_notes": e.admin_notes,
     }

@@ -25,6 +25,11 @@ class Engagement(Base):
     status: Mapped[str] = mapped_column(String(20), default="uploaded")
     # statuses: uploaded -> classifying -> calculating -> reviewing -> delivered
 
+    # Admin metadata
+    uploaded_by_email: Mapped[str | None] = mapped_column(String(255))
+    display_name: Mapped[str | None] = mapped_column(String(255))  # admin-editable label, e.g. "John (SU)"
+    admin_notes: Mapped[str | None] = mapped_column(Text)
+
     # File reference
     upload_filename: Mapped[str | None] = mapped_column(String(255))
 
