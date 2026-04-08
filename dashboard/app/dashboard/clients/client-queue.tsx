@@ -41,22 +41,13 @@ const STAGES: Stage[] = [
     actionStyle: "bg-paper text-muted border border-[#E5E5E0]",
   },
   {
-    key: "carbon_review",
-    label: "Carbon Review",
-    description: "Review emission classifications and factors via QC cards",
+    key: "review",
+    label: "Review",
+    description: "Carbon classification QC and supplier claims verification",
     statuses: ["delivered"],
-    actionLabel: (eng) => eng.qc_progress && eng.qc_progress.reviewed > 0 ? "Continue Review" : "Start Review",
+    actionLabel: (eng) => eng.qc_progress && eng.qc_progress.reviewed > 0 ? "Continue Carbon Review" : "Start Carbon Review",
     actionHref: (eng) => `/dashboard/${eng.id}/qc`,
     actionStyle: "bg-teal text-white",
-  },
-  {
-    key: "supplier_review",
-    label: "Supplier Claims Review",
-    description: "Verify supplier matches and risk assessments are statistically sound",
-    statuses: ["delivered"],
-    actionLabel: () => "Review Suppliers",
-    actionHref: (eng) => `/dashboard/${eng.id}/supplier-review`,
-    actionStyle: "bg-[#6366F1] text-white",
   },
   {
     key: "review_report",
@@ -267,11 +258,26 @@ function EngagementCard({
           </div>
         </div>
 
-        {/* Action button */}
+        {/* Action buttons */}
         {stage.key === "processing" ? (
           <div className="flex-shrink-0 flex items-center gap-2 text-muted text-xs">
             <div className="w-4 h-4 rounded-full border-2 border-amber/30 border-t-amber animate-spin" />
             Processing
+          </div>
+        ) : stage.key === "review" ? (
+          <div className="flex-shrink-0 flex items-center gap-2">
+            <Link
+              href={`/dashboard/${eng.id}/qc`}
+              className="px-4 py-2 rounded-lg text-xs font-semibold transition-opacity hover:opacity-90 bg-teal text-white"
+            >
+              {eng.qc_progress && eng.qc_progress.reviewed > 0 ? "Continue Carbon" : "Carbon Review"}
+            </Link>
+            <Link
+              href={`/dashboard/${eng.id}/supplier-review`}
+              className="px-4 py-2 rounded-lg text-xs font-semibold transition-opacity hover:opacity-90 bg-[#6366F1] text-white"
+            >
+              Supplier Review
+            </Link>
           </div>
         ) : (
           <Link

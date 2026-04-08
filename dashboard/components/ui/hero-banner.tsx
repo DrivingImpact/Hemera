@@ -29,7 +29,7 @@ export function HeroBanner({ engagement, pending }: { engagement: Engagement; pe
         <div className="text-center">
           <div className="text-[9px] text-[#94A3B8] uppercase tracking-[0.5px]">Transactions</div>
           <div className="text-xl font-bold text-white mt-0.5">
-            {fmtNumber(engagement.transaction_count || 0)}
+            {pending ? "—" : fmtNumber(engagement.transaction_count || 0)}
           </div>
         </div>
       </div>

@@ -37,17 +37,6 @@ const ADMIN_SECTIONS: { label: string; items: NavItem[] }[] = [
       { name: "Upload", href: "/upload", icon: "◯", absolute: true },
     ],
   },
-  {
-    label: "Review",
-    items: [
-      { name: "Overview", href: "", icon: "◯" },
-      { name: "Carbon", href: "/carbon", icon: "◯" },
-      { name: "Suppliers", href: "/suppliers", icon: "◯" },
-      { name: "Data Quality", href: "/quality", icon: "◯" },
-      { name: "QC Review", href: "/qc", icon: "◯" },
-      { name: "Supplier Review", href: "/supplier-review", icon: "◯" },
-    ],
-  },
 ];
 
 export function Sidebar({

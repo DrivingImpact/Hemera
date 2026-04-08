@@ -33,28 +33,31 @@ def _load_transactions(engagement_id: int, db):
 
 @router.get("/engagements")
 def list_engagements(db: Session = Depends(get_db), current_user: ClerkUser = Depends(get_current_user)):
-    from sqlalchemy import func
+    from sqlalchemy import func, case
     query = db.query(Engagement)
     if current_user.role != "admin":
         query = query.filter(Engagement.org_name == current_user.org_name)
     engagements = query.order_by(Engagement.created_at.desc()).all()
 
-    # For delivered engagements, get QC progress counts in one query
+    # For delivered engagements, get QC progress counts
     delivered_ids = [e.id for e in engagements if e.status == "delivered"]
     qc_progress = {}
     if delivered_ids:
         rows = (
             db.query(
                 Transaction.engagement_id,
-                func.count().filter(Transaction.is_sampled == True).label("sampled"),
-                func.count().filter(Transaction.is_sampled == True, Transaction.qc_pass != None).label("reviewed"),
+                func.sum(case((Transaction.is_sampled == True, 1), else_=0)).label("sampled"),
+                func.sum(case((Transaction.is_sampled == True, case((Transaction.qc_pass != None, 1), else_=0)), else_=0)).label("reviewed"),
             )
             .filter(Transaction.engagement_id.in_(delivered_ids))
             .group_by(Transaction.engagement_id)
             .all()
         )
         for row in rows:
-            qc_progress[row.engagement_id] = {"sampled": row.sampled, "reviewed": row.reviewed}
+            sampled = int(row.sampled or 0)
+            reviewed = int(row.reviewed or 0)
+            if sampled > 0:
+                qc_progress[row.engagement_id] = {"sampled": sampled, "reviewed": reviewed}
 
     return [
         {
