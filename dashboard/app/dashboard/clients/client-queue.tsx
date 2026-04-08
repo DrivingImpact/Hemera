@@ -333,50 +333,50 @@ function EngagementCard({
 /* ------------------------------------------------------------------ */
 
 function EngagementProgress({ eng }: { eng: EngagementListItem }) {
-  // Calculate overall progress percentage
+  if (eng.status === "delivered") {
+    // Two progress bars for carbon + supplier review
+    const qc = eng.qc_progress;
+    const carbonPct = qc && qc.sampled > 0 ? Math.round((qc.reviewed / qc.sampled) * 100) : 0;
+    const carbonLabel = qc && qc.sampled > 0 ? `${qc.reviewed}/${qc.sampled}` : "Not started";
+    // Supplier review not tracked on backend yet — show as not started
+    const supplierLabel = "Not started";
+
+    return (
+      <div className="border-t border-[#F0F0EB] pt-2 space-y-1.5">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-muted w-16 flex-shrink-0">Carbon</span>
+          <div className="flex-1 h-1.5 bg-[#E5E5E0] rounded-full overflow-hidden">
+            <div className="h-full bg-teal rounded-full transition-all duration-500" style={{ width: `${Math.max(carbonPct, 2)}%` }} />
+          </div>
+          <span className="text-[10px] text-muted flex-shrink-0 tabular-nums w-20 text-right">{carbonLabel}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-muted w-16 flex-shrink-0">Supplier</span>
+          <div className="flex-1 h-1.5 bg-[#E5E5E0] rounded-full overflow-hidden">
+            <div className="h-full bg-[#6366F1] rounded-full transition-all duration-500" style={{ width: "2%" }} />
+          </div>
+          <span className="text-[10px] text-muted flex-shrink-0 tabular-nums w-20 text-right">{supplierLabel}</span>
+        </div>
+      </div>
+    );
+  }
+
+  // Single progress bar for other stages
   let pct = 0;
   let label = "";
 
-  if (eng.status === "uploaded") {
-    pct = 0;
-    label = "Awaiting processing";
-  } else if (eng.status === "processing") {
-    pct = 15;
-    label = "Processing";
-  } else if (eng.status === "delivered") {
-    // 30% base for being processed, up to 80% based on QC progress
-    const qc = eng.qc_progress;
-    if (qc && qc.sampled > 0) {
-      const qcPct = qc.reviewed / qc.sampled;
-      pct = 30 + Math.round(qcPct * 50);
-      label = `Carbon review ${qc.reviewed}/${qc.sampled}`;
-    } else {
-      pct = 30;
-      label = "Processed — ready for review";
-    }
-  } else if (eng.status === "qc_passed") {
-    pct = 90;
-    label = "QC passed — review report";
-  } else if (eng.status === "released") {
-    pct = 100;
-    label = "Complete";
-  }
+  if (eng.status === "uploaded") { pct = 0; label = "Awaiting processing"; }
+  else if (eng.status === "processing") { pct = 15; label = "Processing"; }
+  else if (eng.status === "qc_passed") { pct = 90; label = "QC passed — review report"; }
+  else if (eng.status === "released") { pct = 100; label = "Complete"; }
 
-  const color =
-    pct === 100 ? "bg-[#065F46]" :
-    pct >= 80 ? "bg-teal" :
-    pct >= 30 ? "bg-teal" :
-    pct > 0 ? "bg-amber" :
-    "bg-[#E5E5E0]";
+  const color = pct === 100 ? "bg-[#065F46]" : pct > 0 ? "bg-amber" : "bg-[#E5E5E0]";
 
   return (
     <div className="border-t border-[#F0F0EB] pt-2">
       <div className="flex items-center gap-3">
         <div className="flex-1 h-1.5 bg-[#E5E5E0] rounded-full overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all duration-500 ${color}`}
-            style={{ width: `${Math.max(pct, 2)}%` }}
-          />
+          <div className={`h-full rounded-full transition-all duration-500 ${color}`} style={{ width: `${Math.max(pct, 2)}%` }} />
         </div>
         <span className="text-[10px] text-muted flex-shrink-0 tabular-nums">{label}</span>
       </div>
