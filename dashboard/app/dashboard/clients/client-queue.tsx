@@ -45,9 +45,18 @@ const STAGES: Stage[] = [
     label: "Carbon Review",
     description: "Review emission classifications and factors via QC cards",
     statuses: ["delivered"],
-    actionLabel: () => "Start Review",
+    actionLabel: (eng) => eng.qc_progress && eng.qc_progress.reviewed > 0 ? "Continue Review" : "Start Review",
     actionHref: (eng) => `/dashboard/${eng.id}/qc`,
     actionStyle: "bg-teal text-white",
+  },
+  {
+    key: "supplier_review",
+    label: "Supplier Claims Review",
+    description: "Verify supplier matches and risk assessments are statistically sound",
+    statuses: ["delivered"],
+    actionLabel: () => "Review Suppliers",
+    actionHref: (eng) => `/dashboard/${eng.id}/supplier-review`,
+    actionStyle: "bg-[#6366F1] text-white",
   },
   {
     key: "review_report",
@@ -273,6 +282,23 @@ function EngagementCard({
           </Link>
         )}
       </div>
+
+      {/* QC Progress bar */}
+      {eng.qc_progress && eng.qc_progress.sampled > 0 && (
+        <div className="border-t border-[#F0F0EB] pt-2">
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-1.5 bg-[#E5E5E0] rounded-full overflow-hidden">
+              <div
+                className="h-full bg-teal rounded-full transition-all"
+                style={{ width: `${(eng.qc_progress.reviewed / eng.qc_progress.sampled) * 100}%` }}
+              />
+            </div>
+            <span className="text-[11px] text-muted tabular-nums flex-shrink-0">
+              {eng.qc_progress.reviewed}/{eng.qc_progress.sampled} reviewed
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Notes */}
       <div className="border-t border-[#F0F0EB] pt-2">

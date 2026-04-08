@@ -33,10 +33,29 @@ def _load_transactions(engagement_id: int, db):
 
 @router.get("/engagements")
 def list_engagements(db: Session = Depends(get_db), current_user: ClerkUser = Depends(get_current_user)):
+    from sqlalchemy import func
     query = db.query(Engagement)
     if current_user.role != "admin":
         query = query.filter(Engagement.org_name == current_user.org_name)
     engagements = query.order_by(Engagement.created_at.desc()).all()
+
+    # For delivered engagements, get QC progress counts in one query
+    delivered_ids = [e.id for e in engagements if e.status == "delivered"]
+    qc_progress = {}
+    if delivered_ids:
+        rows = (
+            db.query(
+                Transaction.engagement_id,
+                func.count().filter(Transaction.is_sampled == True).label("sampled"),
+                func.count().filter(Transaction.is_sampled == True, Transaction.qc_pass != None).label("reviewed"),
+            )
+            .filter(Transaction.engagement_id.in_(delivered_ids))
+            .group_by(Transaction.engagement_id)
+            .all()
+        )
+        for row in rows:
+            qc_progress[row.engagement_id] = {"sampled": row.sampled, "reviewed": row.reviewed}
+
     return [
         {
             "id": e.id,
@@ -48,6 +67,7 @@ def list_engagements(db: Session = Depends(get_db), current_user: ClerkUser = De
             "uploaded_by_email": e.uploaded_by_email,
             "display_name": e.display_name,
             "admin_notes": e.admin_notes,
+            "qc_progress": qc_progress.get(e.id),
         }
         for e in engagements
     ]

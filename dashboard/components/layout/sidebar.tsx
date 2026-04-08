@@ -45,6 +45,7 @@ const ADMIN_SECTIONS: { label: string; items: NavItem[] }[] = [
       { name: "Suppliers", href: "/suppliers", icon: "◯" },
       { name: "Data Quality", href: "/quality", icon: "◯" },
       { name: "QC Review", href: "/qc", icon: "◯" },
+      { name: "Supplier Review", href: "/supplier-review", icon: "◯" },
     ],
   },
 ];

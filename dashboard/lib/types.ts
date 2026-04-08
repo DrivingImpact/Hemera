@@ -24,6 +24,7 @@ export interface EngagementListItem {
   uploaded_by_email: string | null;
   display_name: string | null;
   admin_notes: string | null;
+  qc_progress: { sampled: number; reviewed: number } | null;
 }
 
 export interface CategorySummary {

@@ -62,6 +62,7 @@ def build_qc_card(transaction, card_number: int, total_cards: int, top_10_thresh
         "total_cards": total_cards,
         "remaining": total_cards - card_number + 1,
         "transaction_id": t.id,
+        "qc_pass": t.qc_pass,  # None = not reviewed, True = pass, False = fail
         "sampling_reasons": get_sampling_reasons(t, top_10_threshold),
         "raw_data": {
             "row_number": t.row_number,

@@ -2,7 +2,7 @@
 
 import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -16,6 +16,7 @@ interface QCCard {
   card_number: number;
   total_cards: number;
   transaction_id: number;
+  qc_pass: boolean | null;
   sampling_reasons: string[];
   raw_data: {
     row_number: number;
@@ -104,7 +105,6 @@ type PageState =
 
 export default function QCPage() {
   const { id } = useParams<{ id: string }>();
-  const router = useRouter();
   const { getToken } = useAuth();
 
   const [pageState, setPageState] = useState<PageState>("loading_status");
@@ -192,7 +192,7 @@ export default function QCPage() {
     }
   }, [apiFetch, id, startPolling]);
 
-  /* --- Generate sample --- */
+  /* --- Generate sample (or resume existing) --- */
   const generateSample = useCallback(async () => {
     setPageState("loading");
     try {
@@ -201,9 +201,22 @@ export default function QCPage() {
         { method: "POST" }
       );
       setSampleData(data);
-      setCardOrder(data.cards.map((_: QCCard, i: number) => i));
+
+      // Restore verdicts for already-reviewed cards
+      const restored: Record<number, "pass" | "fail"> = {};
+      const unreviewedIndices: number[] = [];
+      data.cards.forEach((c: QCCard, i: number) => {
+        if (c.qc_pass === true) {
+          restored[c.transaction_id] = "pass";
+        } else if (c.qc_pass === false) {
+          restored[c.transaction_id] = "fail";
+        } else {
+          unreviewedIndices.push(i);
+        }
+      });
+      setVerdicts(restored);
+      setCardOrder(unreviewedIndices);
       setCurrentIndex(0);
-      setVerdicts({});
       setPageState("reviewing");
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Failed to generate sample");
@@ -211,15 +224,39 @@ export default function QCPage() {
     }
   }, [apiFetch, id]);
 
-  /* --- Verdict handler --- */
+  /* --- Save a single verdict to backend --- */
+  const saveVerdict = useCallback(async (txnId: number, verdict: "pass" | "fail") => {
+    const pass = verdict === "pass";
+    try {
+      await apiFetch<SubmitResponse>(`/engagements/${id}/qc/submit`, {
+        method: "POST",
+        body: JSON.stringify({
+          results: [{
+            transaction_id: txnId,
+            classification_pass: pass,
+            emission_factor_pass: pass,
+            arithmetic_pass: pass,
+            supplier_match_pass: pass,
+            pedigree_pass: pass,
+            notes: pass ? "" : "Failed QC review",
+          }],
+        }),
+      });
+    } catch {
+      // Verdict is still tracked locally — will be retried on final submit
+    }
+  }, [apiFetch, id]);
+
+  /* --- Verdict handler — saves immediately --- */
   const setVerdict = useCallback((txnId: number, verdict: "pass" | "fail") => {
     setSwipeDir(verdict === "pass" ? "right" : "left");
+    saveVerdict(txnId, verdict);
     setTimeout(() => {
       setVerdicts((prev) => ({ ...prev, [txnId]: verdict }));
       setSwipeDir(null);
       setCurrentIndex((prev) => prev + 1);
     }, 300);
-  }, []);
+  }, [saveVerdict]);
 
   /* --- Skip / come back later --- */
   const skipCard = useCallback(() => {
@@ -240,7 +277,8 @@ export default function QCPage() {
   /* --- Keyboard shortcuts --- */
   useEffect(() => {
     if (pageState !== "reviewing" || !sampleData) return;
-    const card = sampleData.cards[currentIndex];
+    const cardIdx = cardOrder[currentIndex];
+    const card = cardIdx != null ? sampleData.cards[cardIdx] : undefined;
     if (!card) return;
 
     const handler = (e: KeyboardEvent) => {
@@ -256,44 +294,52 @@ export default function QCPage() {
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [pageState, sampleData, currentIndex, setVerdict, skipCard]);
+  }, [pageState, sampleData, cardOrder, currentIndex, setVerdict, skipCard]);
 
-  /* --- Submit all verdicts --- */
-  const submitAll = useCallback(async () => {
+  /* --- Check completion — fetch final status from backend --- */
+  const checkCompletion = useCallback(async () => {
     if (!sampleData) return;
     setPageState("submitting");
     try {
-      const results = sampleData.cards.map((c) => ({
-        transaction_id: c.transaction_id,
-        classification_pass: verdicts[c.transaction_id] === "pass",
-        emission_factor_pass: verdicts[c.transaction_id] === "pass",
-        arithmetic_pass: verdicts[c.transaction_id] === "pass",
-        supplier_match_pass: verdicts[c.transaction_id] === "pass",
-        pedigree_pass: verdicts[c.transaction_id] === "pass",
-        notes: verdicts[c.transaction_id] === "fail" ? "Failed QC review" : "",
-      }));
-      const data = await apiFetch<SubmitResponse>(`/engagements/${id}/qc/submit`, {
-        method: "POST",
-        body: JSON.stringify({ results }),
-      });
-      setSubmitResponse(data);
-      setPageState("done");
+      const status = await apiFetch<{
+        status: string;
+        current_error_rate: number;
+        hard_gate_result?: string;
+        reviewed_count: number;
+        sample_size: number;
+        pass_count: number;
+        fail_count: number;
+      }>(`/engagements/${id}/qc`);
+      if (status.status === "passed" || status.status === "failed") {
+        setSubmitResponse({
+          accepted: status.reviewed_count,
+          remaining: 0,
+          qc_complete: true,
+          current_error_rate: status.current_error_rate,
+          hard_gate_result: status.hard_gate_result,
+          engagement_status: status.status === "passed" ? "qc_passed" : "delivered",
+        });
+        setPageState("done");
+      } else {
+        // Not all reviewed yet — shouldn't happen but handle gracefully
+        setPageState("reviewing");
+      }
     } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : "Submission failed");
+      setErrorMsg(err instanceof Error ? err.message : "Failed to check status");
       setPageState("error");
     }
-  }, [apiFetch, id, sampleData, verdicts]);
+  }, [apiFetch, id, sampleData]);
 
-  /* --- Auto-submit when all cards reviewed --- */
+  /* --- Auto-complete when all cards reviewed --- */
   useEffect(() => {
     if (
       pageState === "reviewing" &&
       sampleData &&
       Object.keys(verdicts).length === sampleData.cards.length
     ) {
-      submitAll();
+      checkCompletion();
     }
-  }, [pageState, sampleData, verdicts, submitAll]);
+  }, [pageState, sampleData, verdicts, checkCompletion]);
 
   /* ---------------------------------------------------------------- */
   /*  Render states                                                    */
@@ -482,7 +528,7 @@ export default function QCPage() {
   const card = cardIdx != null ? sampleData.cards[cardIdx] : undefined;
   const total = sampleData.cards.length;
   const reviewed = Object.keys(verdicts).length;
-  const remaining = total - reviewed;
+  const unreviewedLeft = cardOrder.length - currentIndex;
   const failCount = Object.values(verdicts).filter((v) => v === "fail").length;
 
   // All reviewed — waiting for auto-submit
@@ -508,7 +554,7 @@ export default function QCPage() {
       {/* Progress bar */}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-xs text-muted">
-          <span>Card {reviewed + 1} of {total}{remaining !== total - reviewed ? ` · ${remaining} remaining` : ""}</span>
+          <span>{reviewed} of {total} reviewed · {unreviewedLeft} remaining</span>
           <span>
             {reviewed} reviewed
             {failCount > 0 && <span className="text-error ml-1">· {failCount} failed</span>}
@@ -688,9 +734,17 @@ export default function QCPage() {
         </button>
       </div>
 
-      {/* Keyboard hint */}
-      <div className="text-center text-[10px] text-muted">
-        ← Fail · → Pass · ↓ Come back later · Backspace to go back
+      {/* Keyboard hint + Save & Exit */}
+      <div className="flex items-center justify-between">
+        <div className="text-[10px] text-muted">
+          ← Fail · → Pass · ↓ Skip · Backspace undo
+        </div>
+        <Link
+          href="/dashboard/clients"
+          className="text-xs text-muted hover:text-teal transition-colors font-medium"
+        >
+          Save & Exit
+        </Link>
       </div>
     </div>
   );
