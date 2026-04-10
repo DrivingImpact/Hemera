@@ -190,6 +190,52 @@ def get_supplier_report(
     }
 
 
+@router.post("/engagements/{engagement_id}/supplier-report/enrich")
+async def enrich_engagement_suppliers(
+    engagement_id: int,
+    db: Session = Depends(get_db),
+    current_user: ClerkUser = Depends(require_admin),
+):
+    """Run enrichment on all suppliers in this engagement.
+
+    Uses only FREE data layers (Companies House, Environment Agency, HSE, etc).
+    Skips Layer 2 (OpenSanctions) to avoid API costs.
+    """
+    from hemera.services.enrichment import enrich_supplier as run_enrich
+
+    # Free layers only — skip Layer 2 (OpenSanctions costs money)
+    FREE_LAYERS = [1, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13]
+
+    engagement = _load_engagement(engagement_id, db)
+
+    supplier_ids = (
+        db.query(Transaction.supplier_id)
+        .filter(
+            Transaction.engagement_id == engagement_id,
+            Transaction.supplier_id.isnot(None),
+            Transaction.is_duplicate == False,  # noqa: E712
+        )
+        .distinct()
+        .all()
+    )
+    supplier_ids = [sid for (sid,) in supplier_ids]
+
+    enriched = 0
+    errors = 0
+    for sid in supplier_ids:
+        supplier = db.query(Supplier).filter(Supplier.id == sid).first()
+        if not supplier:
+            continue
+        try:
+            await run_enrich(supplier, db, layers=FREE_LAYERS)
+            enriched += 1
+        except Exception:
+            errors += 1
+
+    db.commit()
+    return {"enriched": enriched, "errors": errors, "total": len(supplier_ids)}
+
+
 @router.patch("/engagements/{engagement_id}/supplier-report/selections")
 def save_selections(
     engagement_id: int,

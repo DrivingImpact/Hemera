@@ -59,7 +59,7 @@ interface SupplierReportResponse {
   suppliers: APISupplierItem[];
 }
 
-type PageState = "loading" | "reviewing" | "saving" | "error" | "empty";
+type PageState = "loading" | "reviewing" | "saving" | "error" | "empty" | "enriching";
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -335,6 +335,29 @@ export default function HemerascopePage() {
   );
 
   /* ---------------------------------------------------------------- */
+  /*  Run Analysis (enrichment — no AI, free data layers only)         */
+  /* ---------------------------------------------------------------- */
+
+  const [enrichProgress, setEnrichProgress] = useState("");
+
+  const handleRunAnalysis = useCallback(async () => {
+    setPageState("enriching");
+    setEnrichProgress("Running analysis on all suppliers (free data layers only — no AI costs)...");
+    try {
+      const result = await apiFetch<{ enriched: number; errors: number; total: number }>(
+        `/engagements/${id}/supplier-report/enrich`,
+        { method: "POST" }
+      );
+      setEnrichProgress(`Done: ${result.enriched}/${result.total} suppliers analysed. Reloading...`);
+      // Reload the page to pick up new findings
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Failed to run analysis");
+      setPageState("error");
+    }
+  }, [apiFetch, id]);
+
+  /* ---------------------------------------------------------------- */
   /*  Navigation                                                       */
   /* ---------------------------------------------------------------- */
 
@@ -379,6 +402,16 @@ export default function HemerascopePage() {
       <CenteredPanel>
         <Spinner />
         <p className="text-muted text-sm mt-3">Loading supplier report...</p>
+      </CenteredPanel>
+    );
+  }
+
+  if (pageState === "enriching") {
+    return (
+      <CenteredPanel>
+        <Spinner />
+        <p className="text-muted text-sm mt-3">{enrichProgress}</p>
+        <p className="text-muted text-[11px] mt-1">This checks Companies House, Environment Agency, HSE, and other public databases. No AI or paid APIs used.</p>
       </CenteredPanel>
     );
   }
@@ -513,6 +546,24 @@ export default function HemerascopePage() {
           </div>
         </div>
       </div>
+
+      {/* ---- Run Analysis banner (when no findings exist) ---- */}
+      {suppliers.every((s) => s.findings.length === 0) && (
+        <div className="bg-[#F0F9FF] border border-[#BAE6FD] rounded-xl p-5 flex items-center justify-between">
+          <div>
+            <h3 className="text-sm font-semibold text-[#0C4A6E]">Suppliers need analysis</h3>
+            <p className="text-xs text-[#0369A1] mt-0.5">
+              Run analysis to collect data from Companies House, Environment Agency, HSE, and other public databases. No AI or paid APIs — completely free.
+            </p>
+          </div>
+          <button
+            onClick={handleRunAnalysis}
+            className="px-5 py-2.5 bg-teal text-white rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity flex-shrink-0"
+          >
+            Run Analysis
+          </button>
+        </div>
+      )}
 
       {/* ---- Split Panel ---- */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
