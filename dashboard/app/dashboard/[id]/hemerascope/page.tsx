@@ -54,6 +54,7 @@ interface APISupplierItem {
 
 interface SupplierReportResponse {
   engagement_id: number;
+  client_name: string;
   status: string;
   supplier_count: number;
   suppliers: APISupplierItem[];
@@ -110,6 +111,7 @@ export default function HemerascopePage() {
 
   const [pageState, setPageState] = useState<PageState>("loading");
   const [errorMsg, setErrorMsg] = useState("");
+  const [clientName, setClientName] = useState("");
   const [suppliers, setSuppliers] = useState<SupplierFindings[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [clientLanguage, setClientLanguage] = useState<
@@ -150,6 +152,8 @@ export default function HemerascopePage() {
         const data = await apiFetch<SupplierReportResponse>(
           `/engagements/${id}/supplier-report`
         );
+
+        setClientName(data.client_name || "");
 
         if (!data.suppliers || data.suppliers.length === 0) {
           setPageState("empty");
@@ -598,7 +602,13 @@ export default function HemerascopePage() {
 
   return (
     <div className="space-y-4">
-      {/* ---- Progress bar ---- */}
+      {/* ---- Client name + progress bar ---- */}
+      {clientName && (
+        <div className="flex items-center justify-between">
+          <h1 className="text-lg font-bold text-slate">{clientName}</h1>
+          <span className="text-[11px] text-muted bg-[#F1F5F9] px-2.5 py-1 rounded-full">HemeraScope Review</span>
+        </div>
+      )}
       <div className="space-y-2">
         <div className="flex items-center justify-between text-xs text-muted">
           <span>

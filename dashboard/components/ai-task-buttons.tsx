@@ -21,7 +21,7 @@ export default function AITaskButtons({
   apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000",
 }: AITaskButtonsProps) {
   const { getToken } = useAuth();
-  const [status, setStatus] = useState<"idle" | "loading" | "awaiting_paste" | "done">("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "copied" | "awaiting_paste" | "done">("idle");
   const [taskId, setTaskId] = useState<number | null>(null);
   const [promptText, setPromptText] = useState("");
   const [clipboardFailed, setClipboardFailed] = useState(false);
@@ -72,10 +72,12 @@ export default function AITaskButtons({
         try {
           await navigator.clipboard.writeText(prompt);
           setClipboardFailed(false);
+          setStatus("copied");
+          setTimeout(() => setStatus("awaiting_paste"), 1500);
         } catch {
           setClipboardFailed(true);
+          setStatus("awaiting_paste");
         }
-        setStatus("awaiting_paste");
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
@@ -100,6 +102,17 @@ export default function AITaskButtons({
     }
   }
 
+  if (status === "copied") {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="px-3 py-1.5 bg-teal/10 text-teal text-xs rounded-lg font-semibold">
+          ✓ Copied to clipboard
+        </span>
+        <span className="text-[11px] text-muted">Paste into Claude Max...</span>
+      </div>
+    );
+  }
+
   if (status === "awaiting_paste") {
     return (
       <div className="space-y-2">
@@ -115,7 +128,14 @@ export default function AITaskButtons({
                 className="w-full border border-amber-200 rounded-lg p-3 text-xs font-mono resize-y min-h-[120px] max-h-[200px] bg-amber-50/50"
               />
               <button
-                onClick={() => navigator.clipboard.writeText(promptText).catch(() => {})}
+                onClick={(e) => {
+                  const btn = e.currentTarget;
+                  navigator.clipboard.writeText(promptText).then(() => {
+                    btn.textContent = "Copied!";
+                    btn.classList.add("text-teal", "border-teal");
+                    setTimeout(() => { btn.textContent = "Copy"; btn.classList.remove("text-teal", "border-teal"); }, 2000);
+                  }).catch(() => {});
+                }}
                 className="absolute top-2 right-2 px-2 py-1 bg-white border border-gray-200 rounded text-[10px] text-gray-600 hover:bg-gray-50"
               >
                 Copy

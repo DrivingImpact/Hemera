@@ -61,7 +61,7 @@ export function Sidebar({
   const sections = isAdmin ? ADMIN_SECTIONS : CLIENT_SECTIONS;
 
   return (
-    <aside className="w-[220px] bg-slate flex flex-col flex-shrink-0 min-h-screen">
+    <aside className="w-[220px] bg-slate flex flex-col flex-shrink-0 h-screen sticky top-0 overflow-y-auto">
       <div className="px-5 pt-5 pb-4 border-b border-white/10">
         <div className="text-teal text-[11px] font-bold uppercase tracking-[2px]">Hemera</div>
         <div className="text-[#94A3B8] text-xs mt-1">{orgName}</div>

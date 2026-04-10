@@ -216,6 +216,7 @@ def get_supplier_report(
 
     return {
         "engagement_id": engagement_id,
+        "client_name": engagement.display_name or engagement.org_name,
         "status": engagement.supplier_report_status or "pending",
         "supplier_count": len(suppliers_data),
         "suppliers": suppliers_data,
