@@ -306,6 +306,48 @@ export default function HemerascopePage() {
   );
 
   /* ---------------------------------------------------------------- */
+  /*  AI Risk Analysis — attach verdicts to finding cards              */
+  /* ---------------------------------------------------------------- */
+
+  const handleRiskAnalysisResult = useCallback(
+    (text: string) => {
+      if (!supplier) return;
+      try {
+        const parsed = JSON.parse(text);
+        const verdicts = parsed.verified_findings;
+        if (!Array.isArray(verdicts)) return;
+
+        setSuppliers((prev) =>
+          prev.map((s, i) => {
+            if (i !== currentIndex) return s;
+            return {
+              ...s,
+              findings: s.findings.map((f) => {
+                const match = verdicts.find(
+                  (v: { original_title?: string }) =>
+                    v.original_title && f.title.includes(v.original_title.substring(0, 30))
+                );
+                if (!match) return f;
+                return {
+                  ...f,
+                  ai_verdict: {
+                    verdict: match.verdict,
+                    reasoning: match.reasoning,
+                    corrected_title: match.corrected_title || undefined,
+                  },
+                };
+              }),
+            };
+          })
+        );
+      } catch {
+        // If response isn't valid JSON, ignore
+      }
+    },
+    [supplier, currentIndex]
+  );
+
+  /* ---------------------------------------------------------------- */
   /*  Log engagement                                                   */
   /* ---------------------------------------------------------------- */
 
@@ -696,6 +738,7 @@ export default function HemerascopePage() {
             onActionsGenerated={handleActionsGenerated}
             onClientLanguage={handleClientLanguage}
             onRemoveFinding={(findingId) => handleToggle(findingId, false)}
+            onRiskAnalysisResult={handleRiskAnalysisResult}
             onLogEngagement={handleLogEngagement}
           />
         </div>

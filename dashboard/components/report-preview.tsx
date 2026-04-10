@@ -33,6 +33,7 @@ interface ReportPreviewProps {
   onActionsGenerated: (text: string) => void;
   onClientLanguage: (findingId: number, text: string) => void;
   onRemoveFinding: (findingId: number) => void;
+  onRiskAnalysisResult: (text: string) => void;
   onLogEngagement: (type: string, notes: string) => void;
 }
 
@@ -52,6 +53,7 @@ export default function ReportPreview({
   onActionsGenerated,
   onClientLanguage,
   onRemoveFinding,
+  onRiskAnalysisResult,
   onLogEngagement,
 }: ReportPreviewProps) {
   const [engType, setEngType] = useState("email");
@@ -72,10 +74,7 @@ export default function ReportPreview({
           taskType="risk_analysis"
           targetType="supplier"
           targetId={supplierId}
-          onResult={() => {
-            // Risk analysis creates new findings — reload to see them
-            setTimeout(() => window.location.reload(), 1000);
-          }}
+          onResult={onRiskAnalysisResult}
         />
       </section>
 

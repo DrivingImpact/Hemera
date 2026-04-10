@@ -13,6 +13,12 @@ export interface EvidenceItem {
   is_verified?: boolean;
 }
 
+export interface AIVerdict {
+  verdict: "correct" | "likely_registry_gap" | "uncertain";
+  reasoning: string;
+  corrected_title?: string;
+}
+
 export interface Finding {
   id: number;
   source: "deterministic" | "ai" | "ai_automated" | "ai_manual" | "outlier";
@@ -24,6 +30,7 @@ export interface Finding {
   source_name?: string;
   layer?: number | null;
   evidence?: EvidenceItem[];
+  ai_verdict?: AIVerdict | null;
   included: boolean | null; // null = not yet decided
 }
 
@@ -101,11 +108,35 @@ export default function FindingCard({ finding, onToggle }: FindingCardProps) {
 
         {/* Title + detail */}
         <h4 className="text-sm font-semibold mt-2 text-slate">
-          {finding.title}
+          {finding.ai_verdict?.corrected_title || finding.title}
+          {finding.ai_verdict?.corrected_title && (
+            <span className="text-[10px] text-muted font-normal ml-1">(corrected by AI)</span>
+          )}
         </h4>
         <p className="text-xs text-muted mt-1 leading-relaxed">
           {finding.detail}
         </p>
+
+        {/* AI Risk Analysis verdict */}
+        {finding.ai_verdict && (
+          <div className={`mt-2 flex items-start gap-1.5 text-[11px] rounded px-2.5 py-1.5 ${
+            finding.ai_verdict.verdict === "correct"
+              ? "bg-teal/5 text-teal border border-teal/15"
+              : finding.ai_verdict.verdict === "likely_registry_gap"
+                ? "bg-amber-50 text-amber-700 border border-amber-200"
+                : "bg-[#F1F5F9] text-[#475569] border border-[#E5E5E0]"
+          }`}>
+            <span className="flex-shrink-0 mt-px">
+              {finding.ai_verdict.verdict === "correct" ? "✓" : finding.ai_verdict.verdict === "likely_registry_gap" ? "⚠" : "?"}
+            </span>
+            <div>
+              <span className="font-semibold">
+                AI: {finding.ai_verdict.verdict === "correct" ? "Confirmed" : finding.ai_verdict.verdict === "likely_registry_gap" ? "Likely registry gap" : "Uncertain"}
+              </span>
+              <span className="ml-1">&mdash; {finding.ai_verdict.reasoning}</span>
+            </div>
+          </div>
+        )}
 
         {/* Evidence breakdown — collapsible dropdown */}
         {finding.evidence && finding.evidence.length > 0 && (
