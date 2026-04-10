@@ -109,14 +109,12 @@ def re_analyse(
     ).update({"is_active": False, "superseded_at": now})
 
     # Regenerate from current scores
-    from hemera.services.esg_scorer import calculate_esg_score
-    from hemera.services.finding_generator import generate_findings_from_result
+    from hemera.services.finding_generator import generate_findings_from_sources
     from hemera.models.supplier import SupplierSource
 
     sources = db.query(SupplierSource).filter(SupplierSource.supplier_id == supplier_id).all()
     if sources:
-        result = calculate_esg_score(sources)
-        finding_dicts = generate_findings_from_result(result, supplier_name=supplier.name)
+        finding_dicts = generate_findings_from_sources(sources, supplier_name=supplier.name)
 
         for fd in finding_dicts:
             finding = SupplierFinding(supplier_id=supplier_id, is_active=True, **fd)

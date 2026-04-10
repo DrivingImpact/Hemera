@@ -31,7 +31,7 @@ from hemera.services.scraping_sources import (
 )
 from hemera.services.esg_scorer import calculate_esg_score
 from hemera.models.finding import SupplierFinding
-from hemera.services.finding_generator import generate_findings_from_result
+from hemera.services.finding_generator import generate_findings_from_sources
 
 log = logging.getLogger(__name__)
 
@@ -181,7 +181,8 @@ async def enrich_supplier(
         SupplierFinding.is_active == True,
     ).update({"is_active": False, "superseded_at": datetime.utcnow()})
 
-    finding_dicts = generate_findings_from_result(esg_result, supplier_name=name)
+    all_sources = db.query(SupplierSource).filter(SupplierSource.supplier_id == supplier.id).all()
+    finding_dicts = generate_findings_from_sources(all_sources, supplier_name=name)
     for fd in finding_dicts:
         finding = SupplierFinding(supplier_id=supplier.id, is_active=True, **fd)
         db.add(finding)
