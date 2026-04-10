@@ -26,11 +26,13 @@ interface ReportPreviewProps {
   supplierName: string;
   engagementId: string;
   includedFindings: Finding[];
+  allFindingsCount: number;
   actions: RecommendedAction[];
   engagements: EngagementTouchpoint[];
   clientLanguage: Record<number, string>; // findingId -> client language
   onActionsGenerated: (text: string) => void;
   onClientLanguage: (findingId: number, text: string) => void;
+  onRemoveFinding: (findingId: number) => void;
   onLogEngagement: (type: string, notes: string) => void;
 }
 
@@ -43,11 +45,13 @@ export default function ReportPreview({
   supplierName,
   engagementId,
   includedFindings,
+  allFindingsCount,
   actions,
   engagements,
   clientLanguage,
   onActionsGenerated,
   onClientLanguage,
+  onRemoveFinding,
   onLogEngagement,
 }: ReportPreviewProps) {
   const [engType, setEngType] = useState("email");
@@ -56,6 +60,25 @@ export default function ReportPreview({
 
   return (
     <div className="space-y-6">
+      {/* ---- Risk Analysis (first — analyses ALL source data, not just included) ---- */}
+      <section>
+        <h3 className="text-xs font-bold uppercase tracking-wide text-muted mb-2">
+          AI Risk Analysis
+        </h3>
+        <p className="text-[11px] text-muted mb-2">
+          Analyses all {allFindingsCount} findings and source data to identify patterns the rules may have missed.
+        </p>
+        <AITaskButtons
+          taskType="risk_analysis"
+          targetType="supplier"
+          targetId={supplierId}
+          onResult={() => {
+            // Risk analysis creates new findings — reload to see them
+            setTimeout(() => window.location.reload(), 1000);
+          }}
+        />
+      </section>
+
       {/* ---- Included Findings ---- */}
       <section>
         <h3 className="text-xs font-bold uppercase tracking-wide text-muted mb-3">
@@ -75,9 +98,18 @@ export default function ReportPreview({
                   key={f.id}
                   className="bg-surface rounded-lg border border-[#E5E5E0] p-4"
                 >
-                  <h4 className="text-sm font-semibold text-slate">
-                    {f.title}
-                  </h4>
+                  <div className="flex items-start justify-between gap-2">
+                    <h4 className="text-sm font-semibold text-slate">
+                      {f.title}
+                    </h4>
+                    <button
+                      onClick={() => onRemoveFinding(f.id)}
+                      className="text-[10px] text-muted hover:text-red-500 flex-shrink-0 px-2 py-0.5 rounded hover:bg-red-50 transition-colors"
+                      title="Remove from report"
+                    >
+                      Remove
+                    </button>
+                  </div>
                   {clientLanguage[f.id] ? (
                     <p className="text-xs text-muted mt-1.5 leading-relaxed whitespace-pre-wrap">
                       {clientLanguage[f.id]}
@@ -108,7 +140,6 @@ export default function ReportPreview({
                   })),
                 }}
                 onResult={(text) => {
-                  // Parse the AI response — expects JSON array of {original_title, client_title, client_detail}
                   try {
                     const parsed = JSON.parse(text);
                     if (Array.isArray(parsed)) {
@@ -120,7 +151,6 @@ export default function ReportPreview({
                       });
                     }
                   } catch {
-                    // If not JSON, apply as-is to first finding
                     if (includedFindings[0]) {
                       onClientLanguage(includedFindings[0].id, text);
                     }
@@ -184,24 +214,6 @@ export default function ReportPreview({
             })),
           }}
           onResult={onActionsGenerated}
-        />
-      </section>
-
-      {/* ---- Risk Analysis ---- */}
-      <section>
-        <h3 className="text-xs font-bold uppercase tracking-wide text-muted mb-3">
-          Risk Analysis
-        </h3>
-        <AITaskButtons
-          taskType="risk_analysis"
-          targetType="supplier"
-          targetId={supplierId}
-          context={{
-            supplier_name: supplierName,
-            engagement_id: engagementId,
-            findings_count: includedFindings.length,
-          }}
-          onResult={() => {}}
         />
       </section>
 

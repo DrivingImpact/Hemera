@@ -689,11 +689,13 @@ export default function HemerascopePage() {
             supplierName={supplier.supplier_name}
             engagementId={id}
             includedFindings={includedFindings}
+            allFindingsCount={supplier.findings.length}
             actions={supplier.actions}
             engagements={supplier.engagements}
             clientLanguage={clientLanguage[supplier.supplier_id] ?? {}}
             onActionsGenerated={handleActionsGenerated}
             onClientLanguage={handleClientLanguage}
+            onRemoveFinding={(findingId) => handleToggle(findingId, false)}
             onLogEngagement={handleLogEngagement}
           />
         </div>

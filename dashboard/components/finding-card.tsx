@@ -107,42 +107,47 @@ export default function FindingCard({ finding, onToggle }: FindingCardProps) {
           {finding.detail}
         </p>
 
-        {/* Evidence breakdown — shows what data sources contributed */}
+        {/* Evidence breakdown — collapsible dropdown */}
         {finding.evidence && finding.evidence.length > 0 && (
-          <div className="mt-2 space-y-1">
-            {finding.evidence.map((ev, i) => (
-              <div key={i} className="flex items-start gap-2 text-[11px] bg-[#F8FAFC] rounded px-2.5 py-1.5 border border-[#F0F0EB]">
-                <span className={`flex-shrink-0 mt-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-bold ${ev.is_verified ? "bg-teal/15 text-teal" : "bg-[#E5E5E0] text-muted"}`}>
-                  {ev.is_verified ? "✓" : "?"}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-semibold text-[#334155]">{ev.source_name}</span>
-                    {ev.tier && (
-                      <span className="text-[9px] text-muted px-1 py-0 rounded bg-[#F1F5F9]">Tier {ev.tier}</span>
+          <details className="mt-2">
+            <summary className="text-[11px] text-teal cursor-pointer hover:underline font-medium">
+              View source data ({finding.evidence.length} source{finding.evidence.length !== 1 ? "s" : ""})
+            </summary>
+            <div className="mt-1.5 space-y-1">
+              {finding.evidence.map((ev, i) => (
+                <div key={i} className="flex items-start gap-2 text-[11px] bg-[#F8FAFC] rounded px-2.5 py-1.5 border border-[#F0F0EB]">
+                  <span className={`flex-shrink-0 mt-0.5 w-3.5 h-3.5 rounded-full flex items-center justify-center text-[8px] font-bold ${ev.is_verified ? "bg-teal/15 text-teal" : "bg-[#E5E5E0] text-muted"}`}>
+                    {ev.is_verified ? "✓" : "?"}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-semibold text-[#334155]">{ev.source_name}</span>
+                      {ev.tier && (
+                        <span className="text-[9px] text-muted px-1 py-0 rounded bg-[#F1F5F9]">Tier {ev.tier}</span>
+                      )}
+                      {finding.layer && (
+                        <span className="text-[9px] text-muted px-1 py-0 rounded bg-[#F1F5F9]">L{finding.layer}</span>
+                      )}
+                      {ev.fetched_at && (
+                        <span className="text-[9px] text-muted ml-auto">{new Date(ev.fetched_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
+                      )}
+                    </div>
+                    {ev.summary && (
+                      <p className="text-muted mt-0.5 leading-snug">{ev.summary}</p>
                     )}
-                    {finding.layer && (
-                      <span className="text-[9px] text-muted px-1 py-0 rounded bg-[#F1F5F9]">L{finding.layer}</span>
-                    )}
-                    {ev.fetched_at && (
-                      <span className="text-[9px] text-muted ml-auto">{new Date(ev.fetched_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
+                    {ev.data && Object.keys(ev.data).length > 0 && (
+                      <details className="mt-1">
+                        <summary className="text-[10px] text-teal cursor-pointer hover:underline">Raw data</summary>
+                        <pre className="text-[9px] text-muted mt-1 overflow-x-auto max-h-32 bg-white rounded p-1.5 border border-[#E5E5E0]">
+                          {JSON.stringify(ev.data, null, 2)}
+                        </pre>
+                      </details>
                     )}
                   </div>
-                  {ev.summary && (
-                    <p className="text-muted mt-0.5 leading-snug">{ev.summary}</p>
-                  )}
-                  {ev.data && Object.keys(ev.data).length > 0 && (
-                    <details className="mt-1">
-                      <summary className="text-[10px] text-teal cursor-pointer hover:underline">Raw data</summary>
-                      <pre className="text-[9px] text-muted mt-1 overflow-x-auto max-h-32 bg-white rounded p-1.5 border border-[#E5E5E0]">
-                        {JSON.stringify(ev.data, null, 2)}
-                      </pre>
-                    </details>
-                  )}
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          </details>
         )}
 
         {/* Evidence link */}
