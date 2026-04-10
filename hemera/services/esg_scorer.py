@@ -32,7 +32,7 @@ class ESGResult:
     anti_corruption: float = 50.0
     social_value: float = 50.0
 
-    total_score: float = 0.0
+    hemera_score: float = 0.0
     critical_flag: bool = False
     staleness_penalty: float = 1.0
     confidence: str = "low"
@@ -294,7 +294,7 @@ def calculate_esg_score(sources: list[SupplierSource]) -> ESGResult:
     if result.critical_flag:
         weighted = min(40, weighted)
 
-    result.total_score = round(max(0, min(100, weighted)), 1)
+    result.hemera_score = round(max(0, min(100, weighted)), 1)
 
     # ── CONFIDENCE RATING ──
     tier1_count = sum(1 for s in sources if s.tier and s.tier <= 1)

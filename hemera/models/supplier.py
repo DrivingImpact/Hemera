@@ -29,8 +29,9 @@ class Supplier(Base):
     registered_address: Mapped[str | None] = mapped_column(Text)
     entity_type: Mapped[str | None] = mapped_column(String(50))  # ltd, plc, charity, cic, etc.
 
-    # Current ESG score (latest)
-    esg_score: Mapped[float | None] = mapped_column(Float)
+    # Current Hemera score (latest)
+    hemera_score: Mapped[float | None] = mapped_column(Float)
+    hemera_verified: Mapped[bool] = mapped_column(Boolean, default=False)
     confidence: Mapped[str | None] = mapped_column(String(10))  # high, medium, low
     critical_flag: Mapped[bool] = mapped_column(Boolean, default=False)
 
@@ -44,6 +45,8 @@ class Supplier(Base):
     sources = relationship("SupplierSource", back_populates="supplier")
     transactions = relationship("Transaction", back_populates="supplier")
     alerts = relationship("MonitoringAlert", back_populates="supplier")
+    findings = relationship("SupplierFinding", back_populates="supplier", order_by="SupplierFinding.created_at.desc()")
+    hemera_engagements = relationship("SupplierEngagement", back_populates="supplier", order_by="SupplierEngagement.created_at.desc()")
 
 
 class SupplierScore(Base):
@@ -65,7 +68,7 @@ class SupplierScore(Base):
     social_value: Mapped[float | None] = mapped_column(Float)
 
     # Weighted total
-    total_score: Mapped[float | None] = mapped_column(Float)
+    hemera_score: Mapped[float | None] = mapped_column(Float)
 
     # Modifiers applied
     critical_flag: Mapped[bool] = mapped_column(Boolean, default=False)

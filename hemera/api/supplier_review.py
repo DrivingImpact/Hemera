@@ -108,7 +108,7 @@ def generate_supplier_review(
 
         # ESG score claims
         if score:
-            claims.append({"category": "ESG", "claim": f"Overall ESG score: {score.total_score:.0f}/100 ({s.confidence or 'unknown'} confidence)", "source": f"{score.layers_completed} data layers", "verifiable": True})
+            claims.append({"category": "ESG", "claim": f"Overall ESG score: {score.hemera_score:.0f}/100 ({s.confidence or 'unknown'} confidence)", "source": f"{score.layers_completed} data layers", "verifiable": True})
             if score.critical_flag:
                 claims.append({"category": "ESG", "claim": "Flagged as critical risk supplier", "source": "ESG scoring model", "verifiable": True, "flag": True})
 
@@ -150,7 +150,7 @@ def generate_supplier_review(
             "entity_type": s.entity_type,
             "status": s.status,
             "sic_codes": s.sic_codes or [],
-            "esg_score": s.esg_score,
+            "hemera_score": s.hemera_score,
             "confidence": s.confidence,
             "critical_flag": s.critical_flag,
             "raw_supplier": row.raw_supplier,

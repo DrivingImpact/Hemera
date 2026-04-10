@@ -26,7 +26,7 @@ def list_suppliers(
             "ch_number": s.ch_number,
             "name": s.name,
             "sector": s.sector,
-            "esg_score": s.esg_score,
+            "hemera_score": s.hemera_score,
             "confidence": s.confidence,
             "critical_flag": s.critical_flag,
         }
@@ -69,14 +69,14 @@ def get_supplier(supplier_id: int, db: Session = Depends(get_db)):
         "sector": s.sector,
         "entity_type": s.entity_type,
         "registered_address": s.registered_address,
-        "esg_score": s.esg_score,
+        "hemera_score": s.hemera_score,
         "confidence": s.confidence,
         "critical_flag": s.critical_flag,
         "created_at": s.created_at.isoformat() if s.created_at else None,
         "updated_at": s.updated_at.isoformat() if s.updated_at else None,
         "score_history": [
             {
-                "total_score": sc.total_score,
+                "hemera_score": sc.hemera_score,
                 "confidence": sc.confidence,
                 "critical_flag": sc.critical_flag,
                 "layers_completed": sc.layers_completed,

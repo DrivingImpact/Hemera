@@ -1,7 +1,7 @@
 """Client engagements — a single carbon footprint report."""
 
 from datetime import datetime, date
-from sqlalchemy import String, Text, Float, Integer, DateTime, Date, JSON
+from sqlalchemy import String, Text, Float, Integer, Boolean, DateTime, Date, JSON
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from hemera.database import Base
 
@@ -44,8 +44,14 @@ class Engagement(Base):
     transaction_count: Mapped[int | None] = mapped_column(Integer)
     supplier_count: Mapped[int | None] = mapped_column(Integer)
 
+    # HemeraScope supplier report fields
+    supplier_report_status: Mapped[str | None] = mapped_column(String(20))
+    supplier_report_exec_summary: Mapped[str | None] = mapped_column(Text)
+
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     delivered_at: Mapped[datetime | None] = mapped_column(DateTime)
 
     # Relationships
     transactions = relationship("Transaction", back_populates="engagement")
+    report_selections = relationship("ReportSelection", back_populates="engagement")
+    report_actions = relationship("ReportAction", back_populates="engagement")

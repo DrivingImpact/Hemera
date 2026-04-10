@@ -164,7 +164,7 @@ async def enrich_supplier(
         transparency_disclosure=esg_result.transparency_disclosure,
         anti_corruption=esg_result.anti_corruption,
         social_value=esg_result.social_value,
-        total_score=esg_result.total_score,
+        hemera_score=esg_result.hemera_score,
         critical_flag=esg_result.critical_flag,
         staleness_penalty=esg_result.staleness_penalty,
         confidence=esg_result.confidence,
@@ -173,7 +173,7 @@ async def enrich_supplier(
     db.add(score)
 
     # Update supplier summary
-    supplier.esg_score = esg_result.total_score
+    supplier.hemera_score = esg_result.hemera_score
     supplier.confidence = esg_result.confidence
     supplier.critical_flag = esg_result.critical_flag
     supplier.updated_at = datetime.utcnow()
@@ -182,7 +182,7 @@ async def enrich_supplier(
 
     db.commit()
 
-    results["esg_score"] = esg_result.total_score
+    results["hemera_score"] = esg_result.hemera_score
     results["confidence"] = esg_result.confidence
     results["critical_flag"] = esg_result.critical_flag
     results["flags"] = esg_result.flags
