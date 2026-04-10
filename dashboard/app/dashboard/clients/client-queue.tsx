@@ -273,33 +273,19 @@ function EngagementCard({
               {eng.qc_progress && eng.qc_progress.reviewed > 0 ? "Continue Carbon" : "Carbon Review"}
             </Link>
             <Link
-              href={`/dashboard/${eng.id}/supplier-review`}
+              href={`/dashboard/${eng.id}/hemerascope`}
               className="px-4 py-2 rounded-lg text-xs font-semibold transition-opacity hover:opacity-90 bg-[#6366F1] text-white"
             >
               Supplier Review
             </Link>
-            <Link
-              href={`/dashboard/${eng.id}/hemerascope`}
-              className="px-4 py-2 rounded-lg text-xs font-semibold transition-opacity hover:opacity-90 bg-slate text-white"
-            >
-              HemeraScope
-            </Link>
           </div>
         ) : stage.key === "review_report" ? (
-          <div className="flex-shrink-0 flex items-center gap-2">
-            <Link
-              href={`/dashboard/${eng.id}/hemerascope`}
-              className="px-4 py-2 rounded-lg text-xs font-semibold transition-opacity hover:opacity-90 bg-slate text-white"
-            >
-              HemeraScope
-            </Link>
-            <Link
-              href={stage.actionHref(eng)}
-              className={`px-4 py-2 rounded-lg text-xs font-semibold transition-opacity hover:opacity-90 ${stage.actionStyle}`}
-            >
-              {stage.actionLabel(eng)}
-            </Link>
-          </div>
+          <Link
+            href={stage.actionHref(eng)}
+            className={`flex-shrink-0 px-5 py-2.5 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90 ${stage.actionStyle}`}
+          >
+            {stage.actionLabel(eng)}
+          </Link>
         ) : (
           <Link
             href={stage.actionHref(eng)}
@@ -377,13 +363,6 @@ function EngagementProgress({ eng }: { eng: EngagementListItem }) {
             <div className="h-full bg-[#6366F1] rounded-full transition-all duration-500" style={{ width: "2%" }} />
           </div>
           <span className="text-[10px] text-muted flex-shrink-0 tabular-nums w-20 text-right">{supplierLabel}</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] text-muted w-20 flex-shrink-0">HemeraScope</span>
-          <div className="flex-1 h-1.5 bg-[#E5E5E0] rounded-full overflow-hidden">
-            <div className="h-full bg-slate rounded-full transition-all duration-500" style={{ width: "2%" }} />
-          </div>
-          <span className="text-[10px] text-muted flex-shrink-0 tabular-nums w-20 text-right">Not started</span>
         </div>
       </div>
     );
