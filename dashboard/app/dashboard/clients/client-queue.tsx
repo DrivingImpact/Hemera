@@ -52,7 +52,7 @@ const STAGES: Stage[] = [
   {
     key: "review_report",
     label: "Review Report",
-    description: "QC passed — review the final report before releasing to client",
+    description: "QC passed — review the carbon report and curate HemeraScope before releasing to client",
     statuses: ["qc_passed"],
     actionLabel: () => "Review Report",
     actionHref: (eng) => `/dashboard/${eng.id}`,
@@ -278,6 +278,27 @@ function EngagementCard({
             >
               Supplier Review
             </Link>
+            <Link
+              href={`/dashboard/${eng.id}/hemerascope`}
+              className="px-4 py-2 rounded-lg text-xs font-semibold transition-opacity hover:opacity-90 bg-slate text-white"
+            >
+              HemeraScope
+            </Link>
+          </div>
+        ) : stage.key === "review_report" ? (
+          <div className="flex-shrink-0 flex items-center gap-2">
+            <Link
+              href={`/dashboard/${eng.id}/hemerascope`}
+              className="px-4 py-2 rounded-lg text-xs font-semibold transition-opacity hover:opacity-90 bg-slate text-white"
+            >
+              HemeraScope
+            </Link>
+            <Link
+              href={stage.actionHref(eng)}
+              className={`px-4 py-2 rounded-lg text-xs font-semibold transition-opacity hover:opacity-90 ${stage.actionStyle}`}
+            >
+              {stage.actionLabel(eng)}
+            </Link>
           </div>
         ) : (
           <Link
@@ -344,18 +365,25 @@ function EngagementProgress({ eng }: { eng: EngagementListItem }) {
     return (
       <div className="border-t border-[#F0F0EB] pt-2 space-y-1.5">
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-muted w-16 flex-shrink-0">Carbon</span>
+          <span className="text-[10px] text-muted w-20 flex-shrink-0">Carbon</span>
           <div className="flex-1 h-1.5 bg-[#E5E5E0] rounded-full overflow-hidden">
             <div className="h-full bg-teal rounded-full transition-all duration-500" style={{ width: `${Math.max(carbonPct, 2)}%` }} />
           </div>
           <span className="text-[10px] text-muted flex-shrink-0 tabular-nums w-20 text-right">{carbonLabel}</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-[10px] text-muted w-16 flex-shrink-0">Supplier</span>
+          <span className="text-[10px] text-muted w-20 flex-shrink-0">Supplier</span>
           <div className="flex-1 h-1.5 bg-[#E5E5E0] rounded-full overflow-hidden">
             <div className="h-full bg-[#6366F1] rounded-full transition-all duration-500" style={{ width: "2%" }} />
           </div>
           <span className="text-[10px] text-muted flex-shrink-0 tabular-nums w-20 text-right">{supplierLabel}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] text-muted w-20 flex-shrink-0">HemeraScope</span>
+          <div className="flex-1 h-1.5 bg-[#E5E5E0] rounded-full overflow-hidden">
+            <div className="h-full bg-slate rounded-full transition-all duration-500" style={{ width: "2%" }} />
+          </div>
+          <span className="text-[10px] text-muted flex-shrink-0 tabular-nums w-20 text-right">Not started</span>
         </div>
       </div>
     );

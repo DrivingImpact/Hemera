@@ -73,9 +73,9 @@ export default async function SupplierDetailPage({
           <div className="text-right">
             {latestScore && (
               <div>
-                <div className="text-[10px] uppercase tracking-[1px] text-muted">ESG Score</div>
+                <div className="text-[10px] uppercase tracking-[1px] text-muted">Hemera Score</div>
                 <div className="text-3xl font-extrabold text-teal">
-                  {latestScore.total_score.toFixed(0)}
+                  {latestScore.hemera_score.toFixed(0)}
                 </div>
                 <Badge
                   variant={
@@ -100,9 +100,9 @@ export default async function SupplierDetailPage({
         )}
       </div>
 
-      {/* ESG Radar */}
+      {/* Hemera Score Radar */}
       {radarLabels.length > 0 && (
-        <ChartCard title="ESG Domain Scores">
+        <ChartCard title="Hemera Domain Scores">
           <EsgRadar labels={radarLabels} values={radarValues} range={[0, 100]} />
         </ChartCard>
       )}

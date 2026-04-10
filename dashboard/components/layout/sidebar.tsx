@@ -24,6 +24,7 @@ const CLIENT_SECTIONS: { label: string; items: NavItem[] }[] = [
     label: "Actions",
     items: [
       { name: "Reduction", href: "/reduction", icon: "◯" },
+      { name: "HemeraScope", href: "/hemerascope/report", icon: "◯" },
       { name: "Upload", href: "/upload", icon: "◯", absolute: true },
     ],
   },
@@ -35,6 +36,12 @@ const ADMIN_SECTIONS: { label: string; items: NavItem[] }[] = [
     items: [
       { name: "Clients", href: "/clients", icon: "◉", absolute: true },
       { name: "Upload", href: "/upload", icon: "◯", absolute: true },
+    ],
+  },
+  {
+    label: "Tools",
+    items: [
+      { name: "HemeraScope", href: "/hemerascope", icon: "◯" },
     ],
   },
 ];

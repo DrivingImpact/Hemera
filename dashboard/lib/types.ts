@@ -104,7 +104,7 @@ export interface SupplierListItem {
   ch_number: string;
   name: string;
   sector: string;
-  esg_score: number;
+  hemera_score: number;
   confidence: string;
   critical_flag: boolean;
 }
@@ -120,13 +120,13 @@ export interface SupplierDetail {
   sector: string;
   entity_type: string;
   registered_address: string;
-  esg_score: number;
+  hemera_score: number;
   confidence: string;
   critical_flag: boolean;
   created_at: string;
   updated_at: string;
   score_history: {
-    total_score: number;
+    hemera_score: number;
     confidence: string;
     critical_flag: boolean;
     layers_completed: number;

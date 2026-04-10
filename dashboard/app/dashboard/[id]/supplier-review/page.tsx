@@ -26,7 +26,7 @@ interface SupplierCard {
   entity_type: string | null;
   status: string | null;
   sic_codes: string[];
-  esg_score: number | null;
+  hemera_score: number | null;
   confidence: string | null;
   critical_flag: boolean;
   raw_supplier: string;
@@ -161,7 +161,7 @@ export default function SupplierReviewPage() {
         </div>
         <h2 className="text-lg font-semibold mt-4">Supplier Claims Review</h2>
         <p className="text-muted text-sm mt-1 max-w-sm">
-          Verify the claims we make about each supplier in the report — ESG scores,
+          Verify the claims we make about each supplier in the report — Hemera Scores,
           risk flags, sector classifications, and evidence from data sources.
         </p>
         <button onClick={generate} className="mt-5 px-6 py-3 bg-[#6366F1] text-white rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity">
@@ -297,21 +297,21 @@ export default function SupplierReviewPage() {
             </div>
           )}
 
-          {/* ESG score summary if available */}
-          {card.esg_score != null && (
+          {/* Hemera Score summary if available */}
+          {card.hemera_score != null && (
             <div className="flex items-center gap-3 pt-2 border-t border-[#F0F0EB]">
               <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${
-                card.esg_score >= 70 ? "bg-[#D1FAE5] text-[#065F46]" :
-                card.esg_score >= 40 ? "bg-amber-tint text-amber" :
+                card.hemera_score >= 70 ? "bg-[#D1FAE5] text-[#065F46]" :
+                card.hemera_score >= 40 ? "bg-amber-tint text-amber" :
                 "bg-[#FEE2E2] text-[#991B1B]"
               }`}>
-                {card.esg_score.toFixed(0)}
+                {card.hemera_score.toFixed(0)}
               </div>
               <div>
-                <div className="text-xs font-medium">ESG Score</div>
+                <div className="text-xs font-medium">Hemera Score</div>
                 <div className="text-[10px] text-muted">
                   {card.confidence} confidence
-                  {card.esg_score >= 70 ? " · Low risk" : card.esg_score >= 40 ? " · Medium risk" : " · High risk"}
+                  {card.hemera_score >= 70 ? " · Low risk" : card.hemera_score >= 40 ? " · Medium risk" : " · High risk"}
                 </div>
               </div>
             </div>
