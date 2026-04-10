@@ -1,0 +1,79 @@
+<h2>Recommendations Summary</h2>
+
+<p style="color: #475569; margin-bottom: 12pt;">
+    The following recommendations are grouped by priority. These actions are designed to strengthen
+    supply chain resilience, improve ESG transparency, and address the findings identified in this report.
+    Hemera will support implementation through ongoing engagement and monitoring.
+</p>
+
+{% if priority_1_actions %}
+<h3>Priority 1 — Immediate Actions</h3>
+<p style="color: #475569; font-size: 9pt; margin-bottom: 6pt;">
+    These actions address critical or high-severity findings and should be initiated within the current reporting period.
+</p>
+<table class="data-table">
+    <thead>
+        <tr><th>Supplier</th><th>Action</th></tr>
+    </thead>
+    <tbody>
+        {% for a in priority_1_actions %}
+        <tr>
+            <td><strong>{{ a.supplier_name }}</strong></td>
+            <td>{{ a.action_text }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+{% if priority_2_actions %}
+<h3 style="margin-top: 12pt;">Priority 2 — Near-Term Actions</h3>
+<p style="color: #475569; font-size: 9pt; margin-bottom: 6pt;">
+    These actions address medium-severity findings and can be incorporated into standard supplier management processes.
+</p>
+<table class="data-table">
+    <thead>
+        <tr><th>Supplier</th><th>Action</th></tr>
+    </thead>
+    <tbody>
+        {% for a in priority_2_actions %}
+        <tr>
+            <td><strong>{{ a.supplier_name }}</strong></td>
+            <td>{{ a.action_text }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+{% if priority_3_actions %}
+<h3 style="margin-top: 12pt;">Priority 3 — Ongoing Improvement</h3>
+<p style="color: #475569; font-size: 9pt; margin-bottom: 6pt;">
+    These actions support continuous improvement and long-term supply chain resilience.
+</p>
+<table class="data-table">
+    <thead>
+        <tr><th>Supplier</th><th>Action</th></tr>
+    </thead>
+    <tbody>
+        {% for a in priority_3_actions %}
+        <tr>
+            <td><strong>{{ a.supplier_name }}</strong></td>
+            <td>{{ a.action_text }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+{% if not priority_1_actions and not priority_2_actions and not priority_3_actions %}
+<p style="color: #64748B; font-style: italic;">
+    No specific actions have been defined for this reporting period.
+</p>
+{% endif %}
+
+<p style="color: #475569; margin-top: 16pt;">
+    Hemera will continue to monitor your supplier base and provide updated intelligence as new data emerges.
+    We recommend reviewing this report with your procurement team and scheduling a follow-up assessment
+    within 12 months to track progress against these recommendations.
+</p>

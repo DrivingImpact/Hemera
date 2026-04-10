@@ -1,0 +1,108 @@
+<div class="no-break">
+    <h2>{{ supplier.name }}</h2>
+    <p style="color: #64748B; font-size: 9pt; margin-bottom: 8pt;">
+        {% if supplier.sector %}{{ supplier.sector }}{% endif %}
+        {% if supplier.entity_type %} &middot; {{ supplier.entity_type }}{% endif %}
+        {% if supplier.ch_number %} &middot; Co. {{ supplier.ch_number }}{% endif %}
+    </p>
+
+    <div class="kpi-grid">
+        <div class="kpi-card {{ 'warning' if supplier.critical_flag else '' }}">
+            <div class="section-label">Hemera Score</div>
+            <div class="metric-value {{ 'metric-amber' if (supplier.hemera_score or 0) < 60 else 'metric-teal' }}">
+                {% if supplier.hemera_score is not none %}{{ "%.0f"|format(supplier.hemera_score) }}{% else %}—{% endif %}
+                <span class="metric-unit">/ 100</span>
+            </div>
+            <p style="font-size: 7pt; color: #64748B; margin-top: 4pt;">
+                Confidence: {{ supplier.confidence or 'pending' }}
+                {% if supplier.critical_flag %} &middot; <span style="color: #991B1B; font-weight: 600;">Critical flag</span>{% endif %}
+            </p>
+        </div>
+        <div class="kpi-card">
+            <div class="section-label">Transactions</div>
+            <div class="metric-value metric-slate">{{ txn_count }}</div>
+            <p style="font-size: 7pt; color: #64748B; margin-top: 4pt;">
+                Total spend: &pound;{{ "{:,.0f}".format(total_spend) }}
+            </p>
+        </div>
+        <div class="kpi-card">
+            <div class="section-label">Carbon contribution</div>
+            <div class="metric-value metric-slate">{{ "%.1f"|format(total_co2e_kg / 1000) }} <span class="metric-unit">tCO2e</span></div>
+        </div>
+    </div>
+</div>
+
+{% if findings %}
+<h3 style="margin-top: 12pt;">Findings</h3>
+<table class="data-table">
+    <thead>
+        <tr><th>Severity</th><th>Domain</th><th>Finding</th></tr>
+    </thead>
+    <tbody>
+        {% for f in findings %}
+        <tr>
+            <td>
+                {% if f.severity == 'critical' %}<span class="badge badge-red">Critical</span>
+                {% elif f.severity == 'high' %}<span class="badge badge-amber">High</span>
+                {% elif f.severity == 'medium' %}<span class="badge badge-amber">Medium</span>
+                {% elif f.severity == 'positive' %}<span class="badge badge-green">Positive</span>
+                {% else %}<span class="badge badge-teal">Info</span>{% endif %}
+            </td>
+            <td>{{ f.domain | replace('_', ' ') | title }}</td>
+            <td>
+                <strong>{{ f.title }}</strong>
+                {% if f.detail %}<br><span style="font-size: 7.5pt; color: #64748B;">{{ f.detail }}</span>{% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p style="color: #64748B; margin-top: 8pt; font-style: italic;">
+    No findings selected for inclusion in this report.
+</p>
+{% endif %}
+
+{% if actions %}
+<h3 style="margin-top: 12pt;">Recommended Actions</h3>
+<table class="data-table">
+    <thead>
+        <tr><th>Priority</th><th>Action</th></tr>
+    </thead>
+    <tbody>
+        {% for a in actions %}
+        <tr>
+            <td class="num">{{ a.priority }}</td>
+            <td>{{ a.action_text }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+{% if engagements %}
+<h3 style="margin-top: 12pt;">Engagement Status</h3>
+<p style="color: #475569; margin-bottom: 6pt; font-size: 9pt;">
+    Hemera has initiated engagement with {{ supplier.name }} as part of our proactive supplier outreach programme.
+</p>
+<table class="data-table">
+    <thead>
+        <tr><th>Type</th><th>Subject</th><th>Status</th><th>Date</th></tr>
+    </thead>
+    <tbody>
+        {% for e in engagements %}
+        <tr>
+            <td>{{ e.engagement_type | replace('_', ' ') | title }}</td>
+            <td>{{ e.subject }}</td>
+            <td>
+                {% if e.status == 'responded' %}<span class="badge badge-green">Responded</span>
+                {% elif e.status == 'sent' %}<span class="badge badge-teal">Sent</span>
+                {% elif e.status == 'closed' %}<span class="badge badge-teal">Closed</span>
+                {% else %}<span class="badge badge-amber">{{ e.status | title }}</span>{% endif %}
+            </td>
+            <td>{{ e.contacted_at or '—' }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}

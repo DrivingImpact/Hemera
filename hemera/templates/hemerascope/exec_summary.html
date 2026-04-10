@@ -1,0 +1,62 @@
+<h2>Executive Summary</h2>
+
+<p style="color: #475569; margin-bottom: 12pt;">
+    This report presents Hemera's supplier intelligence assessment for <strong>{{ org_name }}</strong>,
+    covering {{ supplier_count }} suppliers across your supply chain. Every supply chain has areas for
+    improvement — this report is the first step in a collaborative process to strengthen transparency,
+    resilience, and ESG performance across your supplier base.
+</p>
+
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="section-label">Suppliers assessed</div>
+        <div class="metric-value metric-teal">{{ supplier_count }}</div>
+        <p style="font-size: 7pt; color: #64748B; margin-top: 4pt;">
+            Unique suppliers identified and assessed across 8 ESG domains.
+        </p>
+    </div>
+    <div class="kpi-card">
+        <div class="section-label">Average Hemera Score</div>
+        <div class="metric-value {{ 'metric-amber' if avg_hemera_score < 60 else 'metric-teal' }}">{{ "%.0f"|format(avg_hemera_score) }} <span class="metric-unit">/ 100</span></div>
+        <p style="font-size: 7pt; color: #64748B; margin-top: 4pt;">
+            Weighted composite score across governance, labour, environmental, and transparency domains.
+        </p>
+    </div>
+    <div class="kpi-card {{ 'warning' if critical_count > 0 else '' }}">
+        <div class="section-label">Critical flags</div>
+        <div class="metric-value {{ 'metric-amber' if critical_count > 0 else 'metric-teal' }}">{{ critical_count }}</div>
+        <p style="font-size: 7pt; color: #64748B; margin-top: 4pt;">
+            Suppliers flagged for immediate attention due to critical findings.
+        </p>
+    </div>
+</div>
+
+{% if total_co2e is defined and total_co2e > 0 %}
+<div class="kpi-grid">
+    <div class="kpi-card">
+        <div class="section-label">Total carbon footprint</div>
+        <div class="metric-value metric-slate">{{ "%.1f"|format(total_co2e) }} <span class="metric-unit">tCO2e</span></div>
+    </div>
+    <div class="kpi-card">
+        <div class="section-label">Supply chain emissions (Scope 3)</div>
+        <div class="metric-value metric-amber">{{ "%.1f"|format(scope3) }} <span class="metric-unit">tCO2e</span></div>
+    </div>
+    <div class="kpi-card">
+        <div class="section-label">Data quality grade</div>
+        <div class="metric-value {{ 'metric-amber' if data_quality_grade in ('C', 'D', 'E') else 'metric-teal' }}">{{ data_quality_grade }}</div>
+    </div>
+</div>
+{% endif %}
+
+<h3 style="margin-top: 12pt;">Overview</h3>
+<p style="color: #475569; margin-bottom: 6pt;">
+    Hemera has assessed {{ supplier_count }} suppliers, identifying {{ total_findings }} findings across
+    governance, labour standards, environmental performance, and transparency. Of these,
+    <strong>{{ high_severity_count }} findings require targeted engagement</strong>, and
+    {{ positive_count }} positive indicators were identified.
+</p>
+<p style="color: #475569; margin-bottom: 6pt;">
+    {{ engaged_count }} supplier{{ 's' if engaged_count != 1 else '' }} {{ 'have' if engaged_count != 1 else 'has' }}
+    been contacted as part of Hemera's proactive engagement programme. Detailed findings, recommended actions,
+    and engagement status are provided for each supplier in the following pages.
+</p>

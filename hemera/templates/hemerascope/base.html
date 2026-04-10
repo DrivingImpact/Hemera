@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="report.css">
+    <title>{{ org_name }} — HemeraScope Report</title>
+</head>
+<body>
+    <span style="string-set: client-name '{{ org_name }}'; display: none;"></span>
+    {% include "hemerascope/cover.html" %}
+
+    {% for page in pages %}
+    <div class="page-break"></div>
+    {% include page %}
+    {% endfor %}
+
+    {% for sp in supplier_pages %}
+    <div class="page-break"></div>
+    {% with supplier=sp.supplier, txn_count=sp.txn_count, total_spend=sp.total_spend, total_co2e_kg=sp.total_co2e_kg, findings=sp.findings, actions=sp.actions, engagements=sp.engagements %}
+    {% include "hemerascope/supplier_page.html" %}
+    {% endwith %}
+    {% endfor %}
+
+    <div class="page-break"></div>
+    {% include "hemerascope/back_cover.html" %}
+</body>
+</html>

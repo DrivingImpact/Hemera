@@ -426,3 +426,31 @@ def get_published_report(
         "supplier_count": len(suppliers_data),
         "suppliers": suppliers_data,
     }
+
+
+@router.get("/engagements/{engagement_id}/supplier-intelligence/pdf")
+def export_pdf(
+    engagement_id: int,
+    db: Session = Depends(get_db),
+    current_user: ClerkUser = Depends(get_current_user),
+):
+    """Export the HemeraScope supplier intelligence report as PDF."""
+    from fastapi.responses import Response
+    from hemera.services.hemerascope_report import generate_hemerascope_pdf
+
+    engagement = db.query(Engagement).filter(Engagement.id == engagement_id).first()
+    if not engagement:
+        raise HTTPException(status_code=404, detail="Engagement not found")
+
+    # Org scoping for non-admin users
+    if current_user.role != "admin" and engagement.org_name != current_user.org_name:
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    pdf_bytes = generate_hemerascope_pdf(engagement, db)
+    filename = f"HemeraScope-{engagement.display_name or engagement.org_name}.pdf"
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )

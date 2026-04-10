@@ -1,0 +1,80 @@
+<h2>Risk Overview</h2>
+
+<p style="color: #475569; margin-bottom: 12pt;">
+    The charts below summarise the distribution of findings across your supplier base,
+    highlighting areas for targeted engagement and domains where performance is strongest.
+</p>
+
+{% if risk_donut_svg %}
+<div class="two-col">
+    <div class="chart-section">
+        <h3>Finding Severity Distribution</h3>
+        <div class="chart-container">
+            {{ risk_donut_svg | safe }}
+            <div class="figure-caption">
+                <span class="figure-number">Figure 1.</span> Distribution of {{ total_findings }} findings
+                by severity across all assessed suppliers. Critical and high-severity findings represent
+                areas for priority engagement.
+            </div>
+        </div>
+    </div>
+    <div class="chart-section">
+        <h3>Findings by Domain</h3>
+        <div class="chart-container">
+            {{ domain_bar_svg | safe }}
+            <div class="figure-caption">
+                <span class="figure-number">Figure 2.</span> Number of findings per ESG domain.
+                Domains with more findings may indicate systemic areas for improvement across the supply chain.
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if supplier_score_bar_svg %}
+<div class="chart-section" style="margin-top: 12pt;">
+    <h3>Supplier Hemera Scores</h3>
+    <div class="chart-container">
+        {{ supplier_score_bar_svg | safe }}
+        <div class="figure-caption">
+            <span class="figure-number">Figure 3.</span> Hemera Scores for assessed suppliers, ordered
+            from lowest to highest. Lower scores indicate greater areas for improvement.
+            Critical-flagged suppliers are highlighted.
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<h3 style="margin-top: 12pt;">Summary by Severity</h3>
+<table class="data-table">
+    <thead>
+        <tr><th>Severity</th><th>Count</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><span class="badge badge-red">Critical</span></td>
+            <td class="num">{{ severity_counts.get('critical', 0) }}</td>
+            <td>Requires immediate attention — regulatory non-compliance, sanctions, or material risk</td>
+        </tr>
+        <tr>
+            <td><span class="badge badge-amber">High</span></td>
+            <td class="num">{{ severity_counts.get('high', 0) }}</td>
+            <td>Significant finding requiring engagement within the reporting period</td>
+        </tr>
+        <tr>
+            <td><span class="badge badge-amber">Medium</span></td>
+            <td class="num">{{ severity_counts.get('medium', 0) }}</td>
+            <td>Notable finding to address through standard supplier management processes</td>
+        </tr>
+        <tr>
+            <td><span class="badge badge-teal">Info</span></td>
+            <td class="num">{{ severity_counts.get('info', 0) }}</td>
+            <td>Informational — no action required but noted for context</td>
+        </tr>
+        <tr>
+            <td><span class="badge badge-green">Positive</span></td>
+            <td class="num">{{ severity_counts.get('positive', 0) }}</td>
+            <td>Positive indicator — certification, strong disclosure, or verified good practice</td>
+        </tr>
+    </tbody>
+</table>
