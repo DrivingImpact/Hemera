@@ -30,6 +30,8 @@ from hemera.services.scraping_sources import (
     get_scraping_layer_6, get_scraping_layer_7, get_scraping_layer_10,
 )
 from hemera.services.esg_scorer import calculate_esg_score
+from hemera.models.finding import SupplierFinding
+from hemera.services.finding_generator import generate_findings_from_result
 
 log = logging.getLogger(__name__)
 
@@ -172,6 +174,18 @@ async def enrich_supplier(
     )
     db.add(score)
 
+    # Supersede existing deterministic findings and generate fresh ones
+    db.query(SupplierFinding).filter(
+        SupplierFinding.supplier_id == supplier.id,
+        SupplierFinding.source == "deterministic",
+        SupplierFinding.is_active == True,
+    ).update({"is_active": False, "superseded_at": datetime.utcnow()})
+
+    finding_dicts = generate_findings_from_result(esg_result, supplier_name=name)
+    for fd in finding_dicts:
+        finding = SupplierFinding(supplier_id=supplier.id, is_active=True, **fd)
+        db.add(finding)
+
     # Update supplier summary
     supplier.hemera_score = esg_result.hemera_score
     supplier.confidence = esg_result.confidence
@@ -187,6 +201,7 @@ async def enrich_supplier(
     results["critical_flag"] = esg_result.critical_flag
     results["flags"] = esg_result.flags
     results["layers_completed"] = esg_result.layers_completed
+    results["findings_generated"] = len(finding_dicts)
 
     return results
 
