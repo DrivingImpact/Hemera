@@ -200,8 +200,11 @@ async def enrich_engagement_suppliers(
 
     Uses only FREE data layers (Companies House, Environment Agency, HSE, etc).
     Skips Layer 2 (OpenSanctions) to avoid API costs.
+    Streams progress as newline-delimited JSON so the frontend can show live updates.
     """
+    from fastapi.responses import StreamingResponse
     from hemera.services.enrichment import enrich_supplier as run_enrich
+    import json as _json
 
     # Free layers only — skip Layer 2 (OpenSanctions costs money)
     FREE_LAYERS = [1, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13]
@@ -220,20 +223,49 @@ async def enrich_engagement_suppliers(
     )
     supplier_ids = [sid for (sid,) in supplier_ids]
 
-    enriched = 0
-    errors = 0
+    # Load all supplier names upfront
+    supplier_map = {}
     for sid in supplier_ids:
-        supplier = db.query(Supplier).filter(Supplier.id == sid).first()
-        if not supplier:
-            continue
-        try:
-            await run_enrich(supplier, db, layers=FREE_LAYERS)
-            enriched += 1
-        except Exception:
-            errors += 1
+        s = db.query(Supplier).filter(Supplier.id == sid).first()
+        if s:
+            supplier_map[sid] = s
 
-    db.commit()
-    return {"enriched": enriched, "errors": errors, "total": len(supplier_ids)}
+    total = len(supplier_map)
+
+    async def stream():
+        enriched = 0
+        errors = 0
+        for i, (sid, supplier) in enumerate(supplier_map.items()):
+            yield _json.dumps({
+                "type": "progress",
+                "current": i + 1,
+                "total": total,
+                "supplier": supplier.name,
+                "status": "analysing",
+            }) + "\n"
+            try:
+                await run_enrich(supplier, db, layers=FREE_LAYERS)
+                enriched += 1
+            except Exception as e:
+                errors += 1
+                yield _json.dumps({
+                    "type": "progress",
+                    "current": i + 1,
+                    "total": total,
+                    "supplier": supplier.name,
+                    "status": "error",
+                    "error": str(e)[:200],
+                }) + "\n"
+
+        db.commit()
+        yield _json.dumps({
+            "type": "done",
+            "enriched": enriched,
+            "errors": errors,
+            "total": total,
+        }) + "\n"
+
+    return StreamingResponse(stream(), media_type="application/x-ndjson")
 
 
 @router.patch("/engagements/{engagement_id}/supplier-report/selections")

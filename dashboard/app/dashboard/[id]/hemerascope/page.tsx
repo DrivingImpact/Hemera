@@ -339,23 +339,71 @@ export default function HemerascopePage() {
   /* ---------------------------------------------------------------- */
 
   const [enrichProgress, setEnrichProgress] = useState("");
+  const [enrichDetail, setEnrichDetail] = useState("");
+  const [enrichCounts, setEnrichCounts] = useState({ current: 0, total: 0 });
 
   const handleRunAnalysis = useCallback(async () => {
     setPageState("enriching");
-    setEnrichProgress("Running analysis on all suppliers (free data layers only — no AI costs)...");
+    setEnrichProgress("Starting analysis...");
+    setEnrichDetail("");
+    setEnrichCounts({ current: 0, total: 0 });
+
     try {
-      const result = await apiFetch<{ enriched: number; errors: number; total: number }>(
-        `/engagements/${id}/supplier-report/enrich`,
-        { method: "POST" }
-      );
-      setEnrichProgress(`Done: ${result.enriched}/${result.total} suppliers analysed. Reloading...`);
-      // Reload the page to pick up new findings
-      setTimeout(() => window.location.reload(), 1500);
+      const token = await getToken();
+      const res = await fetch(`${API_URL}/api/engagements/${id}/supplier-report/enrich`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `API error ${res.status}`);
+      }
+
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+
+      if (!reader) throw new Error("No response stream");
+
+      let buffer = "";
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (!line.trim()) continue;
+          try {
+            const msg = JSON.parse(line);
+            if (msg.type === "progress") {
+              setEnrichCounts({ current: msg.current, total: msg.total });
+              if (msg.status === "analysing") {
+                setEnrichProgress(`Analysing supplier ${msg.current} of ${msg.total}`);
+                setEnrichDetail(msg.supplier);
+              } else if (msg.status === "error") {
+                setEnrichDetail(`${msg.supplier} — error, skipping`);
+              }
+            } else if (msg.type === "done") {
+              setEnrichProgress(`Done: ${msg.enriched}/${msg.total} suppliers analysed. Reloading...`);
+              setEnrichDetail("");
+              setTimeout(() => window.location.reload(), 1500);
+            }
+          } catch {
+            // skip unparseable lines
+          }
+        }
+      }
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Failed to run analysis");
       setPageState("error");
     }
-  }, [apiFetch, id]);
+  }, [getToken, id]);
 
   /* ---------------------------------------------------------------- */
   /*  Navigation                                                       */
@@ -407,11 +455,28 @@ export default function HemerascopePage() {
   }
 
   if (pageState === "enriching") {
+    const pct = enrichCounts.total > 0 ? Math.round((enrichCounts.current / enrichCounts.total) * 100) : 0;
     return (
       <CenteredPanel>
         <Spinner />
-        <p className="text-muted text-sm mt-3">{enrichProgress}</p>
-        <p className="text-muted text-[11px] mt-1">This checks Companies House, Environment Agency, HSE, and other public databases. No AI or paid APIs used.</p>
+        <p className="text-sm font-semibold mt-4">{enrichProgress}</p>
+        {enrichDetail && (
+          <p className="text-teal text-sm mt-1 font-medium">{enrichDetail}</p>
+        )}
+        {enrichCounts.total > 0 && (
+          <div className="w-64 mt-4">
+            <div className="w-full h-2 bg-[#E5E5E0] rounded-full overflow-hidden">
+              <div
+                className="h-full bg-teal rounded-full transition-all duration-500"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <p className="text-[11px] text-muted mt-1 text-center">{enrichCounts.current}/{enrichCounts.total} suppliers · {pct}%</p>
+          </div>
+        )}
+        <p className="text-muted text-[11px] mt-3 max-w-sm text-center">
+          Checking Companies House, Environment Agency, HSE, and 50+ other public databases. No AI or paid APIs used.
+        </p>
       </CenteredPanel>
     );
   }
