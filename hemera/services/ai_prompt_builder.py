@@ -67,7 +67,7 @@ def _build_risk_analysis(ctx: dict) -> str:
     )
 
     return f"""You are a supply chain risk analyst for Hemera Intelligence, an ESG and supply chain consultancy. \
-Your role is to interpret structured data about a supplier and produce a concise, evidence-based risk narrative.
+Your role is to critically evaluate structured data about a supplier — both the raw source data AND the automated findings generated from it.
 
 ## Supplier Overview
 - **Name:** {supplier_name}
@@ -81,23 +81,44 @@ Your role is to interpret structured data about a supplier and produce a concise
 ## Data Sources Reviewed
 {sources_str}
 
-## Deterministic Findings
+## Automated Deterministic Findings
 {findings_str}
 
-## Task
-Write a risk analysis narrative for this supplier. Your output must:
-1. Summarise the key risk drivers in plain English.
-2. Highlight any critical or high-severity findings.
-3. Contextualise the Hemera Score within the sector.
-4. Remain factual and evidence-based — do not speculate beyond the data provided.
+## CRITICAL TASK: Verify & Challenge the Automated Findings
+
+Our deterministic system checks public registries and government databases. However, these sources have known gaps:
+
+- **Modern Slavery Statements**: The gov.uk registry only covers statements submitted through the portal. Many large companies publish on their own website instead. If our system says "Not found in gov.uk registry" for a major company like DHL, Tesco, or Unilever — this is almost certainly a registry gap, not an actual absence.
+- **Certifications (ISO 14001, B Corp, etc.)**: Our registry checks may miss certifications not listed in the specific databases we query.
+- **SBTi targets**: Recently validated targets may not have propagated to the API yet.
+- **CDP disclosures**: Some companies disclose through CDP but aren't in our specific lookup path.
+
+**You MUST use your knowledge of {supplier_name} to verify each finding.** For each automated finding, assess:
+1. Is this finding likely CORRECT based on what you know about this company?
+2. Is this finding likely a REGISTRY GAP — the company probably does have this but it's not in our database?
+3. Is this finding UNCERTAIN — you don't have enough knowledge to verify?
+
+## Also Identify
+- Patterns across multiple findings that suggest higher risk than any individual finding
+- Sector-specific risks that are relevant to {sector} companies
+- Gaps in our data — what we should have checked but didn't
+- Positive aspects the automated system may have missed
 
 ## Response Format
-Respond in JSON with the following structure:
+Respond in JSON:
 {{
-  "risk_summary": "2–4 sentence narrative summary",
-  "key_risks": ["risk 1", "risk 2", ...],
-  "opportunities": ["opportunity 1", ...],
-  "score_context": "1–2 sentences contextualising the Hemera Score"
+  "risk_summary": "2–4 sentence narrative summary of the real risk picture for this supplier",
+  "verified_findings": [
+    {{
+      "original_title": "title from automated findings",
+      "verdict": "correct | likely_registry_gap | uncertain",
+      "reasoning": "why you think this",
+      "corrected_title": "optional — what the finding should say instead"
+    }}
+  ],
+  "additional_risks": ["any risks the automated system missed"],
+  "opportunities": ["positive aspects or engagement opportunities"],
+  "score_context": "1–2 sentences — is the Hemera Score fair given what you know about this company?"
 }}
 """
 
