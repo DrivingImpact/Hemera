@@ -1,4 +1,4 @@
-# HemeraScope — Supplier Intelligence System Design
+# HemeraScope — Comprehensive Client Report System Design
 
 **Date:** 2026-04-10
 **Status:** Design approved
@@ -6,12 +6,14 @@
 
 ## Overview
 
-HemeraScope is Hemera Intelligence's supplier intelligence product. It replaces the current ad-hoc supplier review workflow with a three-layer intelligence system (deterministic rules, statistical outliers, AI analysis), analyst curation, and professional client deliverables (interactive dashboard + branded PDF report).
+HemeraScope is Hemera Intelligence's comprehensive client report product. It encompasses the full picture a client receives: carbon footprint analysis (emissions, uncertainty, data quality), supplier intelligence (three-layer risk assessment, analyst curation), and actionable recommendations — delivered as an interactive dashboard and branded PDF report.
+
+This spec focuses on the **supplier intelligence layer**, which is the major new build. The carbon footprint pipeline and report already exist and will be integrated into HemeraScope as sections of the unified deliverable.
 
 ### Branding
 
 - **Hemera Intelligence** — the business
-- **HemeraScope** — this product (supplier intelligence dashboard + PDF report)
+- **HemeraScope** — the complete client product (carbon footprint + supplier intelligence + uncertainty, delivered as dashboard + PDF)
 - **Hemera Score** — the 0-100 weighted score per supplier (replaces "ESG Score" throughout)
 - **Hemera Verified** — badge for suppliers who engage with Hemera and meet a sustainability threshold
 
@@ -19,7 +21,7 @@ HemeraScope is Hemera Intelligence's supplier intelligence product. It replaces 
 
 1. **Full audit trail** — every piece of text on the client report traces back: report text → report_selection → supplier_finding → supplier_source → external source URL
 2. **Enrich once, curate per client** — findings live on the supplier, selections are per engagement
-3. **AI mode flexibility** — every AI task can run via API or manually via Claude Max (copy prompt / paste response), with identical data storage regardless of mode
+3. **AI mode flexibility** — every AI task has two buttons: "Generate (API)" and "Copy Prompt (Max)". Both build the identical prompt. API mode calls Claude directly and tracks cost. Max mode copies the prompt to clipboard, analyst pastes into Claude Max, then pastes the response back. Both modes store the prompt, response, and metadata identically in `ai_tasks`. This applies to ALL five AI touchpoints — no exceptions
 4. **Collaborative tone** — reports frame findings as improvement opportunities, not compliance failures. Hemera is a partner, not an auditor
 5. **Hemera as service** — recommended actions position Hemera as the solution, not just the flag-raiser
 
@@ -41,22 +43,23 @@ Two-stage pipeline (curate → review) with live report preview during curation.
 
 ```
 Engagement uploaded
-  ├── Carbon pipeline (existing, unchanged)
-  │   Upload → Classify → Calculate → Carbon QC → Carbon Report
+  ├── Carbon pipeline (existing)
+  │   Upload → Classify → Calculate → Carbon QC
   │
   └── Supplier pipeline (new, runs in parallel)
-      Match Suppliers
-        → Enrich (13 layers)
-        → Generate deterministic findings
+      Match Suppliers → Enrich (13 layers) → Generate deterministic findings
         → Generate outlier findings (if data exists)
         → Analyst triggers AI analysis (API or Max)
         → Analyst curates per engagement (Stage 1)
         → AI generates client language + actions (API or Max)
-        → Analyst reviews full report (Stage 2)
+
+  Both pipelines feed into:
+  └── HemeraScope Report (unified deliverable)
+      Analyst reviews full report (Stage 2) — carbon + supplier + uncertainty combined
         → Publish to client dashboard + PDF available
 ```
 
-Enrichment starts as soon as suppliers are matched — does not wait for carbon calculations.
+Enrichment starts as soon as suppliers are matched — does not wait for carbon calculations. The final HemeraScope report combines both pipelines into a single client deliverable.
 
 ## Data Model
 
@@ -278,18 +281,20 @@ Threshold criteria TBD — likely a combination of: Hemera Score above X, active
 
 ### PDF Report
 
-Branded document matching the quality of the existing carbon report. Collaborative tone throughout.
+Branded document — the single HemeraScope deliverable combining carbon footprint and supplier intelligence. Collaborative tone throughout.
 
 **Structure:**
-1. Cover page — "HemeraScope Supplier Intelligence Report" + client name + fiscal year
-2. Executive summary — aggregate stats, overall assessment narrative
-3. Methodology — "Our Approach" page explaining the process without revealing the 13-layer protocol. Frame as collaborative: "Every supply chain has areas for improvement. This report is the first step in a collaborative process."
-4. Aggregate risk overview — risk distribution chart, domain average heatmap
-5. Per-supplier pages (1 per supplier) — Hemera Score, domain breakdown, findings, recommended actions, Hemera engagement status, Hemera Verified badge if applicable
-6. Recommendations summary — grouped by urgency (immediate/short-term/ongoing), Hemera services pitch
-7. Back cover — "Helping organisations build transparent, resilient supply chains."
+1. Cover page — "HemeraScope Report" + client name + fiscal year
+2. Executive summary — aggregate carbon footprint + supplier risk narrative, key numbers, overall assessment
+3. Methodology — "Our Approach" page explaining both the carbon and supplier analysis processes without revealing proprietary methods. Frame as collaborative: "Every supply chain has areas for improvement. This report is the first step in a collaborative process — identifying where targeted engagement can drive the greatest impact."
+4. **Carbon Footprint** — scope breakdown, hotspots, monthly trends, reduction roadmap (existing 11-page carbon report content, integrated as sections)
+5. **Data Quality & Uncertainty** — pedigree scores, cascade distribution, confidence intervals, data quality recommendations (existing uncertainty content)
+6. **Supplier Intelligence** — aggregate risk overview (risk distribution chart, domain average heatmap)
+7. Per-supplier pages (1 per supplier) — Hemera Score, domain breakdown, findings, recommended actions, Hemera engagement status, Hemera Verified badge if applicable
+8. Recommendations summary — grouped by urgency (immediate/short-term/ongoing), covering both carbon reduction and supplier engagement actions, Hemera services pitch
+9. Back cover — "Helping organisations build transparent, resilient supply chains."
 
-**Tone guidelines:** Frame negatives as improvement opportunities. "Supplier X does not currently hold a validated Science Based Target" not "Supplier X failed SBTi check." Emphasise Hemera's active role in helping suppliers improve. Each report should leave the client feeling that Hemera is already working on the problems identified.
+**Tone guidelines:** Frame negatives as improvement opportunities. "Supplier X does not currently hold a validated Science Based Target" not "Supplier X failed SBTi check." Emphasise Hemera's active role in helping suppliers improve. Each report should leave the client feeling that Hemera is already working on the problems identified, and that this is a journey everyone goes through — not a pass/fail assessment.
 
 ## API Endpoints
 
@@ -351,9 +356,11 @@ Branded document matching the quality of the existing carbon report. Collaborati
 
 ### `pdf_report.py`
 
-- New parallel report generator for HemeraScope
+- Evolves into the unified HemeraScope report generator
+- Existing carbon/uncertainty sections become part of the larger HemeraScope PDF
+- New supplier intelligence sections added (aggregate risk, per-supplier pages, recommendations)
 - Same pattern: data gathering → Jinja2 templates → WeasyPrint PDF
-- Different templates, different content structure
+- Single PDF output that covers everything: carbon footprint, uncertainty, supplier intelligence
 
 ### Supplier model
 
