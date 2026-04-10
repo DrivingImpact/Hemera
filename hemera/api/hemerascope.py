@@ -222,79 +222,96 @@ def get_supplier_report(
     }
 
 
-@router.post("/engagements/{engagement_id}/supplier-report/enrich")
-async def enrich_engagement_suppliers(
+LAYER_NAMES = {
+    1: "Corporate Identity (Companies House)",
+    3: "Financial Health",
+    4: "Carbon & Environmental",
+    5: "Labour & Modern Slavery",
+    6: "Certifications",
+    7: "Regulator Actions",
+    9: "Government Contracts",
+    10: "Nature & Water Risk",
+    11: "Debarment Lists",
+    12: "Cyber Risk",
+    13: "Social Value",
+}
+
+# Free layers only — skip Layer 2 (OpenSanctions costs money)
+FREE_LAYERS = [1, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13]
+
+
+@router.post("/engagements/{engagement_id}/supplier-report/enrich/{supplier_id}")
+async def enrich_single_supplier(
     engagement_id: int,
+    supplier_id: int,
     db: Session = Depends(get_db),
     current_user: ClerkUser = Depends(require_admin),
 ):
-    """Run enrichment on all suppliers in this engagement.
+    """Run enrichment on a single supplier, streaming per-layer progress.
 
-    Uses only FREE data layers (Companies House, Environment Agency, HSE, etc).
-    Skips Layer 2 (OpenSanctions) to avoid API costs.
-    Streams progress as newline-delimited JSON so the frontend can show live updates.
+    Uses only FREE data layers. Skips Layer 2 (OpenSanctions) to avoid API costs.
     """
     from fastapi.responses import StreamingResponse
     from hemera.services.enrichment import enrich_supplier as run_enrich
+    from hemera.services.finding_generator import generate_findings_from_sources
+    from hemera.models.finding import SupplierFinding
+    from datetime import datetime
     import json as _json
 
-    # Free layers only — skip Layer 2 (OpenSanctions costs money)
-    FREE_LAYERS = [1, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13]
+    _load_engagement(engagement_id, db)
+    supplier = db.query(Supplier).filter(Supplier.id == supplier_id).first()
+    if not supplier:
+        raise HTTPException(status_code=404, detail="Supplier not found")
 
-    engagement = _load_engagement(engagement_id, db)
-
-    supplier_ids = (
-        db.query(Transaction.supplier_id)
-        .filter(
-            Transaction.engagement_id == engagement_id,
-            Transaction.supplier_id.isnot(None),
-            Transaction.is_duplicate == False,  # noqa: E712
-        )
-        .distinct()
-        .all()
-    )
-    supplier_ids = [sid for (sid,) in supplier_ids]
-
-    # Load all supplier names upfront
-    supplier_map = {}
-    for sid in supplier_ids:
-        s = db.query(Supplier).filter(Supplier.id == sid).first()
-        if s:
-            supplier_map[sid] = s
-
-    total = len(supplier_map)
+    total_layers = len(FREE_LAYERS)
 
     async def stream():
-        enriched = 0
-        errors = 0
-        for i, (sid, supplier) in enumerate(supplier_map.items()):
+        # Run enrichment layer by layer
+        for i, layer in enumerate(FREE_LAYERS):
+            layer_name = LAYER_NAMES.get(layer, f"Layer {layer}")
             yield _json.dumps({
                 "type": "progress",
                 "current": i + 1,
-                "total": total,
-                "supplier": supplier.name,
+                "total": total_layers,
+                "layer": layer,
+                "layer_name": layer_name,
                 "status": "analysing",
             }) + "\n"
+
             try:
-                await run_enrich(supplier, db, layers=FREE_LAYERS)
-                enriched += 1
+                await run_enrich(supplier, db, layers=[layer])
             except Exception as e:
-                errors += 1
                 yield _json.dumps({
                     "type": "progress",
                     "current": i + 1,
-                    "total": total,
-                    "supplier": supplier.name,
+                    "total": total_layers,
+                    "layer": layer,
+                    "layer_name": layer_name,
                     "status": "error",
                     "error": str(e)[:200],
                 }) + "\n"
 
+        # Supersede old findings and regenerate
+        yield _json.dumps({"type": "progress", "current": total_layers, "total": total_layers, "layer_name": "Generating findings", "status": "analysing"}) + "\n"
+
+        db.query(SupplierFinding).filter(
+            SupplierFinding.supplier_id == supplier_id,
+            SupplierFinding.source == "deterministic",
+            SupplierFinding.is_active == True,  # noqa: E712
+        ).update({"is_active": False, "superseded_at": datetime.utcnow()})
+
+        all_sources = db.query(SupplierSource).filter(SupplierSource.supplier_id == supplier_id).all()
+        finding_dicts = generate_findings_from_sources(all_sources, supplier_name=supplier.name)
+        for fd in finding_dicts:
+            finding = SupplierFinding(supplier_id=supplier_id, is_active=True, **fd)
+            db.add(finding)
+
         db.commit()
+
         yield _json.dumps({
             "type": "done",
-            "enriched": enriched,
-            "errors": errors,
-            "total": total,
+            "findings_generated": len(finding_dicts),
+            "layers_completed": total_layers,
         }) + "\n"
 
     return StreamingResponse(stream(), media_type="application/x-ndjson")

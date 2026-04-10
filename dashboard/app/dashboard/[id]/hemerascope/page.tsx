@@ -343,14 +343,15 @@ export default function HemerascopePage() {
   const [enrichCounts, setEnrichCounts] = useState({ current: 0, total: 0 });
 
   const handleRunAnalysis = useCallback(async () => {
+    if (!supplier) return;
     setPageState("enriching");
     setEnrichProgress("Starting analysis...");
-    setEnrichDetail("");
+    setEnrichDetail(supplier.supplier_name);
     setEnrichCounts({ current: 0, total: 0 });
 
     try {
       const token = await getToken();
-      const res = await fetch(`${API_URL}/api/engagements/${id}/supplier-report/enrich`, {
+      const res = await fetch(`${API_URL}/api/engagements/${id}/supplier-report/enrich/${supplier.supplier_id}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -384,13 +385,13 @@ export default function HemerascopePage() {
             if (msg.type === "progress") {
               setEnrichCounts({ current: msg.current, total: msg.total });
               if (msg.status === "analysing") {
-                setEnrichProgress(`Analysing supplier ${msg.current} of ${msg.total}`);
-                setEnrichDetail(msg.supplier);
+                setEnrichProgress(`Layer ${msg.current} of ${msg.total}`);
+                setEnrichDetail(msg.layer_name);
               } else if (msg.status === "error") {
-                setEnrichDetail(`${msg.supplier} — error, skipping`);
+                setEnrichDetail(`${msg.layer_name} — error, skipping`);
               }
             } else if (msg.type === "done") {
-              setEnrichProgress(`Done: ${msg.enriched}/${msg.total} suppliers analysed. Reloading...`);
+              setEnrichProgress(`Done — ${msg.findings_generated} findings generated. Reloading...`);
               setEnrichDetail("");
               setTimeout(() => window.location.reload(), 1500);
             }
@@ -403,7 +404,7 @@ export default function HemerascopePage() {
       setErrorMsg(err instanceof Error ? err.message : "Failed to run analysis");
       setPageState("error");
     }
-  }, [getToken, id]);
+  }, [getToken, id, supplier]);
 
   /* ---------------------------------------------------------------- */
   /*  Navigation                                                       */
@@ -471,11 +472,11 @@ export default function HemerascopePage() {
                 style={{ width: `${pct}%` }}
               />
             </div>
-            <p className="text-[11px] text-muted mt-1 text-center">{enrichCounts.current}/{enrichCounts.total} suppliers · {pct}%</p>
+            <p className="text-[11px] text-muted mt-1 text-center">Layer {enrichCounts.current}/{enrichCounts.total} · {pct}%</p>
           </div>
         )}
         <p className="text-muted text-[11px] mt-3 max-w-sm text-center">
-          Checking Companies House, Environment Agency, HSE, and 50+ other public databases. No AI or paid APIs used.
+          Checking Companies House, Environment Agency, HSE, and 50+ other public databases. No AI or paid APIs.
         </p>
       </CenteredPanel>
     );
