@@ -50,7 +50,7 @@ class Supplier(Base):
 
 
 class SupplierScore(Base):
-    """ESG score history — append-only. Every re-scoring creates a new row."""
+    """Hemera Score history — append-only. Every re-scoring creates a new row."""
 
     __tablename__ = "supplier_scores"
 

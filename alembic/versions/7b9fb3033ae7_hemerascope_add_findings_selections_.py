@@ -28,9 +28,9 @@ def upgrade() -> None:
     sa.Column('target_id', sa.Integer(), nullable=False),
     sa.Column('mode', sa.String(length=20), nullable=False),
     sa.Column('status', sa.String(length=20), nullable=False),
-    sa.Column('prompt_text', sa.Text(), nullable=True),
+    sa.Column('prompt_text', sa.Text(), nullable=False),
     sa.Column('response_text', sa.Text(), nullable=True),
-    sa.Column('prompt_hash', sa.String(length=64), nullable=True),
+    sa.Column('prompt_hash', sa.String(length=64), nullable=False),
     sa.Column('token_count', sa.Integer(), nullable=True),
     sa.Column('cost_usd', sa.Float(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=False),
@@ -57,16 +57,16 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('supplier_id', sa.Integer(), nullable=False),
     sa.Column('engagement_type', sa.String(length=50), nullable=False),
-    sa.Column('subject', sa.String(length=255), nullable=True),
+    sa.Column('subject', sa.String(length=255), nullable=False),
     sa.Column('status', sa.String(length=20), nullable=False),
     sa.Column('notes', sa.Text(), nullable=True),
     sa.Column('contact_name', sa.String(length=255), nullable=True),
     sa.Column('contact_email', sa.String(length=255), nullable=True),
     sa.Column('contacted_at', sa.DateTime(), nullable=True),
     sa.Column('responded_at', sa.DateTime(), nullable=True),
-    sa.Column('next_action', sa.String(length=255), nullable=True),
+    sa.Column('next_action', sa.Text(), nullable=True),
     sa.Column('next_action_date', sa.Date(), nullable=True),
-    sa.Column('created_by', sa.Integer(), nullable=True),
+    sa.Column('created_by', sa.Integer(), nullable=False),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['supplier_id'], ['suppliers.id'], ),
@@ -96,6 +96,13 @@ def upgrade() -> None:
     op.create_index('ix_supplier_findings_domain', 'supplier_findings', ['supplier_id', 'domain'], unique=False)
     op.create_index('ix_supplier_findings_severity', 'supplier_findings', ['supplier_id', 'severity'], unique=False)
     op.create_index(op.f('ix_supplier_findings_supplier_id'), 'supplier_findings', ['supplier_id'], unique=False)
+    # ALTER TABLE operations for existing tables
+    op.alter_column('suppliers', 'esg_score', new_column_name='hemera_score')
+    op.add_column('suppliers', sa.Column('hemera_verified', sa.Boolean(), server_default='false', nullable=False))
+    op.alter_column('supplier_scores', 'total_score', new_column_name='hemera_score')
+    op.add_column('engagements', sa.Column('supplier_report_status', sa.String(length=20), nullable=True))
+    op.add_column('engagements', sa.Column('supplier_report_exec_summary', sa.Text(), nullable=True))
+
     op.create_table('report_selections',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('engagement_id', sa.Integer(), nullable=False),
@@ -127,4 +134,11 @@ def downgrade() -> None:
     op.drop_table('supplier_engagements')
     op.drop_table('report_actions')
     op.drop_table('ai_tasks')
+
+    # Reverse ALTER TABLE operations
+    op.drop_column('engagements', 'supplier_report_exec_summary')
+    op.drop_column('engagements', 'supplier_report_status')
+    op.alter_column('supplier_scores', 'hemera_score', new_column_name='total_score')
+    op.drop_column('suppliers', 'hemera_verified')
+    op.alter_column('suppliers', 'hemera_score', new_column_name='esg_score')
     # ### end Alembic commands ###

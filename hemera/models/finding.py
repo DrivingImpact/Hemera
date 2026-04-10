@@ -2,31 +2,33 @@
 
 from datetime import datetime
 from sqlalchemy import (
-    Column, String, Text, Integer, Boolean, DateTime, JSON,
+    String, Text, Integer, Boolean, DateTime, JSON,
     Index, UniqueConstraint, ForeignKey,
 )
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from hemera.database import Base
 
 
 class SupplierFinding(Base):
+    """A finding about a supplier from any layer or AI analysis."""
+
     __tablename__ = "supplier_findings"
 
-    id = Column(Integer, primary_key=True)
-    supplier_id = Column(Integer, ForeignKey("suppliers.id"), nullable=False, index=True)
-    source = Column(String(20), nullable=False)  # deterministic, outlier, ai_automated, ai_manual
-    domain = Column(String(30), nullable=False)  # governance, labour, carbon, water, product, transparency, anti_corruption, social_value
-    severity = Column(String(10), nullable=False)  # critical, high, medium, info, positive
-    title = Column(String(255), nullable=False)
-    detail = Column(Text, nullable=False)
-    evidence_url = Column(Text)
-    evidence_data = Column(JSON)
-    layer = Column(Integer)  # 1-13, for deterministic findings
-    source_name = Column(String(100), nullable=False)
-    is_active = Column(Boolean, default=True, nullable=False)
-    ai_task_id = Column(Integer, ForeignKey("ai_tasks.id"))
-    created_at = Column(DateTime, default=datetime.utcnow)
-    superseded_at = Column(DateTime)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    supplier_id: Mapped[int] = mapped_column(ForeignKey("suppliers.id"), index=True)
+    source: Mapped[str] = mapped_column(String(20))  # deterministic, outlier, ai_automated, ai_manual
+    domain: Mapped[str] = mapped_column(String(30))  # governance, labour, carbon, water, product, transparency, anti_corruption, social_value
+    severity: Mapped[str] = mapped_column(String(10))  # critical, high, medium, info, positive
+    title: Mapped[str] = mapped_column(String(255))
+    detail: Mapped[str] = mapped_column(Text)
+    evidence_url: Mapped[str | None] = mapped_column(Text)
+    evidence_data: Mapped[dict | None] = mapped_column(JSON)
+    layer: Mapped[int | None] = mapped_column(Integer)  # 1-13, for deterministic findings
+    source_name: Mapped[str] = mapped_column(String(100))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    ai_task_id: Mapped[int | None] = mapped_column(ForeignKey("ai_tasks.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    superseded_at: Mapped[datetime | None] = mapped_column(DateTime)
 
     supplier = relationship("Supplier", back_populates="findings")
     selections = relationship("ReportSelection", back_populates="finding")
@@ -39,18 +41,20 @@ class SupplierFinding(Base):
 
 
 class ReportSelection(Base):
+    """Links a finding to an engagement report — tracks inclusion/exclusion."""
+
     __tablename__ = "report_selections"
 
-    id = Column(Integer, primary_key=True)
-    engagement_id = Column(Integer, ForeignKey("engagements.id"), nullable=False)
-    finding_id = Column(Integer, ForeignKey("supplier_findings.id"), nullable=False)
-    included = Column(Boolean, nullable=False)
-    client_title = Column(String(255))
-    client_detail = Column(Text)
-    client_language_source = Column(String(20))  # ai_automated, ai_manual, analyst
-    analyst_note = Column(Text)
-    selected_by = Column(Integer, nullable=False)
-    selected_at = Column(DateTime, default=datetime.utcnow)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    engagement_id: Mapped[int] = mapped_column(ForeignKey("engagements.id"))
+    finding_id: Mapped[int] = mapped_column(ForeignKey("supplier_findings.id"))
+    included: Mapped[bool] = mapped_column(Boolean)
+    client_title: Mapped[str | None] = mapped_column(String(255))
+    client_detail: Mapped[str | None] = mapped_column(Text)
+    client_language_source: Mapped[str | None] = mapped_column(String(20))  # ai_automated, ai_manual, analyst
+    analyst_note: Mapped[str | None] = mapped_column(Text)
+    selected_by: Mapped[int] = mapped_column(Integer)
+    selected_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     finding = relationship("SupplierFinding", back_populates="selections")
     engagement = relationship("Engagement", back_populates="report_selections")
@@ -61,18 +65,20 @@ class ReportSelection(Base):
 
 
 class ReportAction(Base):
+    """A recommended action linked to an engagement and supplier."""
+
     __tablename__ = "report_actions"
 
-    id = Column(Integer, primary_key=True)
-    engagement_id = Column(Integer, ForeignKey("engagements.id"), nullable=False)
-    supplier_id = Column(Integer, ForeignKey("suppliers.id"), nullable=False)
-    action_text = Column(Text, nullable=False)
-    priority = Column(Integer, nullable=False, default=1)
-    linked_finding_ids = Column(JSON)
-    language_source = Column(String(20), nullable=False)  # ai_automated, ai_manual, analyst
-    ai_task_id = Column(Integer, ForeignKey("ai_tasks.id"))
-    created_by = Column(Integer, nullable=False)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    engagement_id: Mapped[int] = mapped_column(ForeignKey("engagements.id"))
+    supplier_id: Mapped[int] = mapped_column(ForeignKey("suppliers.id"))
+    action_text: Mapped[str] = mapped_column(Text)
+    priority: Mapped[int] = mapped_column(Integer, default=1)
+    linked_finding_ids: Mapped[list | None] = mapped_column(JSON)
+    language_source: Mapped[str] = mapped_column(String(20))  # ai_automated, ai_manual, analyst
+    ai_task_id: Mapped[int | None] = mapped_column(ForeignKey("ai_tasks.id"))
+    created_by: Mapped[int] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     engagement = relationship("Engagement", back_populates="report_actions")
     supplier = relationship("Supplier")

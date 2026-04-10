@@ -15,7 +15,7 @@ class SupplierEngagement(Base):
     supplier_id: Mapped[int] = mapped_column(ForeignKey("suppliers.id"), nullable=False)
 
     engagement_type: Mapped[str] = mapped_column(String(50))  # data_request, follow_up, audit, etc.
-    subject: Mapped[str | None] = mapped_column(String(255))
+    subject: Mapped[str] = mapped_column(String(255))
     status: Mapped[str] = mapped_column(String(20), default="draft")  # draft, sent, responded, closed
     notes: Mapped[str | None] = mapped_column(Text)
 
@@ -25,10 +25,10 @@ class SupplierEngagement(Base):
     contacted_at: Mapped[datetime | None] = mapped_column(DateTime)
     responded_at: Mapped[datetime | None] = mapped_column(DateTime)
 
-    next_action: Mapped[str | None] = mapped_column(String(255))
+    next_action: Mapped[str | None] = mapped_column(Text)
     next_action_date: Mapped[date | None] = mapped_column(Date)
 
-    created_by: Mapped[int | None] = mapped_column(Integer)  # user id
+    created_by: Mapped[int] = mapped_column(Integer)  # user id
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow

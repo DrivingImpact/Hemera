@@ -20,9 +20,9 @@ class AITask(Base):
     mode: Mapped[str] = mapped_column(String(20), default="auto")  # auto, manual
     status: Mapped[str] = mapped_column(String(20), default="pending")  # pending, running, completed, failed
 
-    prompt_text: Mapped[str | None] = mapped_column(Text)
+    prompt_text: Mapped[str] = mapped_column(Text)
     response_text: Mapped[str | None] = mapped_column(Text)
-    prompt_hash: Mapped[str | None] = mapped_column(String(64))  # for deduplication
+    prompt_hash: Mapped[str] = mapped_column(String(64))  # for deduplication
 
     token_count: Mapped[int | None] = mapped_column(Integer)
     cost_usd: Mapped[float | None] = mapped_column(Float)
