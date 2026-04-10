@@ -6,7 +6,7 @@
 
 export interface Finding {
   id: number;
-  source: "deterministic" | "ai" | "outlier";
+  source: "deterministic" | "ai" | "ai_automated" | "ai_manual" | "outlier";
   domain: string;
   severity: "critical" | "high" | "medium" | "info" | "positive";
   title: string;
@@ -52,9 +52,11 @@ const SEVERITY_STYLES: Record<
   },
 };
 
-const SOURCE_LABELS: Record<Finding["source"], string> = {
+const SOURCE_LABELS: Record<string, string> = {
   deterministic: "Deterministic",
   ai: "AI Analysis",
+  ai_automated: "AI Analysis",
+  ai_manual: "AI Analysis (Manual)",
   outlier: "Outlier Detection",
 };
 

@@ -25,15 +25,38 @@ interface SupplierFindings {
   co2e_kg?: number;
   hemera_score?: number;
   confidence?: string;
-  findings: Finding[];
-  selections: Record<number, boolean>; // findingId -> included
+  findings: (Finding & { included?: boolean | null })[];
   actions: RecommendedAction[];
   engagements: EngagementTouchpoint[];
   client_language?: Record<number, string>;
 }
 
+/* Raw shape from GET /engagements/{id}/supplier-report */
+interface APISupplierItem {
+  supplier: {
+    id: number;
+    name: string;
+    legal_name?: string;
+    ch_number?: string;
+    sector?: string;
+    hemera_score?: number;
+    confidence?: string;
+    critical_flag?: boolean;
+    hemera_verified?: boolean;
+  };
+  txn_count: number;
+  total_spend: number;
+  total_co2e_kg: number;
+  findings: (Finding & { selection?: { included: boolean; client_title?: string; client_detail?: string; analyst_note?: string } | null })[];
+  actions: { id?: number; action_text: string; priority?: number; linked_finding_ids?: number[]; language_source?: string }[];
+  hemera_engagements: EngagementTouchpoint[];
+}
+
 interface SupplierReportResponse {
-  suppliers: SupplierFindings[];
+  engagement_id: number;
+  status: string;
+  supplier_count: number;
+  suppliers: APISupplierItem[];
 }
 
 type PageState = "loading" | "reviewing" | "saving" | "error" | "empty";
@@ -63,9 +86,11 @@ function confidenceBadge(conf?: string): { bg: string; text: string } {
   }
 }
 
-const SOURCE_ORDER: Record<Finding["source"], number> = {
+const SOURCE_ORDER: Record<string, number> = {
   deterministic: 0,
   ai: 1,
+  ai_automated: 1,
+  ai_manual: 1,
   outlier: 2,
 };
 
@@ -131,24 +156,36 @@ export default function HemerascopePage() {
           return;
         }
 
-        // Restore existing selections into each finding's included flag
-        const restored = data.suppliers.map((s) => ({
-          ...s,
-          findings: s.findings.map((f) => ({
+        // Transform API response to flat frontend shape
+        const transformed: SupplierFindings[] = data.suppliers.map((item) => ({
+          supplier_id: item.supplier.id,
+          supplier_name: item.supplier.legal_name || item.supplier.name,
+          companies_house_number: item.supplier.ch_number ?? undefined,
+          sector: item.supplier.sector ?? undefined,
+          spend_gbp: item.total_spend,
+          co2e_kg: item.total_co2e_kg,
+          hemera_score: item.supplier.hemera_score ?? undefined,
+          confidence: item.supplier.confidence ?? undefined,
+          findings: item.findings.map((f) => ({
             ...f,
-            included:
-              s.selections[f.id] !== undefined ? s.selections[f.id] : null,
+            included: f.selection ? f.selection.included : null,
           })),
+          actions: item.actions.map((a) => ({ text: a.action_text })),
+          engagements: item.hemera_engagements,
         }));
 
-        setSuppliers(restored);
+        setSuppliers(transformed);
 
-        // Restore client language
+        // Restore client language from selections
         const lang: Record<number, Record<number, string>> = {};
-        restored.forEach((s) => {
-          if (s.client_language) {
-            lang[s.supplier_id] = { ...s.client_language };
-          }
+        data.suppliers.forEach((item) => {
+          const supplierId = item.supplier.id;
+          item.findings.forEach((f) => {
+            if (f.selection?.client_detail) {
+              if (!lang[supplierId]) lang[supplierId] = {};
+              lang[supplierId][f.id] = f.selection.client_detail;
+            }
+          });
         });
         setClientLanguage(lang);
 
@@ -405,12 +442,11 @@ export default function HemerascopePage() {
   const conf = confidenceBadge(supplier.confidence);
 
   // Group label headers for findings
-  const sourceGroups = ["deterministic", "ai", "outlier"] as const;
-  const groupLabels: Record<string, string> = {
-    deterministic: "Deterministic Findings",
-    ai: "AI-Generated Findings",
-    outlier: "Outlier Findings",
-  };
+  const sourceGroupDefs = [
+    { key: "deterministic", label: "Deterministic Findings", match: (s: string) => s === "deterministic" },
+    { key: "ai", label: "AI-Generated Findings", match: (s: string) => s === "ai" || s === "ai_automated" || s === "ai_manual" },
+    { key: "outlier", label: "Outlier Findings", match: (s: string) => s === "outlier" },
+  ];
 
   return (
     <div className="space-y-4">
@@ -486,15 +522,15 @@ export default function HemerascopePage() {
             Findings ({supplier.findings.length})
           </h3>
 
-          {sourceGroups.map((source) => {
+          {sourceGroupDefs.map((group) => {
             const findings = groupedFindings.filter(
-              (f) => f.source === source
+              (f) => group.match(f.source)
             );
             if (findings.length === 0) return null;
             return (
-              <div key={source} className="space-y-2">
+              <div key={group.key} className="space-y-2">
                 <h4 className="text-[11px] font-semibold text-muted uppercase tracking-wide">
-                  {groupLabels[source]}
+                  {group.label}
                 </h4>
                 {findings.map((f) => (
                   <FindingCard
