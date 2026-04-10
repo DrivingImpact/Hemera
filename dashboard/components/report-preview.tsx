@@ -68,45 +68,67 @@ export default function ReportPreview({
             include them in the report.
           </div>
         ) : (
-          <div className="space-y-3">
-            {includedFindings.map((f) => (
-              <div
-                key={f.id}
-                className="bg-surface rounded-lg border border-[#E5E5E0] p-4"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <h4 className="text-sm font-semibold text-slate">
-                      {f.title}
-                    </h4>
-                    {clientLanguage[f.id] ? (
-                      <p className="text-xs text-muted mt-1.5 leading-relaxed whitespace-pre-wrap">
-                        {clientLanguage[f.id]}
-                      </p>
-                    ) : (
-                      <p className="text-xs text-muted/60 italic mt-1.5">
-                        Client language not yet generated
-                      </p>
-                    )}
-                  </div>
+          <>
+            <div className="space-y-3">
+              {includedFindings.map((f) => (
+                <div
+                  key={f.id}
+                  className="bg-surface rounded-lg border border-[#E5E5E0] p-4"
+                >
+                  <h4 className="text-sm font-semibold text-slate">
+                    {f.title}
+                  </h4>
+                  {clientLanguage[f.id] ? (
+                    <p className="text-xs text-muted mt-1.5 leading-relaxed whitespace-pre-wrap">
+                      {clientLanguage[f.id]}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted/60 italic mt-1.5">
+                      Language not yet generated
+                    </p>
+                  )}
                 </div>
-                <div className="mt-3">
-                  <AITaskButtons
-                    taskType="client_language"
-                    targetType="finding"
-                    targetId={f.id}
-                    context={{
-                      supplier_name: supplierName,
-                      finding_title: f.title,
-                      finding_detail: f.detail,
-                      finding_severity: f.severity,
-                    }}
-                    onResult={(text) => onClientLanguage(f.id, text)}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+            {/* Single button to generate language for ALL included findings at once */}
+            <div className="mt-3">
+              <p className="text-[11px] text-muted mb-1.5">Generate client-friendly language for all {includedFindings.length} included findings:</p>
+              <AITaskButtons
+                taskType="client_language"
+                targetType="supplier"
+                targetId={supplierId}
+                context={{
+                  supplier_name: supplierName,
+                  findings: includedFindings.map((f) => ({
+                    id: f.id,
+                    title: f.title,
+                    detail: f.detail,
+                    severity: f.severity,
+                    domain: f.domain,
+                  })),
+                }}
+                onResult={(text) => {
+                  // Parse the AI response — expects JSON array of {original_title, client_title, client_detail}
+                  try {
+                    const parsed = JSON.parse(text);
+                    if (Array.isArray(parsed)) {
+                      parsed.forEach((item: { original_title?: string; client_detail?: string }) => {
+                        const match = includedFindings.find((f) => f.title === item.original_title);
+                        if (match && item.client_detail) {
+                          onClientLanguage(match.id, item.client_detail);
+                        }
+                      });
+                    }
+                  } catch {
+                    // If not JSON, apply as-is to first finding
+                    if (includedFindings[0]) {
+                      onClientLanguage(includedFindings[0].id, text);
+                    }
+                  }
+                }}
+              />
+            </div>
+          </>
         )}
       </section>
 

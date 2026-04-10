@@ -158,18 +158,18 @@ export default function AITaskButtons({
   return (
     <div className="flex gap-2">
       <button
-        onClick={() => handleGenerate("api")}
-        disabled={status === "loading"}
-        className="px-3 py-1.5 border border-purple-400 text-purple-600 text-xs rounded-lg hover:bg-purple-50 disabled:opacity-50"
-      >
-        {status === "loading" ? "Generating..." : "✨ Generate (API)"}
-      </button>
-      <button
         onClick={() => handleGenerate("manual")}
         disabled={status === "loading"}
-        className="px-3 py-1.5 border border-gray-200 text-gray-600 text-xs rounded-lg hover:bg-gray-50 disabled:opacity-50"
+        className="px-3 py-1.5 border border-purple-400 bg-purple-50 text-purple-600 text-xs rounded-lg hover:bg-purple-100 disabled:opacity-50 font-semibold"
       >
-        📋 Copy Prompt (Max)
+        {status === "loading" ? "Preparing..." : "📋 Copy Prompt (Max)"}
+      </button>
+      <button
+        onClick={() => handleGenerate("api")}
+        disabled={status === "loading"}
+        className="px-3 py-1.5 border border-gray-200 text-gray-500 text-xs rounded-lg hover:bg-gray-50 disabled:opacity-50"
+      >
+        {status === "loading" ? "Generating..." : "API"}
       </button>
       {error && <span className="text-xs text-red-500 self-center">{error}</span>}
       {status === "done" && <span className="text-xs text-green-600 self-center">✓ Done</span>}

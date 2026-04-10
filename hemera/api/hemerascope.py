@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from hemera.database import get_db
 from hemera.models.engagement import Engagement
 from hemera.models.finding import SupplierFinding, ReportSelection, ReportAction
-from hemera.models.supplier import Supplier
+from hemera.models.supplier import Supplier, SupplierSource
 from hemera.models.supplier_engagement import SupplierEngagement
 from hemera.models.transaction import Transaction
 from hemera.dependencies import require_admin, get_current_user
@@ -103,6 +103,27 @@ def get_supplier_report(
             .all()
         )
 
+        # Get raw source data so admin can see what fed each finding
+        sources = (
+            db.query(SupplierSource)
+            .filter(SupplierSource.supplier_id == sid)
+            .order_by(SupplierSource.layer)
+            .all()
+        )
+        # Build a lookup: layer -> list of source summaries
+        sources_by_layer = {}
+        for src in sources:
+            if src.layer not in sources_by_layer:
+                sources_by_layer[src.layer] = []
+            sources_by_layer[src.layer].append({
+                "source_name": src.source_name,
+                "tier": src.tier,
+                "summary": src.summary,
+                "data": src.data,
+                "fetched_at": src.fetched_at.isoformat() if src.fetched_at else None,
+                "is_verified": src.is_verified,
+            })
+
         # Aggregate transaction stats
         stats = db.query(
             func.count(Transaction.id),
@@ -141,6 +162,7 @@ def get_supplier_report(
                     "evidence_url": f.evidence_url,
                     "layer": f.layer,
                     "source_name": f.source_name,
+                    "evidence": sources_by_layer.get(f.layer, []) if f.layer else [],
                     "selection": {
                         "included": selections_map[f.id].included,
                         "client_title": selections_map[f.id].client_title,
@@ -149,6 +171,16 @@ def get_supplier_report(
                     } if f.id in selections_map else None,
                 }
                 for f in findings
+            ],
+            "sources": [
+                {
+                    "layer": src.layer,
+                    "source_name": src.source_name,
+                    "tier": src.tier,
+                    "summary": src.summary,
+                    "fetched_at": src.fetched_at.isoformat() if src.fetched_at else None,
+                }
+                for src in sources
             ],
             "actions": [
                 {
