@@ -344,6 +344,12 @@ export default function HemerascopePage() {
 
   const handleRunAnalysis = useCallback(async () => {
     if (!supplier) return;
+    const supplierId = supplier.supplier_id;
+    if (!supplierId) {
+      setErrorMsg("No supplier ID available");
+      setPageState("error");
+      return;
+    }
     setPageState("enriching");
     setEnrichProgress("Starting analysis...");
     setEnrichDetail(supplier.supplier_name);
@@ -351,7 +357,8 @@ export default function HemerascopePage() {
 
     try {
       const token = await getToken();
-      const res = await fetch(`${API_URL}/api/engagements/${id}/supplier-report/enrich/${supplier.supplier_id}`, {
+      const url = `${API_URL}/api/engagements/${id}/supplier-report/enrich/${supplierId}`;
+      const res = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -361,7 +368,7 @@ export default function HemerascopePage() {
 
       if (!res.ok) {
         const text = await res.text();
-        throw new Error(text || `API error ${res.status}`);
+        throw new Error(`API ${res.status}: ${text}`);
       }
 
       const reader = res.body?.getReader();
