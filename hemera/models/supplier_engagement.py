@@ -1,7 +1,7 @@
 """Supplier engagement tracking — outreach, data requests, follow-ups."""
 
 from datetime import datetime, date
-from sqlalchemy import String, Text, DateTime, Date, ForeignKey
+from sqlalchemy import String, Text, Integer, DateTime, Date, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from hemera.database import Base
 
@@ -28,7 +28,7 @@ class SupplierEngagement(Base):
     next_action: Mapped[str | None] = mapped_column(String(255))
     next_action_date: Mapped[date | None] = mapped_column(Date)
 
-    created_by: Mapped[str | None] = mapped_column(String(255))  # email
+    created_by: Mapped[int | None] = mapped_column(Integer)  # user id
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime, default=datetime.utcnow, onupdate=datetime.utcnow

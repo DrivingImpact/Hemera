@@ -1,8 +1,8 @@
 """hemerascope: add findings, selections, actions, ai_tasks, supplier_engagements; rename esg_score
 
-Revision ID: e0c66241078d
+Revision ID: 7b9fb3033ae7
 Revises: c5a787667f05
-Create Date: 2026-04-10 15:54:01.784331
+Create Date: 2026-04-10 16:18:46.942487
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = 'e0c66241078d'
+revision: str = '7b9fb3033ae7'
 down_revision: Union[str, Sequence[str], None] = 'c5a787667f05'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -40,17 +40,17 @@ def upgrade() -> None:
     op.create_table('report_actions',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('engagement_id', sa.Integer(), nullable=False),
+    sa.Column('supplier_id', sa.Integer(), nullable=False),
+    sa.Column('action_text', sa.Text(), nullable=False),
+    sa.Column('priority', sa.Integer(), nullable=False),
+    sa.Column('linked_finding_ids', sa.JSON(), nullable=True),
+    sa.Column('language_source', sa.String(length=20), nullable=False),
     sa.Column('ai_task_id', sa.Integer(), nullable=True),
-    sa.Column('action_type', sa.String(length=50), nullable=False),
-    sa.Column('section', sa.String(length=100), nullable=True),
-    sa.Column('content', sa.Text(), nullable=True),
-    sa.Column('metadata_json', sa.JSON(), nullable=True),
-    sa.Column('status', sa.String(length=20), nullable=False),
-    sa.Column('approved_by', sa.String(length=255), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.Column('created_by', sa.Integer(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['ai_task_id'], ['ai_tasks.id'], ),
     sa.ForeignKeyConstraint(['engagement_id'], ['engagements.id'], ),
+    sa.ForeignKeyConstraint(['supplier_id'], ['suppliers.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('supplier_engagements',
@@ -66,7 +66,7 @@ def upgrade() -> None:
     sa.Column('responded_at', sa.DateTime(), nullable=True),
     sa.Column('next_action', sa.String(length=255), nullable=True),
     sa.Column('next_action_date', sa.Date(), nullable=True),
-    sa.Column('created_by', sa.String(length=255), nullable=True),
+    sa.Column('created_by', sa.Integer(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['supplier_id'], ['suppliers.id'], ),
@@ -75,18 +75,19 @@ def upgrade() -> None:
     op.create_table('supplier_findings',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('supplier_id', sa.Integer(), nullable=False),
-    sa.Column('ai_task_id', sa.Integer(), nullable=True),
-    sa.Column('domain', sa.String(length=50), nullable=False),
+    sa.Column('source', sa.String(length=20), nullable=False),
+    sa.Column('domain', sa.String(length=30), nullable=False),
+    sa.Column('severity', sa.String(length=10), nullable=False),
     sa.Column('title', sa.String(length=255), nullable=False),
-    sa.Column('summary', sa.Text(), nullable=True),
-    sa.Column('detail', sa.Text(), nullable=True),
-    sa.Column('severity', sa.String(length=20), nullable=False),
-    sa.Column('confidence', sa.Float(), nullable=True),
-    sa.Column('source_layers', sa.JSON(), nullable=True),
-    sa.Column('evidence', sa.JSON(), nullable=True),
+    sa.Column('detail', sa.Text(), nullable=False),
+    sa.Column('evidence_url', sa.Text(), nullable=True),
+    sa.Column('evidence_data', sa.JSON(), nullable=True),
+    sa.Column('layer', sa.Integer(), nullable=True),
+    sa.Column('source_name', sa.String(length=100), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.Column('ai_task_id', sa.Integer(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('superseded_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['ai_task_id'], ['ai_tasks.id'], ),
     sa.ForeignKeyConstraint(['supplier_id'], ['suppliers.id'], ),
     sa.PrimaryKeyConstraint('id')
@@ -94,38 +95,31 @@ def upgrade() -> None:
     op.create_index('ix_supplier_findings_active', 'supplier_findings', ['supplier_id', 'is_active'], unique=False)
     op.create_index('ix_supplier_findings_domain', 'supplier_findings', ['supplier_id', 'domain'], unique=False)
     op.create_index('ix_supplier_findings_severity', 'supplier_findings', ['supplier_id', 'severity'], unique=False)
+    op.create_index(op.f('ix_supplier_findings_supplier_id'), 'supplier_findings', ['supplier_id'], unique=False)
     op.create_table('report_selections',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('engagement_id', sa.Integer(), nullable=False),
     sa.Column('finding_id', sa.Integer(), nullable=False),
     sa.Column('included', sa.Boolean(), nullable=False),
-    sa.Column('selected_by', sa.String(length=255), nullable=True),
-    sa.Column('notes', sa.Text(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=False),
-    sa.Column('updated_at', sa.DateTime(), nullable=False),
+    sa.Column('client_title', sa.String(length=255), nullable=True),
+    sa.Column('client_detail', sa.Text(), nullable=True),
+    sa.Column('client_language_source', sa.String(length=20), nullable=True),
+    sa.Column('analyst_note', sa.Text(), nullable=True),
+    sa.Column('selected_by', sa.Integer(), nullable=False),
+    sa.Column('selected_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['engagement_id'], ['engagements.id'], ),
     sa.ForeignKeyConstraint(['finding_id'], ['supplier_findings.id'], ),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('engagement_id', 'finding_id', name='uq_report_selection_engagement_finding')
     )
-    op.add_column('engagements', sa.Column('supplier_report_status', sa.String(length=20), nullable=True))
-    op.add_column('engagements', sa.Column('supplier_report_exec_summary', sa.Text(), nullable=True))
-    # Rename columns (preserve data) instead of add+drop
-    op.alter_column('supplier_scores', 'total_score', new_column_name='hemera_score')
-    op.alter_column('suppliers', 'esg_score', new_column_name='hemera_score')
-    op.add_column('suppliers', sa.Column('hemera_verified', sa.Boolean(), server_default=sa.text('false'), nullable=False))
     # ### end Alembic commands ###
 
 
 def downgrade() -> None:
     """Downgrade schema."""
     # ### commands auto generated by Alembic - please adjust! ###
-    op.drop_column('suppliers', 'hemera_verified')
-    op.alter_column('suppliers', 'hemera_score', new_column_name='esg_score')
-    op.alter_column('supplier_scores', 'hemera_score', new_column_name='total_score')
-    op.drop_column('engagements', 'supplier_report_exec_summary')
-    op.drop_column('engagements', 'supplier_report_status')
     op.drop_table('report_selections')
+    op.drop_index(op.f('ix_supplier_findings_supplier_id'), table_name='supplier_findings')
     op.drop_index('ix_supplier_findings_severity', table_name='supplier_findings')
     op.drop_index('ix_supplier_findings_domain', table_name='supplier_findings')
     op.drop_index('ix_supplier_findings_active', table_name='supplier_findings')
