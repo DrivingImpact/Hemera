@@ -23,6 +23,8 @@ export default function AITaskButtons({
   const { getToken } = useAuth();
   const [status, setStatus] = useState<"idle" | "loading" | "awaiting_paste" | "done">("idle");
   const [taskId, setTaskId] = useState<number | null>(null);
+  const [promptText, setPromptText] = useState("");
+  const [clipboardFailed, setClipboardFailed] = useState(false);
   const [pasteValue, setPasteValue] = useState("");
   const [error, setError] = useState<string | null>(null);
 
@@ -65,7 +67,14 @@ export default function AITaskButtons({
         setStatus("done");
         if (data.response_text) onResult(data.response_text);
       } else {
-        await navigator.clipboard.writeText(data.prompt_text ?? "");
+        const prompt = data.prompt_text ?? "";
+        setPromptText(prompt);
+        try {
+          await navigator.clipboard.writeText(prompt);
+          setClipboardFailed(false);
+        } catch {
+          setClipboardFailed(true);
+        }
         setStatus("awaiting_paste");
       }
     } catch (e) {
@@ -94,9 +103,30 @@ export default function AITaskButtons({
   if (status === "awaiting_paste") {
     return (
       <div className="space-y-2">
-        <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 px-3 py-2 rounded-lg">
-          <span>Prompt copied to clipboard. Paste into Claude Max, then paste the response below.</span>
-        </div>
+        {clipboardFailed ? (
+          <>
+            <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 px-3 py-2 rounded-lg">
+              <span>Copy the prompt below, paste into Claude Max, then paste the response back.</span>
+            </div>
+            <div className="relative">
+              <textarea
+                readOnly
+                value={promptText}
+                className="w-full border border-amber-200 rounded-lg p-3 text-xs font-mono resize-y min-h-[120px] max-h-[200px] bg-amber-50/50"
+              />
+              <button
+                onClick={() => navigator.clipboard.writeText(promptText).catch(() => {})}
+                className="absolute top-2 right-2 px-2 py-1 bg-white border border-gray-200 rounded text-[10px] text-gray-600 hover:bg-gray-50"
+              >
+                Copy
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 px-3 py-2 rounded-lg">
+            <span>Prompt copied to clipboard. Paste into Claude Max, then paste the response below.</span>
+          </div>
+        )}
         <textarea
           className="w-full border border-gray-200 rounded-lg p-3 text-sm font-mono resize-y min-h-[100px]"
           placeholder="Paste Claude Max response here..."
