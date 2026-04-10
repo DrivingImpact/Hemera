@@ -345,8 +345,10 @@ function EngagementProgress({ eng }: { eng: EngagementListItem }) {
     const qc = eng.qc_progress;
     const carbonPct = qc && qc.sampled > 0 ? Math.round((qc.reviewed / qc.sampled) * 100) : 0;
     const carbonLabel = qc && qc.sampled > 0 ? `${qc.reviewed}/${qc.sampled}` : "Not started";
-    // Supplier review not tracked on backend yet — show as not started
-    const supplierLabel = "Not started";
+
+    const sp = eng.supplier_progress;
+    const supplierPct = sp && sp.total > 0 ? Math.round((sp.reviewed / sp.total) * 100) : 0;
+    const supplierLabel = sp && sp.total > 0 ? `${sp.reviewed}/${sp.total}` : "Not started";
 
     return (
       <div className="border-t border-[#F0F0EB] pt-2 space-y-1.5">
@@ -360,7 +362,7 @@ function EngagementProgress({ eng }: { eng: EngagementListItem }) {
         <div className="flex items-center gap-2">
           <span className="text-[10px] text-muted w-20 flex-shrink-0">Supplier</span>
           <div className="flex-1 h-1.5 bg-[#E5E5E0] rounded-full overflow-hidden">
-            <div className="h-full bg-[#6366F1] rounded-full transition-all duration-500" style={{ width: "2%" }} />
+            <div className="h-full bg-[#6366F1] rounded-full transition-all duration-500" style={{ width: `${Math.max(supplierPct, 2)}%` }} />
           </div>
           <span className="text-[10px] text-muted flex-shrink-0 tabular-nums w-20 text-right">{supplierLabel}</span>
         </div>

@@ -25,6 +25,8 @@ export interface EngagementListItem {
   display_name: string | null;
   admin_notes: string | null;
   qc_progress: { sampled: number; reviewed: number } | null;
+  supplier_progress: { total: number; reviewed: number } | null;
+  supplier_report_status: string | null;
 }
 
 export interface CategorySummary {

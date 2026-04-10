@@ -59,6 +59,46 @@ def list_engagements(db: Session = Depends(get_db), current_user: ClerkUser = De
             if sampled > 0:
                 qc_progress[row.engagement_id] = {"sampled": sampled, "reviewed": reviewed}
 
+    # Supplier review progress — count total findings vs reviewed (have a selection)
+    from hemera.models.finding import SupplierFinding, ReportSelection
+    supplier_progress = {}
+    all_ids = [e.id for e in engagements]
+    if all_ids:
+        for eid in all_ids:
+            # Count unique suppliers with active findings for this engagement
+            supplier_ids_q = (
+                db.query(Transaction.supplier_id)
+                .filter(Transaction.engagement_id == eid, Transaction.supplier_id.isnot(None), Transaction.is_duplicate == False)
+                .distinct()
+                .all()
+            )
+            sids = [s for (s,) in supplier_ids_q]
+            if not sids:
+                continue
+
+            total_findings = (
+                db.query(func.count(SupplierFinding.id))
+                .filter(SupplierFinding.supplier_id.in_(sids), SupplierFinding.is_active == True)
+                .scalar()
+            ) or 0
+
+            reviewed_findings = (
+                db.query(func.count(ReportSelection.id))
+                .filter(
+                    ReportSelection.engagement_id == eid,
+                    ReportSelection.finding_id.in_(
+                        db.query(SupplierFinding.id).filter(
+                            SupplierFinding.supplier_id.in_(sids),
+                            SupplierFinding.is_active == True,
+                        )
+                    ),
+                )
+                .scalar()
+            ) or 0
+
+            if total_findings > 0:
+                supplier_progress[eid] = {"total": total_findings, "reviewed": reviewed_findings}
+
     return [
         {
             "id": e.id,
@@ -71,6 +111,8 @@ def list_engagements(db: Session = Depends(get_db), current_user: ClerkUser = De
             "display_name": e.display_name,
             "admin_notes": e.admin_notes,
             "qc_progress": qc_progress.get(e.id),
+            "supplier_progress": supplier_progress.get(e.id),
+            "supplier_report_status": e.supplier_report_status,
         }
         for e in engagements
     ]
