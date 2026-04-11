@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hemera Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --slate: #1E293B;
+  --teal: #0D9488;
+  --teal-glow: rgba(13, 148, 136, 0.15);
+  --amber: #F59E0B;
+  --paper: #F5F5F0;
+  --surface: #FFFFFF;
+  --muted: #64748B;
+  --emerald: #059669;
+  --violet: #7C3AED;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  color: var(--slate);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ── CURSOR GLOW ── */
+#cursor-glow {
+  position: fixed;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(circle, rgba(13, 148, 136, 0.07), transparent 70%);
+  transform: translate(-50%, -50%);
+  transition: left 0.15s ease-out, top 0.15s ease-out;
+}
+
+/* ── NAV ── */
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  transition: all 0.3s;
+}
+.nav.scrolled {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(30, 41, 59, 0.06);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: var(--slate);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.3px;
+}
+.nav-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--teal); }
+.nav-links { display: flex; align-items: center; gap: 32px; }
+.nav-links a { color: var(--muted); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
+.nav-links a:hover { color: var(--slate); }
+.nav-cta {
+  padding: 8px 20px;
+  background: var(--teal);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+.nav-cta:hover { opacity: 0.9; transform: translateY(-1px); }
+
+/* ── HERO ── */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(13, 148, 136, 0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 75% 20%, rgba(245, 158, 11, 0.03) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 40% at 25% 80%, rgba(13, 148, 136, 0.03) 0%, transparent 50%),
+    linear-gradient(180deg, #FAFDF9 0%, #F5F5F0 40%, #F0F0EB 100%);
+}
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  opacity: 0.025;
+  background-image:
+    linear-gradient(rgba(30, 41, 59, 0.4) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30, 41, 59, 0.4) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+#hero-canvas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.hero-content {
+  position: relative;
+  z-index: 10;
+  max-width: 900px;
+  text-align: center;
+  padding: 0 24px;
+}
+.hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 32px;
+  opacity: 0;
+  animation: fadeInDown 0.8s ease-out forwards;
+}
+.hero-badge-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--teal);
+  animation: pulse 2s ease-in-out infinite;
+}
+.hero-badge-text {
+  color: var(--teal);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+}
+.hero h1 {
+  font-size: clamp(40px, 7vw, 72px);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  opacity: 0;
+  animation: fadeInUp 1s ease-out 0.1s forwards;
+}
+.hero h1 .highlight {
+  position: relative;
+  display: inline-block;
+}
+.hero h1 .highlight::after {
+  content: "";
+  position: absolute;
+  bottom: 4px;
+  left: -4px;
+  right: -4px;
+  height: 12px;
+  background: rgba(13, 148, 136, 0.1);
+  border-radius: 3px;
+  transform: skewX(-2deg);
+  z-index: -1;
+}
+.hero-sub {
+  margin-top: 24px;
+  font-size: clamp(16px, 2.5vw, 20px);
+  color: var(--muted);
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+  opacity: 0;
+  animation: fadeInUp 1s ease-out 0.3s forwards;
+}
+.hero-ctas {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 40px;
+  opacity: 0;
+  animation: fadeInUp 1s ease-out 0.5s forwards;
+}
+.btn-primary {
+  padding: 16px 32px;
+  background: var(--teal);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(13, 148, 136, 0.25);
+}
+.btn-primary::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--teal), var(--emerald));
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.btn-primary:hover::after { opacity: 1; }
+.btn-primary span { position: relative; z-index: 1; }
+.btn-secondary {
+  padding: 16px 32px;
+  background: transparent;
+  color: var(--slate);
+  border: 1px solid rgba(30, 41, 59, 0.12);
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.3s;
+}
+.btn-secondary:hover {
+  border-color: rgba(13, 148, 136, 0.3);
+  background: rgba(13, 148, 136, 0.03);
+}
+.btn-secondary svg { color: var(--teal); transition: transform 0.3s; }
+.btn-secondary:hover svg { transform: scale(1.15); }
+.hero-trust {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  margin-top: 56px;
+  font-size: 12px;
+  color: var(--muted);
+  opacity: 0;
+  animation: fadeInUp 1s ease-out 0.7s forwards;
+}
+.hero-trust-item { display: flex; align-items: center; gap: 6px; }
+.hero-trust-item svg { width: 16px; height: 16px; color: var(--teal); }
+.hero-trust-sep { width: 1px; height: 16px; background: rgba(30,41,59,0.08); }
+.scroll-indicator {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: bounce 2s ease-in-out infinite;
+}
+.scroll-pill {
+  width: 24px;
+  height: 40px;
+  border-radius: 12px;
+  border: 2px solid rgba(30, 41, 59, 0.15);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 8px;
+}
+.scroll-dot {
+  width: 6px;
+  height: 10px;
+  border-radius: 3px;
+  background: rgba(13, 148, 136, 0.4);
+  animation: scrollDot 2s ease-in-out infinite;
+}
+
+/* ── STATS ── */
+.stats {
+  position: relative;
+  padding: 96px 24px;
+  background: var(--slate);
+  overflow: hidden;
+}
+.stats-pattern {
+  position: absolute;
+  inset: 0;
+  opacity: 0.03;
+  background: repeating-linear-gradient(45deg, transparent, transparent 40px, rgba(255,255,255,0.15) 40px, rgba(255,255,255,0.15) 41px);
+}
+.stats-grid {
+  position: relative;
+  z-index: 2;
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 48px;
+}
+.stat { text-align: center; }
+.stat-value {
+  font-size: clamp(36px, 5vw, 52px);
+  font-weight: 800;
+  color: white;
+  font-variant-numeric: tabular-nums;
+}
+.stat-label { color: var(--teal); font-size: 14px; font-weight: 600; margin-top: 8px; }
+.stat-desc { color: rgba(255,255,255,0.35); font-size: 12px; margin-top: 4px; }
+
+/* ── HEMERASCOPE ── */
+.hemerascope {
+  padding: 112px 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 100px;
+  background: rgba(13, 148, 136, 0.06);
+  border: 1px solid rgba(13, 148, 136, 0.12);
+  margin-bottom: 24px;
+}
+.section-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--teal); }
+.section-badge-text { color: var(--teal); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; }
+.section-header { text-align: center; margin-bottom: 64px; }
+.section-header h2 {
+  font-size: clamp(28px, 5vw, 48px);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+.section-header p { margin-top: 16px; color: var(--muted); font-size: 18px; max-width: 640px; margin-left: auto; margin-right: auto; line-height: 1.6; }
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.bento-card {
+  border-radius: 16px;
+  padding: 32px;
+  border: 1px solid rgba(0,0,0,0.04);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: default;
+}
+.bento-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.06); }
+.bento-card.span-2 { grid-column: span 2; }
+.bento-card.carbon { background: linear-gradient(135deg, rgba(13,148,136,0.04), rgba(13,148,136,0.08)); border-color: rgba(13,148,136,0.1); }
+.bento-card.uncertainty { background: linear-gradient(135deg, rgba(245,158,11,0.04), rgba(245,158,11,0.08)); border-color: rgba(245,158,11,0.1); }
+.bento-card.esg { background: linear-gradient(135deg, rgba(5,150,105,0.04), rgba(5,150,105,0.08)); border-color: rgba(5,150,105,0.1); }
+.bento-card.engagement { background: linear-gradient(135deg, rgba(124,58,237,0.04), rgba(124,58,237,0.08)); border-color: rgba(124,58,237,0.1); }
+.bento-card-inner { display: flex; gap: 16px; align-items: flex-start; }
+.bento-icon { flex-shrink: 0; width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-top: 4px; }
+.bento-icon.teal { background: rgba(13,148,136,0.1); color: var(--teal); }
+.bento-icon.amber { background: rgba(245,158,11,0.1); color: var(--amber); }
+.bento-icon.emerald { background: rgba(5,150,105,0.1); color: var(--emerald); }
+.bento-icon.violet { background: rgba(124,58,237,0.1); color: var(--violet); }
+.bento-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  padding: 3px 10px;
+  border-radius: 100px;
+  margin-bottom: 12px;
+}
+.bento-tag.teal { background: rgba(13,148,136,0.08); color: var(--teal); }
+.bento-tag.amber { background: rgba(245,158,11,0.08); color: #92400E; }
+.bento-tag.emerald { background: rgba(5,150,105,0.08); color: #065F46; }
+.bento-tag.violet { background: rgba(124,58,237,0.08); color: #5B21B6; }
+.bento-card h3 { font-size: 17px; font-weight: 700; line-height: 1.3; }
+.bento-card p { font-size: 14px; color: var(--muted); line-height: 1.6; margin-top: 8px; }
+
+/* ── HOW IT WORKS ── */
+.approach {
+  padding: 112px 24px;
+  position: relative;
+  background: linear-gradient(180deg, var(--paper) 0%, #FAFDF9 50%, var(--paper) 100%);
+}
+.approach-inner { max-width: 800px; margin: 0 auto; position: relative; }
+.approach-line {
+  position: absolute;
+  left: 27px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg, rgba(13,148,136,0.25), rgba(13,148,136,0.05));
+}
+.step { display: flex; gap: 24px; margin-bottom: 56px; position: relative; }
+.step:last-child { margin-bottom: 0; }
+.step-num {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: white;
+  border: 2px solid rgba(13,148,136,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--teal);
+  font-size: 14px;
+  font-weight: 700;
+  z-index: 2;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.step-content {
+  flex: 1;
+  background: white;
+  border-radius: 16px;
+  border: 1px solid rgba(30,41,59,0.06);
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  transition: box-shadow 0.3s;
+}
+.step-content:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+.step-content h3 { font-size: 17px; font-weight: 700; }
+.step-content p { font-size: 14px; color: var(--muted); line-height: 1.6; margin-top: 8px; }
+.step-detail { font-size: 12px; color: rgba(13,148,136,0.6); font-weight: 500; margin-top: 8px; }
+
+/* ── VIDEO ── */
+.video-section {
+  padding: 112px 24px;
+  background: var(--slate);
+  position: relative;
+  overflow: hidden;
+}
+.video-glow {
+  position: absolute;
+  inset: 0;
+  opacity: 0.25;
+  background: radial-gradient(ellipse 80% 50% at 50% 50%, rgba(13,148,136,0.2), transparent);
+}
+.video-inner { position: relative; z-index: 2; max-width: 900px; margin: 0 auto; text-align: center; }
+.video-inner h2 { font-size: clamp(28px, 4vw, 40px); font-weight: 800; color: white; }
+.video-inner > p { color: rgba(255,255,255,0.45); font-size: 18px; margin-top: 16px; }
+.video-player {
+  margin-top: 48px;
+  aspect-ratio: 16/9;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.03);
+  position: relative;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color 0.3s;
+}
+.video-player:hover { border-color: rgba(13,148,136,0.3); }
+.video-dots {
+  position: absolute;
+  inset: 0;
+  opacity: 0.04;
+  background-image: radial-gradient(circle at 1px 1px, white 1px, transparent 0);
+  background-size: 24px 24px;
+}
+.play-btn {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: rgba(13,148,136,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+  box-shadow: 0 8px 32px rgba(13,148,136,0.35);
+}
+.video-player:hover .play-btn { transform: translate(-50%, -50%) scale(1.1); background: var(--teal); }
+.play-btn svg { width: 28px; height: 28px; color: white; margin-left: 3px; }
+.duration-badge {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  padding: 4px 12px;
+  border-radius: 8px;
+  background: rgba(0,0,0,0.4);
+  backdrop-filter: blur(8px);
+  color: white;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ── SCIENCE ── */
+.science {
+  padding: 112px 24px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.science-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: center;
+}
+.science-left h2 {
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 800;
+  line-height: 1.15;
+}
+.science-left h2 .teal-text { color: var(--teal); }
+.science-left p { color: var(--muted); line-height: 1.7; margin-top: 20px; font-size: 15px; }
+.standards-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.standard-card {
+  background: white;
+  border: 1px solid rgba(30,41,59,0.06);
+  border-radius: 12px;
+  padding: 20px;
+  transition: all 0.3s;
+}
+.standard-card:hover { border-color: rgba(13,148,136,0.15); box-shadow: 0 4px 16px rgba(0,0,0,0.05); }
+.standard-cat {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--teal);
+  background: rgba(13,148,136,0.06);
+  padding: 2px 8px;
+  border-radius: 100px;
+}
+.standard-card h4 { font-size: 14px; font-weight: 700; margin-top: 8px; }
+.standard-card p { font-size: 12px; color: var(--muted); line-height: 1.5; margin-top: 4px; }
+
+/* ── COLLABORATION ── */
+.collab {
+  padding: 112px 24px;
+  position: relative;
+  overflow: hidden;
+}
+.collab-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(13,148,136,0.02), rgba(245,158,11,0.015), rgba(13,148,136,0.02));
+}
+.collab-inner { position: relative; z-index: 2; max-width: 1000px; margin: 0 auto; }
+.collab-inner > h2 { text-align: center; font-size: clamp(28px, 5vw, 48px); font-weight: 800; }
+.collab-inner > p { text-align: center; color: var(--muted); font-size: 18px; line-height: 1.6; max-width: 640px; margin: 24px auto 0; }
+.collab-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 56px; }
+.collab-card {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid rgba(30,41,59,0.06);
+  padding: 32px;
+  transition: all 0.3s;
+  text-align: left;
+}
+.collab-card:hover { box-shadow: 0 8px 30px rgba(0,0,0,0.05); }
+.collab-card h3 { font-size: 17px; font-weight: 700; margin-bottom: 16px; }
+.collab-card ul { list-style: none; }
+.collab-card li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--muted);
+  padding: 6px 0;
+}
+.collab-card li svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; }
+.collab-card:nth-child(1) li svg { color: var(--teal); }
+.collab-card:nth-child(2) li svg { color: var(--emerald); }
+.collab-card:nth-child(3) li svg { color: var(--amber); }
+
+/* ── ABOUT ── */
+.about {
+  padding: 112px 24px;
+  background: var(--slate);
+  position: relative;
+  overflow: hidden;
+}
+.about-dots {
+  position: absolute;
+  inset: 0;
+  opacity: 0.04;
+  background-image: radial-gradient(circle at 1px 1px, white 1px, transparent 0);
+  background-size: 32px 32px;
+}
+.about-inner { position: relative; z-index: 2; max-width: 700px; margin: 0 auto; text-align: center; }
+.about-inner h2 { font-size: clamp(28px, 4vw, 40px); font-weight: 800; color: white; }
+.about-inner p { color: rgba(255,255,255,0.5); font-size: 17px; line-height: 1.7; margin-top: 24px; }
+.about-inner p:nth-of-type(2) { color: rgba(255,255,255,0.35); margin-top: 16px; }
+.about-ctas { display: flex; gap: 16px; justify-content: center; margin-top: 48px; }
+.btn-about-primary {
+  padding: 16px 32px;
+  background: var(--teal);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.btn-about-primary:hover { opacity: 0.9; }
+.btn-about-secondary {
+  padding: 16px 32px;
+  background: transparent;
+  color: white;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.btn-about-secondary:hover { background: rgba(255,255,255,0.05); }
+
+/* ── CTA ── */
+.cta-section {
+  padding: 112px 24px;
+  position: relative;
+}
+.cta-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(13,148,136,0.05), transparent);
+}
+.cta-inner { position: relative; z-index: 2; max-width: 700px; margin: 0 auto; text-align: center; }
+.cta-inner h2 { font-size: clamp(28px, 5vw, 48px); font-weight: 800; line-height: 1.1; }
+.cta-inner > p { color: var(--muted); font-size: 18px; margin-top: 24px; }
+.cta-buttons { display: flex; gap: 16px; justify-content: center; margin-top: 40px; }
+
+/* ── FOOTER ── */
+.footer {
+  border-top: 1px solid rgba(30,41,59,0.06);
+  padding: 48px 24px;
+}
+.footer-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.footer-brand { display: flex; align-items: center; gap: 8px; }
+.footer-brand span { font-size: 14px; font-weight: 700; color: var(--slate); }
+.footer-tagline { color: var(--muted); font-size: 12px; }
+.footer-copy { color: var(--muted); font-size: 12px; }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInDown {
+  from { opacity: 0; transform: translateY(-12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes scrollDot {
+  0%, 100% { transform: translateY(0); opacity: 0.4; }
+  50% { transform: translateY(6px); opacity: 1; }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+@keyframes bounce {
+  0%, 100% { transform: translateX(-50%) translateY(0); }
+  50% { transform: translateX(-50%) translateY(-8px); }
+}
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .stats-grid { grid-template-columns: repeat(2, 1fr); gap: 32px; }
+  .bento-grid { grid-template-columns: 1fr; }
+  .bento-card.span-2 { grid-column: span 1; }
+  .science-grid { grid-template-columns: 1fr; gap: 40px; }
+  .standards-grid { grid-template-columns: 1fr 1fr; }
+  .collab-cards { grid-template-columns: 1fr; }
+  .hero-ctas { flex-direction: column; align-items: center; }
+  .hero-trust { flex-direction: column; gap: 12px; }
+  .hero-trust-sep { display: none; }
+  .nav-links { display: none; }
+  .about-ctas { flex-direction: column; align-items: center; }
+  .cta-buttons { flex-direction: column; align-items: center; }
+  .footer-inner { flex-direction: column; gap: 16px; text-align: center; }
+}
+</style>
+</head>
+<body>
+
+<!-- CURSOR GLOW -->
+<div id="cursor-glow"></div>
+
+<!-- NAV -->
+<nav class="nav" id="nav">
+  <a href="#" class="nav-logo">
+    <div class="nav-dot"></div>
+    Hemera
+  </a>
+  <div class="nav-links">
+    <a href="#hemerascope">Product</a>
+    <a href="#approach">How It Works</a>
+    <a href="#science">Standards</a>
+    <a href="#about">About</a>
+    <a href="/sign-in" style="color:var(--slate);font-weight:600;font-size:14px;text-decoration:none;">Sign In</a>
+    <a href="#cta" class="nav-cta">Book a Demo</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-content">
+    <div class="hero-badge">
+      <div class="hero-badge-dot"></div>
+      <span class="hero-badge-text">Hemera Intelligence</span>
+      <div class="hero-badge-dot"></div>
+    </div>
+    <h1>Supply chains<br><span class="highlight">made transparent</span></h1>
+    <p class="hero-sub">Carbon intelligence, supplier ESG analysis, and quantified data uncertainty &mdash; statistically verified to academic standards. Delivered fast, at a price that makes sustainability accessible to everyone.</p>
+    <div class="hero-ctas">
+      <a href="#cta" class="btn-primary"><span>Book a Demo</span></a>
+      <a href="#video" class="btn-secondary">
+        <svg fill="currentColor" viewBox="0 0 20 20" width="20" height="20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg>
+        Watch the Video
+      </a>
+    </div>
+    <div class="hero-trust">
+      <div class="hero-trust-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        GHG Protocol Aligned
+      </div>
+      <div class="hero-trust-sep"></div>
+      <div class="hero-trust-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        ISO 19011 QC Standards
+      </div>
+      <div class="hero-trust-sep"></div>
+      <div class="hero-trust-item">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064"/></svg>
+        100+ Data Points Per Supplier
+      </div>
+    </div>
+  </div>
+  <div class="scroll-indicator">
+    <div class="scroll-pill"><div class="scroll-dot"></div></div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="stats" id="stats">
+  <div class="stats-pattern"></div>
+  <div class="stats-grid">
+    <div class="stat reveal"><div class="stat-value" data-target="100" data-suffix="+">0</div><div class="stat-label">Data Points Per Supplier</div><div class="stat-desc">Government registries, certifications, regulators</div></div>
+    <div class="stat reveal"><div class="stat-value" data-target="8">0</div><div class="stat-label">ESG Domains Scored</div><div class="stat-desc">Governance, labour, carbon, nature, and more</div></div>
+    <div class="stat reveal"><div class="stat-value" data-target="13">0</div><div class="stat-label">Intelligence Layers</div><div class="stat-desc">From corporate identity to social value</div></div>
+    <div class="stat reveal"><div class="stat-value" data-target="95" data-suffix="%">0</div><div class="stat-label">Confidence Level</div><div class="stat-desc">Statistical sampling to ISO 19011</div></div>
+  </div>
+</section>
+
+<!-- HEMERASCOPE -->
+<section class="hemerascope" id="hemerascope">
+  <div class="section-header">
+    <div class="section-badge reveal"><div class="section-badge-dot"></div><span class="section-badge-text">HemeraScope</span></div>
+    <h2 class="reveal">One report. Complete clarity.</h2>
+    <p class="reveal">HemeraScope combines carbon footprint analysis, supplier ESG intelligence, and statistical uncertainty into a single, auditable deliverable.</p>
+  </div>
+  <div class="bento-grid">
+    <div class="bento-card carbon span-2 reveal">
+      <div class="bento-card-inner">
+        <div class="bento-icon teal"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" width="22" height="22"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg></div>
+        <div><span class="bento-tag teal">Carbon Intelligence</span><h3>Scope 1, 2 &amp; 3 emissions calculated from your spend data</h3><p>Upload your activity and spend data. Our system classifies every transaction, matches suppliers, and calculates emissions using DEFRA-verified factors. Full GHG Protocol compliance with quantified uncertainty on every number.</p></div>
+      </div>
+    </div>
+    <div class="bento-card uncertainty reveal">
+      <div class="bento-card-inner">
+        <div class="bento-icon amber"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" width="22" height="22"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z"/></svg></div>
+        <div><span class="bento-tag amber">Data Uncertainty</span><h3>Every number comes with a confidence interval</h3><p>Pedigree matrix scoring across 5 dimensions. Monte Carlo uncertainty propagation. You'll know exactly how reliable each figure is &mdash; and where to invest in better data.</p></div>
+      </div>
+    </div>
+    <div class="bento-card esg reveal">
+      <div class="bento-card-inner">
+        <div class="bento-icon emerald"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" width="22" height="22"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"/></svg></div>
+        <div><span class="bento-tag emerald">Supplier ESG</span><h3>100+ data points. One Hemera Score per supplier</h3><p>We check Companies House, Environment Agency, HSE, SBTi, CDP, and dozens more public registries. Every finding is traceable to its source. Deep analysis verifies and challenges the automated results, with benchmarking against sector peers.</p></div>
+      </div>
+    </div>
+    <div class="bento-card engagement span-2 reveal">
+      <div class="bento-card-inner">
+        <div class="bento-icon violet"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" width="22" height="22"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg></div>
+        <div><span class="bento-tag violet">Supplier Engagement</span><h3>We don't just flag problems &mdash; we help fix them</h3><p>Hemera works directly with your suppliers to close ESG gaps. Modern slavery statements, SBTi commitments, environmental compliance &mdash; we facilitate the conversations and track progress. Suppliers who meet our standards earn the Hemera Verified badge.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="approach" id="approach">
+  <div class="section-header">
+    <h2 class="reveal">How it works</h2>
+    <p class="reveal">From upload to insight in days, not months. Collaboration at every step.</p>
+  </div>
+  <div class="approach-inner">
+    <div class="approach-line"></div>
+    <div class="step reveal"><div class="step-num">01</div><div class="step-content"><h3>Upload your activity and spend data</h3><p>A simple CSV or Excel file. We handle the complexity &mdash; every transaction is classified into GHG Protocol scopes and categories automatically.</p><div class="step-detail">Intelligent classification with full audit trail. Every decision is traceable.</div></div></div>
+    <div class="step reveal"><div class="step-num">02</div><div class="step-content"><h3>We analyse your supply chain</h3><p>Over 100 data points checked per supplier across government registries, certification bodies, and regulatory databases. Every finding benchmarked against sector peers.</p><div class="step-detail">Multi-layered intelligence with deterministic scoring and deep analysis.</div></div></div>
+    <div class="step reveal"><div class="step-num">03</div><div class="step-content"><h3>Expert review with full transparency</h3><p>Every finding is reviewed by a human analyst who can include, skip, or challenge it. We walk you through the results and explain every number.</p><div class="step-detail">Statistical sampling to ISO 19011 standards. Nothing goes to you unchecked.</div></div></div>
+    <div class="step reveal"><div class="step-num">04</div><div class="step-content"><h3>We engage with your suppliers</h3><p>We don't just flag problems &mdash; we contact your suppliers, facilitate conversations, and help them improve. Suppliers who meet our standards earn the Hemera Verified badge.</p><div class="step-detail">Collaboration, not auditing. Making sustainability accessible.</div></div></div>
+    <div class="step reveal"><div class="step-num">05</div><div class="step-content"><h3>You receive your HemeraScope report</h3><p>Carbon footprint, supplier ESG profiles, uncertainty analysis, and recommended actions &mdash; delivered as an interactive dashboard, branded PDF, and Power BI access.</p><div class="step-detail">Every number traceable to its source. Every figure accompanied by quantified uncertainty.</div></div></div>
+  </div>
+</section>
+
+<!-- VIDEO -->
+<section class="video-section" id="video">
+  <div class="video-glow"></div>
+  <div class="video-inner">
+    <h2 class="reveal">See HemeraScope in action</h2>
+    <p class="reveal">Watch how we turn your spend data into actionable supply chain intelligence.</p>
+    <div class="video-player reveal">
+      <div class="video-dots"></div>
+      <div class="play-btn"><svg fill="currentColor" viewBox="0 0 20 20"><path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/></svg></div>
+      <div class="duration-badge">3:24</div>
+    </div>
+  </div>
+</section>
+
+<!-- SCIENCE -->
+<section class="science" id="science">
+  <div class="science-grid">
+    <div class="science-left">
+      <div class="section-badge reveal"><div class="section-badge-dot"></div><span class="section-badge-text">Academic Standards</span></div>
+      <h2 class="reveal">Rigorous by design.<br><span class="teal-text">Not by accident.</span></h2>
+      <p class="reveal">Every carbon figure comes with a confidence interval. Every supplier finding is traceable to a public registry. Every quality control check follows ISO 19011 sampling standards.</p>
+      <p class="reveal">We believe sustainability data should be as trustworthy as financial data. That's why we quantify uncertainty instead of hiding it &mdash; and why our reports stand up to boardroom scrutiny.</p>
+    </div>
+    <div class="standards-grid">
+      <div class="standard-card reveal"><span class="standard-cat">Carbon</span><h4>GHG Protocol</h4><p>Corporate Standard & Scope 3 calculation methodology</p></div>
+      <div class="standard-card reveal"><span class="standard-cat">Carbon</span><h4>DEFRA</h4><p>UK Government emission factors (annually updated)</p></div>
+      <div class="standard-card reveal"><span class="standard-cat">Quality</span><h4>ISO 19011</h4><p>Statistical sampling for quality control audits</p></div>
+      <div class="standard-card reveal"><span class="standard-cat">Targets</span><h4>SBTi</h4><p>Science Based Targets initiative alignment</p></div>
+      <div class="standard-card reveal"><span class="standard-cat">Uncertainty</span><h4>Pedigree Matrix</h4><p>Multi-dimensional data quality scoring framework</p></div>
+      <div class="standard-card reveal"><span class="standard-cat">Uncertainty</span><h4>Monte Carlo</h4><p>Uncertainty propagation with confidence intervals</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- COLLABORATION -->
+<section class="collab" id="collab">
+  <div class="collab-bg"></div>
+  <div class="collab-inner">
+    <h2 class="reveal">Collaboration, not auditing.</h2>
+    <p class="reveal">Every supply chain has areas for improvement. Our job isn't to judge &mdash; it's to help. When we find a gap, we don't just flag it. We reach out to your suppliers, facilitate the conversation, and work together toward a solution.</p>
+    <div class="collab-cards">
+      <div class="collab-card reveal">
+        <h3>For your business</h3>
+        <ul>
+          <li><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>Full Scope 1, 2 & 3 footprint</li>
+          <li><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>Boardroom-ready reports</li>
+          <li><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>Reduction roadmap with ROI</li>
+          <li><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>SBTi-aligned target setting</li>
+        </ul>
+      </div>
+      <div class="collab-card reveal">
+        <h3>For your suppliers</h3>
+        <ul>
+          <li><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>Free ESG assessment</li>
+          <li><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>Guided improvement pathway</li>
+          <li><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>Hemera Verified badge</li>
+          <li><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>Access to sustainability resources</li>
+        </ul>
+      </div>
+      <div class="collab-card reveal">
+        <h3>For the planet</h3>
+        <ul>
+          <li><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>Measurable emissions reduction</li>
+          <li><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>Supply chain transparency</li>
+          <li><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>Evidence-based sustainability</li>
+          <li><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>Accessible to all organisations</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section class="about" id="about">
+  <div class="about-dots"></div>
+  <div class="about-inner">
+    <h2 class="reveal">About Hemera Intelligence</h2>
+    <p class="reveal">Named after the Greek goddess of daylight, Hemera Intelligence was founded on a simple belief: supply chain sustainability should be transparent, rigorous, and accessible to all. Because sunshine is the best disinfectant.</p>
+    <p class="reveal">We combine academic rigour with cutting-edge technology to deliver supply chain intelligence that stands up to scrutiny &mdash; fast, statistically significant, and with quantified uncertainty on every number. No black-box calculations. No unexplained figures. We walk you through every result, because if you can't explain it, you can't trust it. Our approach is collaborative &mdash; we work with your suppliers, not against them &mdash; because real sustainability happens through partnership.</p>
+    <div class="about-ctas reveal">
+      <a href="mailto:nicolashenry2002@gmail.com?subject=Hemera%20Demo%20Request" class="btn-about-primary">Get in Touch</a>
+      <a href="/sign-in" class="btn-about-secondary">Sign In</a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="cta">
+  <div class="cta-glow"></div>
+  <div class="cta-inner">
+    <h2 class="reveal">Ready to bring daylight<br>to your supply chain?</h2>
+    <p class="reveal">Book a 20-minute demo and see how HemeraScope can transform your supply chain sustainability.</p>
+    <div class="cta-buttons reveal">
+      <a href="mailto:nicolashenry2002@gmail.com?subject=Hemera%20Demo%20Request" class="btn-primary"><span>Book a Demo</span></a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand"><div class="nav-dot"></div><span>Hemera Intelligence</span></div>
+    <div class="footer-tagline">Helping organisations build transparent, resilient supply chains.</div>
+    <div class="footer-copy">&copy; 2026 Hemera Intelligence Ltd</div>
+  </div>
+</footer>
+
+<script>
+// ── Cursor glow ──
+const glow = document.getElementById('cursor-glow');
+document.addEventListener('mousemove', (e) => {
+  glow.style.left = e.clientX + 'px';
+  glow.style.top = e.clientY + 'px';
+});
+
+// ── Nav scroll effect ──
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  nav.classList.toggle('scrolled', window.scrollY > 50);
+}, { passive: true });
+
+// ── Scroll reveal ──
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((entry, i) => {
+    if (entry.isIntersecting) {
+      // Stagger siblings
+      const parent = entry.target.parentElement;
+      const siblings = parent ? Array.from(parent.querySelectorAll('.reveal')) : [];
+      const idx = siblings.indexOf(entry.target);
+      setTimeout(() => {
+        entry.target.classList.add('visible');
+      }, idx * 80);
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// ── Animated counters ──
+const counterObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      const el = entry.target.querySelector('.stat-value');
+      if (!el || el.dataset.done) return;
+      el.dataset.done = '1';
+      const target = parseInt(el.dataset.target);
+      const suffix = el.dataset.suffix || '';
+      const duration = 2000;
+      let start;
+      const step = (ts) => {
+        if (!start) start = ts;
+        const p = Math.min((ts - start) / duration, 1);
+        const eased = 1 - Math.pow(1 - p, 3);
+        el.textContent = Math.round(eased * target) + suffix;
+        if (p < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+      counterObserver.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.3 });
+document.querySelectorAll('.stat').forEach(el => counterObserver.observe(el));
+
+// ── Hero particle canvas ──
+const canvas = document.getElementById('hero-canvas');
+const ctx = canvas.getContext('2d');
+let mouseX = 0, mouseY = 0;
+const particles = [];
+const PARTICLE_COUNT = 70;
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+for (let i = 0; i < PARTICLE_COUNT; i++) {
+  particles.push({
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    vx: (Math.random() - 0.5) * 0.3,
+    vy: (Math.random() - 0.5) * 0.3,
+    r: Math.random() * 2 + 0.5,
+    a: Math.random() * 0.35 + 0.08,
+    speed: Math.random() * 0.5 + 0.2,
+  });
+}
+
+document.addEventListener('mousemove', (e) => { mouseX = e.clientX; mouseY = e.clientY; });
+
+function drawParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  particles.forEach(p => {
+    if (mouseX && mouseY) {
+      const dx = mouseX - p.x, dy = mouseY - p.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 280) { p.vx += (dx / dist) * 0.015; p.vy += (dy / dist) * 0.015; }
+    }
+    p.x += p.vx * p.speed;
+    p.y += p.vy * p.speed;
+    p.vx *= 0.992;
+    p.vy *= 0.992;
+    if (p.x < 0) p.x = canvas.width; if (p.x > canvas.width) p.x = 0;
+    if (p.y < 0) p.y = canvas.height; if (p.y > canvas.height) p.y = 0;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(13, 148, 136, ${p.a})`;
+    ctx.fill();
+  });
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i + 1; j < particles.length; j++) {
+      const dx = particles[i].x - particles[j].x;
+      const dy = particles[i].y - particles[j].y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 110) {
+        ctx.beginPath();
+        ctx.moveTo(particles[i].x, particles[i].y);
+        ctx.lineTo(particles[j].x, particles[j].y);
+        ctx.strokeStyle = `rgba(13, 148, 136, ${0.06 * (1 - dist / 110)})`;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    }
+  }
+  requestAnimationFrame(drawParticles);
+}
+drawParticles();
+</script>
+</body>
+</html>
