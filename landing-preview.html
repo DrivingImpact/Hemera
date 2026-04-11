@@ -389,43 +389,27 @@ body {
   position: relative;
   background: linear-gradient(180deg, var(--paper) 0%, #FAFDF9 50%, var(--paper) 100%);
 }
-.approach-inner { max-width: 800px; margin: 0 auto; position: relative; }
-.approach-line {
-  position: absolute;
-  left: 27px;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: linear-gradient(180deg, rgba(13,148,136,0.25), rgba(13,148,136,0.05));
-}
-.step { display: flex; gap: 24px; margin-bottom: 56px; position: relative; }
+.approach-inner { max-width: 900px; margin: 0 auto; }
+.step { display: grid; grid-template-columns: 80px 1fr; gap: 24px; margin-bottom: 32px; align-items: start; }
 .step:last-child { margin-bottom: 0; }
+.step-num-col { display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 24px; }
 .step-num {
-  flex-shrink: 0;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: white;
-  border: 2px solid rgba(13,148,136,0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  font-size: 40px;
+  font-weight: 800;
   color: var(--teal);
-  font-size: 14px;
-  font-weight: 700;
-  z-index: 2;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  line-height: 1;
+  letter-spacing: -0.02em;
 }
+.step-num-line { width: 2px; height: 100%; min-height: 40px; background: linear-gradient(180deg, rgba(13,148,136,0.15), transparent); }
 .step-content {
-  flex: 1;
   background: white;
   border-radius: 16px;
   border: 1px solid rgba(30,41,59,0.06);
-  padding: 24px;
+  padding: 24px 28px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.03);
-  transition: box-shadow 0.3s;
+  transition: all 0.3s;
 }
-.step-content:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+.step-content:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.06); border-color: rgba(13,148,136,0.12); }
 .step-content h3 { font-size: 17px; font-weight: 700; }
 .step-content p { font-size: 14px; color: var(--muted); line-height: 1.6; margin-top: 8px; }
 .step-detail { font-size: 12px; color: rgba(13,148,136,0.6); font-weight: 500; margin-top: 8px; }
@@ -818,12 +802,11 @@ body {
     <p class="reveal">From upload to insight in days, not months. Collaboration at every step.</p>
   </div>
   <div class="approach-inner">
-    <div class="approach-line"></div>
-    <div class="step reveal"><div class="step-num">01</div><div class="step-content"><h3>Upload your activity and spend data</h3><p>A simple CSV or Excel file. We handle the complexity &mdash; every transaction is classified into GHG Protocol scopes and categories automatically.</p><div class="step-detail">Intelligent classification with full audit trail. Every decision is traceable.</div></div></div>
-    <div class="step reveal"><div class="step-num">02</div><div class="step-content"><h3>We analyse your supply chain</h3><p>Over 100 data points checked per supplier across government registries, certification bodies, and regulatory databases. Every finding benchmarked against sector peers.</p><div class="step-detail">Multi-layered intelligence with deterministic scoring and deep analysis.</div></div></div>
-    <div class="step reveal"><div class="step-num">03</div><div class="step-content"><h3>Expert review with full transparency</h3><p>Every finding is reviewed by a human analyst who can include, skip, or challenge it. We walk you through the results and explain every number.</p><div class="step-detail">Statistical sampling to ISO 19011 standards. Nothing goes to you unchecked.</div></div></div>
-    <div class="step reveal"><div class="step-num">04</div><div class="step-content"><h3>You receive your HemeraScope report</h3><p>Carbon footprint, supplier ESG profiles, uncertainty analysis, and recommended actions &mdash; delivered as an interactive dashboard, branded PDF, and Power BI access.</p><div class="step-detail">Every number traceable to its source. Every figure accompanied by quantified uncertainty.</div></div></div>
-    <div class="step reveal"><div class="step-num">05</div><div class="step-content"><h3>We engage with your suppliers</h3><p>We don't just flag problems &mdash; we contact your suppliers, facilitate conversations, and help them improve. Suppliers who meet our standards earn the Hemera Verified badge.</p><div class="step-detail">Collaboration, not auditing. Making sustainability accessible.</div></div></div>
+    <div class="step reveal"><div class="step-num-col"><div class="step-num">01</div><div class="step-num-line"></div></div><div class="step-content"><h3>Upload your activity and spend data</h3><p>A simple CSV or Excel file. We handle the complexity &mdash; every transaction is classified into GHG Protocol scopes and categories automatically.</p><div class="step-detail">Intelligent classification with full audit trail. Every decision is traceable.</div></div></div>
+    <div class="step reveal"><div class="step-num-col"><div class="step-num">02</div><div class="step-num-line"></div></div><div class="step-content"><h3>We analyse your supply chain</h3><p>Over 100 data points checked per supplier across government registries, certification bodies, and regulatory databases. Every finding benchmarked against sector peers.</p><div class="step-detail">Multi-layered intelligence with deterministic scoring and deep analysis.</div></div></div>
+    <div class="step reveal"><div class="step-num-col"><div class="step-num">03</div><div class="step-num-line"></div></div><div class="step-content"><h3>Expert review with full transparency</h3><p>Every finding is reviewed by a human analyst who can include, skip, or challenge it. We walk you through the results and explain every number.</p><div class="step-detail">Statistical sampling to ISO 19011 standards. Nothing goes to you unchecked.</div></div></div>
+    <div class="step reveal"><div class="step-num-col"><div class="step-num">04</div><div class="step-num-line"></div></div><div class="step-content"><h3>You receive your HemeraScope report</h3><p>Carbon footprint, supplier ESG profiles, uncertainty analysis, and recommended actions &mdash; delivered as an interactive dashboard, branded PDF, and Power BI access.</p><div class="step-detail">Every number traceable to its source. Every figure accompanied by quantified uncertainty.</div></div></div>
+    <div class="step reveal"><div class="step-num-col"><div class="step-num">05</div></div><div class="step-content"><h3>We engage with your suppliers</h3><p>We don't just flag problems &mdash; we contact your suppliers, facilitate conversations, and help them improve. Suppliers who meet our standards earn the Hemera Verified badge.</p><div class="step-detail">Collaboration, not auditing. Making sustainability accessible.</div></div></div>
   </div>
 </section>
 
@@ -846,7 +829,7 @@ body {
   <div class="science-grid">
     <div class="science-left">
       <div class="section-badge reveal"><div class="section-badge-dot"></div><span class="section-badge-text">Academic Standards</span></div>
-      <h2 class="reveal">Rigorous by design.<br><span class="teal-text">Not by accident.</span></h2>
+      <h2 class="reveal">Rigorous by design.<br><span class="teal-text"></span></h2>
       <p class="reveal">Every carbon figure comes with a confidence interval. Every supplier finding is traceable to a public registry. Every quality control check follows ISO 19011 sampling standards.</p>
       <p class="reveal">We believe sustainability data should be as trustworthy as financial data. That's why we quantify uncertainty instead of hiding it &mdash; and why our reports stand up to boardroom scrutiny.</p>
     </div>
@@ -856,7 +839,7 @@ body {
       <div class="standard-card reveal"><span class="standard-cat">Quality</span><h4>ISO 19011</h4><p>Statistical sampling for quality control audits</p></div>
       <div class="standard-card reveal"><span class="standard-cat">Targets</span><h4>SBTi</h4><p>Science Based Targets initiative alignment</p></div>
       <div class="standard-card reveal"><span class="standard-cat">Uncertainty</span><h4>Pedigree Matrix</h4><p>Multi-dimensional data quality scoring framework</p></div>
-      <div class="standard-card reveal"><span class="standard-cat">Uncertainty</span><h4>Monte Carlo</h4><p>Uncertainty propagation with confidence intervals</p></div>
+      <div class="standard-card reveal"><span class="standard-cat">Uncertainty</span><h4>Monte Carlo Simulated</h4><p>Uncertainty propagation with confidence intervals</p></div>
     </div>
   </div>
 </section>

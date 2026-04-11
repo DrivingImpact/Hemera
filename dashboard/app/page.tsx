@@ -478,27 +478,27 @@ function Approach() {
           </p>
         </div>
 
-        <div className="relative">
-          {/* Vertical line */}
-          <div className="absolute left-[27px] md:left-1/2 md:-translate-x-px top-0 bottom-0 w-[2px] bg-gradient-to-b from-teal/30 via-teal/15 to-transparent" />
-
+        <div className="max-w-[900px] mx-auto">
           {steps.map((step, i) => (
             <div
               key={step.num}
-              className={`relative flex items-start gap-6 md:gap-12 mb-16 last:mb-0 ${i % 2 === 0 ? "md:flex-row" : "md:flex-row-reverse"}`}
+              className="grid grid-cols-[80px_1fr] gap-6 mb-8 last:mb-0"
               style={{
                 opacity: inView ? 1 : 0,
                 transform: inView ? "translateY(0)" : "translateY(30px)",
                 transition: `all 0.8s cubic-bezier(0.16, 1, 0.3, 1) ${i * 0.15}s`,
               }}
             >
-              {/* Number circle */}
-              <div className="flex-shrink-0 w-14 h-14 rounded-full bg-white border-2 border-teal/20 flex items-center justify-center shadow-sm z-10 md:absolute md:left-1/2 md:-translate-x-1/2">
-                <span className="text-teal text-sm font-bold">{step.num}</span>
+              {/* Number on the left */}
+              <div className="flex flex-col items-center gap-1 pt-6">
+                <span className="text-[40px] font-extrabold text-teal leading-none tracking-tight">{step.num}</span>
+                {i < steps.length - 1 && (
+                  <div className="w-[2px] flex-1 min-h-[40px] bg-gradient-to-b from-teal/15 to-transparent" />
+                )}
               </div>
 
-              {/* Content */}
-              <div className={`flex-1 bg-white rounded-2xl border border-slate/8 p-6 shadow-sm hover:shadow-md transition-shadow ${i % 2 === 0 ? "md:mr-[calc(50%+2rem)]" : "md:ml-[calc(50%+2rem)]"}`}>
+              {/* Card on the right */}
+              <div className="bg-white rounded-2xl border border-slate/6 p-6 shadow-sm hover:shadow-md hover:border-teal/12 transition-all">
                 <h3 className="text-lg font-bold text-slate">{step.title}</h3>
                 <p className="mt-2 text-sm text-muted leading-relaxed">{step.desc}</p>
                 <p className="mt-2 text-xs text-teal/70 font-medium">{step.detail}</p>
@@ -582,7 +582,7 @@ function Science() {
     { name: "ISO 19011", desc: "Statistical sampling for quality control audits", category: "Quality" },
     { name: "SBTi", desc: "Science Based Targets initiative alignment", category: "Targets" },
     { name: "Pedigree Matrix", desc: "Multi-dimensional data quality scoring framework", category: "Uncertainty" },
-    { name: "Monte Carlo", desc: "Uncertainty propagation with confidence intervals", category: "Uncertainty" },
+    { name: "Monte Carlo Simulated", desc: "Uncertainty propagation with confidence intervals", category: "Uncertainty" },
   ];
 
   return (
@@ -599,7 +599,6 @@ function Science() {
               style={{ opacity: inView ? 1 : 0, transform: inView ? "translateY(0)" : "translateY(20px)", transition: "all 0.8s ease-out 0.1s" }}>
               Rigorous by design.
               <br />
-              <span className="text-teal">Not by accident.</span>
             </h2>
             <p className="mt-6 text-muted leading-relaxed"
               style={{ opacity: inView ? 1 : 0, transform: inView ? "translateY(0)" : "translateY(20px)", transition: "all 0.8s ease-out 0.2s" }}>
