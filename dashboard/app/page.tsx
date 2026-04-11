@@ -193,8 +193,8 @@ function Hero() {
 
         {/* Subheadline */}
         <p className="mt-6 text-lg sm:text-xl text-muted max-w-2xl mx-auto leading-relaxed animate-[fadeInUp_1s_ease-out_0.2s_both]">
-          Carbon intelligence, supplier ESG analysis, and data uncertainty quantification —
-          all statistically verified to academic standards. At a price and pace that makes
+          Carbon intelligence, supplier ESG analysis, and quantified data uncertainty &mdash;
+          statistically verified to academic standards. Delivered fast, at a price that makes
           sustainability accessible to everyone.
         </p>
 
@@ -238,7 +238,7 @@ function Hero() {
             <svg className="w-4 h-4 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064" />
             </svg>
-            59 Public Data Sources
+            100+ Data Points Per Supplier
           </span>
         </div>
       </div>
@@ -259,8 +259,8 @@ function Hero() {
 
 function Stats() {
   const { ref, inView } = useInView(0.3);
-  const sources = useCountUp(59, 2000, inView);
-  const fields = useCountUp(80, 2200, inView);
+  const sources = useCountUp(100, 2000, inView);
+  const domains = useCountUp(8, 1500, inView);
   const layers = useCountUp(13, 1500, inView);
   const accuracy = useCountUp(95, 1800, inView);
 
@@ -275,8 +275,8 @@ function Stats() {
       <div className="relative z-10 max-w-6xl mx-auto px-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
           {[
-            { value: sources, suffix: "", label: "Public Data Sources", desc: "Government registries, certifications, regulators" },
-            { value: fields, suffix: "+", label: "Data Fields Analysed", desc: "Per supplier, across every ESG domain" },
+            { value: sources, suffix: "+", label: "Data Points Per Supplier", desc: "Government registries, certifications, regulators" },
+            { value: domains, suffix: "", label: "ESG Domains Scored", desc: "Governance, labour, carbon, nature, and more" },
             { value: layers, suffix: "", label: "Intelligence Layers", desc: "From corporate identity to social value" },
             { value: accuracy, suffix: "%", label: "Confidence Level", desc: "Statistical sampling to ISO 19011" },
           ].map((stat, i) => (
@@ -313,7 +313,7 @@ function HemeraScope() {
     {
       tag: "Carbon Intelligence",
       title: "Scope 1, 2 & 3 emissions calculated from your spend data",
-      desc: "Upload your accounting data. Our AI classifies every transaction, matches suppliers, and calculates emissions using DEFRA-verified factors. Full GHG Protocol compliance with uncertainty quantification on every number.",
+      desc: "Upload your activity and spend data. Our system classifies every transaction, matches suppliers, and calculates emissions using DEFRA-verified factors. Full GHG Protocol compliance with quantified uncertainty on every number.",
       color: "from-teal/5 to-teal/10",
       border: "border-teal/15",
       tagColor: "bg-teal/10 text-teal",
@@ -340,8 +340,8 @@ function HemeraScope() {
     },
     {
       tag: "Supplier ESG",
-      title: "59 sources. One Hemera Score per supplier",
-      desc: "We check Companies House, Environment Agency, HSE, SBTi, CDP, and 50+ more databases. Every finding is traceable to a public source. AI analysis verifies and challenges the automated results.",
+      title: "100+ data points. One Hemera Score per supplier",
+      desc: "We check Companies House, Environment Agency, HSE, SBTi, CDP, and dozens more public registries. Every finding is traceable to its source. Deep analysis verifies and challenges the automated results, with benchmarking against sector peers.",
       color: "from-emerald-500/5 to-emerald-500/10",
       border: "border-emerald-500/15",
       tagColor: "bg-emerald-50 text-emerald-700",
@@ -380,7 +380,7 @@ function HemeraScope() {
           </div>
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate leading-tight"
             style={{ opacity: inView ? 1 : 0, transform: inView ? "translateY(0)" : "translateY(20px)", transition: "all 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s" }}>
-            One report. Complete clarity.
+            One dashboard. Complete clarity.
           </h2>
           <p className="mt-4 text-muted text-lg max-w-2xl mx-auto"
             style={{ opacity: inView ? 1 : 0, transform: inView ? "translateY(0)" : "translateY(20px)", transition: "all 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.2s" }}>
@@ -429,33 +429,33 @@ function Approach() {
   const steps = [
     {
       num: "01",
-      title: "Upload your spend data",
-      desc: "A simple CSV or Excel file. We handle the complexity — AI classifies every transaction into GHG Protocol scopes and categories.",
-      detail: "Keyword matching + Claude AI for ambiguous items. Every classification is auditable.",
+      title: "Upload your activity and spend data",
+      desc: "A simple CSV or Excel file. We handle the complexity — every transaction is classified into GHG Protocol scopes and categories automatically.",
+      detail: "Intelligent classification with full audit trail. Every decision is traceable.",
     },
     {
       num: "02",
       title: "We analyse your supply chain",
-      desc: "59 public data sources checked per supplier. Companies House, Environment Agency, HSE, SBTi, and more. No paid databases needed.",
-      detail: "13 intelligence layers with deterministic scoring + AI verification.",
+      desc: "Over 100 data points checked per supplier across government registries, certification bodies, and regulatory databases. Every finding benchmarked against sector peers.",
+      detail: "Multi-layered intelligence with deterministic scoring and deep analysis.",
     },
     {
       num: "03",
       title: "Expert review with full transparency",
-      desc: "Every finding is reviewed by an analyst who can include, skip, or challenge it. AI-generated insights are verified against real-world knowledge.",
-      detail: "Statistical sampling to ISO 19011 standards. Nothing goes to the client unchecked.",
+      desc: "Every finding is reviewed by a human analyst who can include, skip, or challenge it. We walk you through the results and explain every number.",
+      detail: "Statistical sampling to ISO 19011 standards. Nothing goes to you unchecked.",
     },
     {
       num: "04",
-      title: "We engage with your suppliers",
-      desc: "We don't just flag problems — we contact your suppliers, facilitate conversations, and help them improve. Suppliers who meet our standards earn the Hemera Verified badge.",
-      detail: "Collaboration, not auditing. Making sustainability accessible.",
+      title: "You receive your HemeraScope report",
+      desc: "Carbon footprint, supplier ESG profiles, uncertainty analysis, and recommended actions — delivered as an interactive dashboard, branded PDF, and Power BI access.",
+      detail: "Every number traceable to its source. Every figure accompanied by quantified uncertainty.",
     },
     {
       num: "05",
-      title: "You receive your HemeraScope report",
-      desc: "Carbon footprint, supplier ESG profiles, uncertainty analysis, and recommended actions — all in one beautifully designed, interactive report.",
-      detail: "Dashboard + branded PDF. Every number traceable to its source.",
+      title: "We engage with your suppliers",
+      desc: "We don't just flag problems — we contact your suppliers, facilitate conversations, and help them improve. Suppliers who meet our standards earn the Hemera Verified badge.",
+      detail: "Collaboration, not auditing. Making sustainability accessible.",
     },
   ];
 
@@ -581,7 +581,7 @@ function Science() {
     { name: "DEFRA", desc: "UK Government emission factors (annually updated)", category: "Carbon" },
     { name: "ISO 19011", desc: "Statistical sampling for quality control audits", category: "Quality" },
     { name: "SBTi", desc: "Science Based Targets initiative alignment", category: "Targets" },
-    { name: "Pedigree Matrix", desc: "5-dimension data quality scoring (Weidema et al.)", category: "Uncertainty" },
+    { name: "Pedigree Matrix", desc: "Multi-dimensional data quality scoring framework", category: "Uncertainty" },
     { name: "Monte Carlo", desc: "Uncertainty propagation with confidence intervals", category: "Uncertainty" },
   ];
 
@@ -735,11 +735,17 @@ function About() {
           Named after the Greek goddess of daylight, Hemera Intelligence was founded on a simple belief:
           supply chain sustainability should be transparent, rigorous, and accessible to all.
         </p>
-        <p className="text-white/40 text-base leading-relaxed max-w-2xl mx-auto mt-4"
-          style={{ opacity: inView ? 1 : 0, transform: inView ? "translateY(0)" : "translateY(20px)", transition: "all 0.8s ease-out 0.2s" }}>
+        <p className="text-teal text-lg font-semibold italic max-w-2xl mx-auto mt-6"
+          style={{ opacity: inView ? 1 : 0, transform: inView ? "translateY(0)" : "translateY(20px)", transition: "all 0.8s ease-out 0.15s" }}>
+          Because sunshine is the best disinfectant.
+        </p>
+        <p className="text-white/40 text-base leading-relaxed max-w-2xl mx-auto mt-6"
+          style={{ opacity: inView ? 1 : 0, transform: inView ? "translateY(0)" : "translateY(20px)", transition: "all 0.8s ease-out 0.25s" }}>
           We combine academic rigour with cutting-edge technology to deliver supply chain intelligence
-          that stands up to scrutiny. Our approach is collaborative — we work with your suppliers,
-          not against them — because real sustainability happens through partnership.
+          that stands up to scrutiny &mdash; fast, statistically significant, and with quantified uncertainty
+          on every number. No black-box calculations. No unexplained figures. We walk you through every
+          result, because if you can&apos;t explain it, you can&apos;t trust it. Our approach is collaborative &mdash;
+          we work with your suppliers, not against them &mdash; because real sustainability happens through partnership.
         </p>
 
         <div className="flex items-center justify-center gap-6 mt-12"
@@ -751,10 +757,10 @@ function About() {
             Get in Touch
           </Link>
           <Link
-            href="/sign-up"
+            href="/sign-in"
             className="px-8 py-4 border border-white/20 text-white rounded-xl font-semibold text-sm hover:bg-white/5 transition-colors"
           >
-            Create Account
+            Sign In
           </Link>
         </div>
       </div>
@@ -788,17 +794,11 @@ function CTA() {
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center mt-10">
           <Link
-            href="mailto:hello@hemera.earth"
+            href="mailto:nicolashenry2002@gmail.com?subject=Hemera%20Demo%20Request"
             className="group relative px-10 py-4 bg-teal text-white rounded-xl font-semibold text-sm overflow-hidden transition-all hover:shadow-xl hover:shadow-teal/20 hover:-translate-y-0.5"
           >
             <span className="relative z-10">Book a Demo</span>
             <div className="absolute inset-0 bg-gradient-to-r from-teal to-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity" />
-          </Link>
-          <Link
-            href="/sign-up"
-            className="px-10 py-4 border border-slate/15 text-slate rounded-xl font-semibold text-sm hover:border-teal/30 hover:bg-teal/3 transition-all"
-          >
-            Start Free
           </Link>
         </div>
       </div>
