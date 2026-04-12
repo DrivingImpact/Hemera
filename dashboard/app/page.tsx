@@ -1172,18 +1172,35 @@ function Nav() {
 function Footer() {
   return (
     <footer className="border-t border-slate/8 py-12 px-6">
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-teal" />
-          <span className="text-slate text-sm font-bold">Hemera Intelligence</span>
+      <div className="max-w-6xl mx-auto space-y-8">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-teal" />
+            <span className="text-slate text-sm font-bold">Hemera Intelligence</span>
+          </div>
+
+          <div className="flex items-center gap-6 text-xs text-muted">
+            <span>Helping organisations build transparent, resilient supply chains.</span>
+          </div>
+
+          <div className="flex items-center gap-5 text-xs">
+            <Link href="/legal/privacy" className="text-muted hover:text-teal transition-colors">
+              Privacy
+            </Link>
+            <Link href="/legal/terms" className="text-muted hover:text-teal transition-colors">
+              Terms
+            </Link>
+            <Link href="/legal/cookies" className="text-muted hover:text-teal transition-colors">
+              Cookies
+            </Link>
+          </div>
         </div>
 
-        <div className="flex items-center gap-6 text-xs text-muted">
-          <span>Helping organisations build transparent, resilient supply chains.</span>
-        </div>
-
-        <div className="text-xs text-muted">
-          © 2026 Hemera Intelligence Ltd
+        <div className="flex flex-col md:flex-row items-center justify-between gap-3 pt-6 border-t border-slate/5 text-[11px] text-muted/80">
+          <div>
+            © 2026 Hemera Intelligence Ltd. Registered in England and Wales, company number [########].
+            Registered office: [address]. ICO registration number [########].
+          </div>
         </div>
       </div>
     </footer>
