@@ -29,6 +29,15 @@ class Transaction(Base):
     transaction_date: Mapped[date | None] = mapped_column(Date)
     amount_gbp: Mapped[float | None] = mapped_column(Float)
 
+    # Data type — "spend" or "activity"
+    # spend rows calculate via amount_gbp × factor (kgCO2e/GBP)
+    # activity rows calculate via quantity × factor (kgCO2e/kWh, kgCO2e/litre, etc.)
+    data_type: Mapped[str] = mapped_column(String(20), default="spend", server_default="spend")
+    activity_type: Mapped[str | None] = mapped_column(String(50))  # electricity, gas, diesel, petrol, lpg, heat, water, waste, distance, refrigerants, other
+    quantity: Mapped[float | None] = mapped_column(Float)  # numeric consumption (kWh, litres, m3, kg, km)
+    quantity_unit: Mapped[str | None] = mapped_column(String(20))  # kWh, litres, m3, kg, km, tonnes
+    raw_activity_label: Mapped[str | None] = mapped_column(String(255))  # freeform user-entered activity type when not in the picker list
+
     # Classification
     scope: Mapped[int | None] = mapped_column(Integer)  # 1, 2, or 3
     ghg_category: Mapped[int | None] = mapped_column(Integer)  # 1-15 for Scope 3
