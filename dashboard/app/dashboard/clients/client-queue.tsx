@@ -248,12 +248,20 @@ function EngagementCard({
               <span className="text-[10px] text-muted bg-paper px-1.5 py-0.5 rounded">{eng.org_name}</span>
             )}
           </div>
-          <div className="text-muted text-xs mt-0.5 flex items-center gap-3">
+          <div className="text-muted text-xs mt-0.5 flex items-center gap-3 flex-wrap">
             <span>#{eng.id}</span>
             <span>{date}</span>
             <span>{eng.transaction_count?.toLocaleString() ?? "—"} transactions</span>
             {eng.total_co2e != null && eng.total_co2e > 0 && (
               <span className="font-medium">{eng.total_co2e.toFixed(1)} tCO2e</span>
+            )}
+            {eng.uploaded_by_email && (
+              <span
+                className="text-[10px] bg-paper px-1.5 py-0.5 rounded font-medium"
+                title="Person who uploaded this engagement"
+              >
+                by {eng.uploaded_by_email}
+              </span>
             )}
           </div>
         </div>
