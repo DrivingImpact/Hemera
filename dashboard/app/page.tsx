@@ -176,7 +176,7 @@ function Hero() {
         <div className="inline-flex items-center gap-2 mb-8 animate-[fadeInDown_0.8s_ease-out]">
           <div className="w-2 h-2 rounded-full bg-teal animate-pulse" />
           <span className="text-teal text-[11px] font-bold uppercase tracking-[4px]">
-            Hemera Intelligence
+            HemeraScope
           </span>
           <div className="w-2 h-2 rounded-full bg-teal animate-pulse" />
         </div>
