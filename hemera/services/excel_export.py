@@ -1,0 +1,379 @@
+"""Excel summary export per engagement.
+
+Produces a multi-sheet xlsx file optimised for two use cases:
+  1. Human review — summary + drill-down sheets ordered from high-level to detailed
+  2. Power BI ingestion — every sheet is a wide, flat, typed table with no merged
+     cells or header hacks, so Power Query imports them without manual cleanup.
+
+Sheets:
+  - Summary          — single-row KPI block
+  - By Scope         — Scope 1/2/3 breakdown
+  - By Category      — totals per classified ghg category
+  - By Supplier      — totals per supplier
+  - By Month         — monthly time series
+  - By Data Type     — spend vs activity split
+  - Transactions     — full transaction list with classification + emissions
+"""
+
+from __future__ import annotations
+
+import io
+from collections import defaultdict
+from datetime import date
+
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.utils import get_column_letter
+from sqlalchemy.orm import Session
+
+from hemera.models.engagement import Engagement
+from hemera.models.transaction import Transaction
+from hemera.models.supplier import Supplier
+
+
+# ── Styling helpers ─────────────────────────────────────────────────────
+
+HEADER_FONT = Font(bold=True, color="FFFFFF")
+HEADER_FILL = PatternFill(start_color="0D9488", end_color="0D9488", fill_type="solid")
+HEADER_ALIGN = Alignment(horizontal="left", vertical="center")
+
+
+def _write_header(ws, headers: list[str]) -> None:
+    ws.append(headers)
+    for col_idx, _ in enumerate(headers, start=1):
+        cell = ws.cell(row=1, column=col_idx)
+        cell.font = HEADER_FONT
+        cell.fill = HEADER_FILL
+        cell.alignment = HEADER_ALIGN
+
+
+def _autosize(ws) -> None:
+    """Rough column autosizing based on max string length per column."""
+    for col_idx in range(1, ws.max_column + 1):
+        letter = get_column_letter(col_idx)
+        max_len = 10
+        for row_idx in range(1, ws.max_row + 1):
+            val = ws.cell(row=row_idx, column=col_idx).value
+            if val is not None:
+                max_len = max(max_len, min(len(str(val)) + 2, 60))
+        ws.column_dimensions[letter].width = max_len
+
+
+# ── Main export ─────────────────────────────────────────────────────────
+
+
+def build_engagement_workbook(engagement: Engagement, db: Session) -> bytes:
+    """Build an xlsx workbook for an engagement and return the raw bytes.
+
+    The caller is responsible for returning the bytes as an HTTP response
+    (StreamingResponse or Response with the xlsx media type).
+    """
+    wb = Workbook()
+    # Workbook() creates a default sheet — repurpose it as Summary
+    summary_ws = wb.active
+    summary_ws.title = "Summary"
+
+    # Load transactions once, join supplier name
+    transactions: list[Transaction] = (
+        db.query(Transaction)
+        .filter(Transaction.engagement_id == engagement.id)
+        .all()
+    )
+    supplier_id_to_name: dict[int, str] = {}
+    if transactions:
+        supplier_ids = {t.supplier_id for t in transactions if t.supplier_id is not None}
+        if supplier_ids:
+            suppliers = (
+                db.query(Supplier.id, Supplier.name)
+                .filter(Supplier.id.in_(supplier_ids))
+                .all()
+            )
+            supplier_id_to_name = {sid: name or "" for sid, name in suppliers}
+
+    _fill_summary_sheet(summary_ws, engagement, transactions)
+    _fill_by_scope_sheet(wb.create_sheet("By Scope"), transactions)
+    _fill_by_category_sheet(wb.create_sheet("By Category"), transactions)
+    _fill_by_supplier_sheet(
+        wb.create_sheet("By Supplier"), transactions, supplier_id_to_name
+    )
+    _fill_by_month_sheet(wb.create_sheet("By Month"), transactions)
+    _fill_by_data_type_sheet(wb.create_sheet("By Data Type"), transactions)
+    _fill_transactions_sheet(
+        wb.create_sheet("Transactions"), transactions, supplier_id_to_name
+    )
+
+    buffer = io.BytesIO()
+    wb.save(buffer)
+    return buffer.getvalue()
+
+
+# ── Per-sheet builders ──────────────────────────────────────────────────
+
+
+def _fill_summary_sheet(ws, engagement: Engagement, txns: list[Transaction]) -> None:
+    total_co2e = sum(t.co2e_kg or 0 for t in txns)
+    total_spend = sum(t.amount_gbp or 0 for t in txns if (t.data_type or "spend") == "spend")
+    scope_1 = sum(t.co2e_kg or 0 for t in txns if t.scope == 1)
+    scope_2 = sum(t.co2e_kg or 0 for t in txns if t.scope == 2)
+    scope_3 = sum(t.co2e_kg or 0 for t in txns if t.scope == 3)
+    n_suppliers = len({t.supplier_id for t in txns if t.supplier_id is not None})
+    dates = [t.transaction_date for t in txns if t.transaction_date]
+    date_from = min(dates).isoformat() if dates else ""
+    date_to = max(dates).isoformat() if dates else ""
+
+    _write_header(
+        ws,
+        [
+            "Engagement ID",
+            "Organisation",
+            "Period From",
+            "Period To",
+            "Transactions",
+            "Unique Suppliers",
+            "Total CO2e (tonnes)",
+            "Scope 1 (tonnes)",
+            "Scope 2 (tonnes)",
+            "Scope 3 (tonnes)",
+            "Total Spend (GBP)",
+        ],
+    )
+    ws.append(
+        [
+            engagement.id,
+            engagement.org_name or "",
+            date_from,
+            date_to,
+            len(txns),
+            n_suppliers,
+            round(total_co2e / 1000, 3),
+            round(scope_1 / 1000, 3),
+            round(scope_2 / 1000, 3),
+            round(scope_3 / 1000, 3),
+            round(total_spend, 2),
+        ]
+    )
+    _autosize(ws)
+
+
+def _fill_by_scope_sheet(ws, txns: list[Transaction]) -> None:
+    _write_header(ws, ["Scope", "CO2e (kg)", "CO2e (tonnes)", "Transactions", "% of Total"])
+    total = sum(t.co2e_kg or 0 for t in txns) or 1.0
+    for scope_label, scope_num in (("Scope 1", 1), ("Scope 2", 2), ("Scope 3", 3), ("Unclassified", None)):
+        rows = [t for t in txns if t.scope == scope_num]
+        co2e = sum(t.co2e_kg or 0 for t in rows)
+        ws.append(
+            [
+                scope_label,
+                round(co2e, 2),
+                round(co2e / 1000, 3),
+                len(rows),
+                round((co2e / total) * 100, 2),
+            ]
+        )
+    _autosize(ws)
+
+
+def _fill_by_category_sheet(ws, txns: list[Transaction]) -> None:
+    _write_header(
+        ws,
+        ["Category", "Scope", "GHG Category", "CO2e (kg)", "CO2e (tonnes)", "Transactions"],
+    )
+    groups: dict[tuple[str, int | None, int | None], list[Transaction]] = defaultdict(list)
+    for t in txns:
+        key = (t.category_name or "Unclassified", t.scope, t.ghg_category)
+        groups[key].append(t)
+
+    rows = []
+    for (cat, scope, ghg), group in groups.items():
+        co2e = sum(t.co2e_kg or 0 for t in group)
+        rows.append((cat, scope, ghg, co2e, len(group)))
+    rows.sort(key=lambda r: r[3], reverse=True)
+
+    for cat, scope, ghg, co2e, count in rows:
+        ws.append(
+            [
+                cat,
+                scope if scope is not None else "",
+                ghg if ghg is not None else "",
+                round(co2e, 2),
+                round(co2e / 1000, 3),
+                count,
+            ]
+        )
+    _autosize(ws)
+
+
+def _fill_by_supplier_sheet(
+    ws, txns: list[Transaction], supplier_names: dict[int, str]
+) -> None:
+    _write_header(
+        ws,
+        [
+            "Supplier ID",
+            "Supplier Name",
+            "Transactions",
+            "Spend (GBP)",
+            "CO2e (kg)",
+            "CO2e (tonnes)",
+            "Avg GSD",
+        ],
+    )
+    groups: dict[int | None, list[Transaction]] = defaultdict(list)
+    for t in txns:
+        groups[t.supplier_id].append(t)
+
+    rows = []
+    for sid, group in groups.items():
+        co2e = sum(t.co2e_kg or 0 for t in group)
+        spend = sum(t.amount_gbp or 0 for t in group)
+        gsd_vals = [t.gsd_total for t in group if t.gsd_total is not None]
+        avg_gsd = sum(gsd_vals) / len(gsd_vals) if gsd_vals else None
+        name = supplier_names.get(sid, "") if sid else "(unmatched)"
+        rows.append(
+            (
+                sid if sid is not None else "",
+                name,
+                len(group),
+                round(spend, 2),
+                round(co2e, 2),
+                round(co2e / 1000, 3),
+                round(avg_gsd, 3) if avg_gsd is not None else "",
+            )
+        )
+    rows.sort(key=lambda r: r[4] if isinstance(r[4], (int, float)) else 0, reverse=True)
+    for r in rows:
+        ws.append(list(r))
+    _autosize(ws)
+
+
+def _fill_by_month_sheet(ws, txns: list[Transaction]) -> None:
+    _write_header(
+        ws,
+        ["Year-Month", "Transactions", "Spend (GBP)", "CO2e (kg)", "CO2e (tonnes)"],
+    )
+    groups: dict[str, list[Transaction]] = defaultdict(list)
+    for t in txns:
+        if t.transaction_date:
+            key = t.transaction_date.strftime("%Y-%m")
+        else:
+            key = "(no date)"
+        groups[key].append(t)
+
+    for ym in sorted(groups.keys()):
+        group = groups[ym]
+        co2e = sum(t.co2e_kg or 0 for t in group)
+        spend = sum(t.amount_gbp or 0 for t in group)
+        ws.append(
+            [
+                ym,
+                len(group),
+                round(spend, 2),
+                round(co2e, 2),
+                round(co2e / 1000, 3),
+            ]
+        )
+    _autosize(ws)
+
+
+def _fill_by_data_type_sheet(ws, txns: list[Transaction]) -> None:
+    _write_header(
+        ws,
+        [
+            "Data Type",
+            "Activity Type",
+            "Unit",
+            "Rows",
+            "Total Quantity",
+            "CO2e (kg)",
+            "CO2e (tonnes)",
+        ],
+    )
+    groups: dict[tuple[str, str | None, str | None], list[Transaction]] = defaultdict(list)
+    for t in txns:
+        dt = t.data_type or "spend"
+        key = (dt, t.activity_type, t.quantity_unit)
+        groups[key].append(t)
+
+    for (dt, at, unit), group in groups.items():
+        co2e = sum(t.co2e_kg or 0 for t in group)
+        qty = sum(t.quantity or 0 for t in group) if dt == "activity" else None
+        ws.append(
+            [
+                dt,
+                at or "",
+                unit or "",
+                len(group),
+                round(qty, 3) if qty is not None else "",
+                round(co2e, 2),
+                round(co2e / 1000, 3),
+            ]
+        )
+    _autosize(ws)
+
+
+def _fill_transactions_sheet(
+    ws, txns: list[Transaction], supplier_names: dict[int, str]
+) -> None:
+    _write_header(
+        ws,
+        [
+            "Txn ID",
+            "Row",
+            "Date",
+            "Supplier (raw)",
+            "Matched Supplier",
+            "Description",
+            "Category",
+            "Scope",
+            "GHG Category",
+            "Data Type",
+            "Activity Type",
+            "Quantity",
+            "Unit",
+            "Amount (GBP)",
+            "EF Value",
+            "EF Unit",
+            "EF Source",
+            "EF Year",
+            "CO2e (kg)",
+            "GSD",
+            "Pedigree R",
+            "Pedigree C",
+            "Pedigree T",
+            "Pedigree G",
+            "Pedigree Te",
+        ],
+    )
+    for t in txns:
+        ws.append(
+            [
+                t.id,
+                t.row_number,
+                t.transaction_date.isoformat() if t.transaction_date else "",
+                t.raw_supplier or "",
+                supplier_names.get(t.supplier_id, "") if t.supplier_id else "",
+                t.raw_description or "",
+                t.category_name or "",
+                t.scope if t.scope is not None else "",
+                t.ghg_category if t.ghg_category is not None else "",
+                t.data_type or "spend",
+                t.activity_type or "",
+                round(t.quantity, 4) if t.quantity is not None else "",
+                t.quantity_unit or "",
+                round(t.amount_gbp, 2) if t.amount_gbp is not None else "",
+                t.ef_value if t.ef_value is not None else "",
+                t.ef_unit or "",
+                t.ef_source or "",
+                t.ef_year if t.ef_year is not None else "",
+                round(t.co2e_kg, 3) if t.co2e_kg is not None else "",
+                round(t.gsd_total, 3) if t.gsd_total is not None else "",
+                t.pedigree_reliability if t.pedigree_reliability is not None else "",
+                t.pedigree_completeness if t.pedigree_completeness is not None else "",
+                t.pedigree_temporal if t.pedigree_temporal is not None else "",
+                t.pedigree_geographical if t.pedigree_geographical is not None else "",
+                t.pedigree_technological if t.pedigree_technological is not None else "",
+            ]
+        )
+    # Don't autosize the Transactions sheet — it can be very wide and slow
+    for col_letter in ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"]:
+        ws.column_dimensions[col_letter].width = 16
