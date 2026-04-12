@@ -570,6 +570,328 @@ function Video() {
 }
 
 /* ================================================================== */
+/*  GLASS BOX — Transparency as competitive differentiator             */
+/* ================================================================== */
+
+function GlassBox() {
+  const { ref, inView } = useInView(0.15);
+
+  const tiles = [
+    {
+      n: "01",
+      title: "The exact factor",
+      body: "Every number tells you which DEFRA factor produced it, with a direct link to the published government reference.",
+    },
+    {
+      n: "02",
+      title: "Quantified uncertainty",
+      body: "Every figure carries a 95% confidence interval — the same statistical bar used in peer-reviewed climate science. An analyst validates the inputs before we stamp that confidence on them.",
+    },
+    {
+      n: "03",
+      title: "Traceable sources",
+      body: "We won\u2019t make a supplier claim you can\u2019t trace. Every finding links to its public registry — Companies House, HSE, SBTi, CDP, Environment Agency.",
+    },
+    {
+      n: "04",
+      title: "Analyst challenged",
+      body: "Our purpose-trained research AI does the heavy lifting at scale. But every assumption it makes is then pushed back on by a Hemera analyst — who weighs the evidence and decides whether to stand by the finding, soften it, or throw it out.",
+    },
+    {
+      n: "05",
+      title: "Gaps you can act on",
+      body: "Every data point is scored. You see which numbers are solid, where better inputs would tighten your footprint, and what we honestly can\u2019t know about your supply chain yet.",
+    },
+  ];
+
+  return (
+    <section
+      ref={ref}
+      className="relative py-28 px-6 overflow-hidden"
+      style={{
+        background: "radial-gradient(ellipse 100% 70% at 50% 0%, #1e293b 0%, #0f172a 80%)",
+      }}
+    >
+      {/* grid backdrop */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          opacity: 0.4,
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)",
+          backgroundSize: "32px 32px",
+        }}
+      />
+
+      <div className="relative z-10 max-w-6xl mx-auto">
+        {/* Kicker */}
+        <div
+          className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border"
+          style={{
+            background: "rgba(20,184,166,0.1)",
+            borderColor: "rgba(20,184,166,0.25)",
+            opacity: inView ? 1 : 0,
+            transform: inView ? "translateY(0)" : "translateY(10px)",
+            transition: "all 0.6s ease-out",
+          }}
+        >
+          <span className="w-1.5 h-1.5 rounded-full" style={{ background: "#5eead4" }} />
+          <span
+            className="text-[10px] font-extrabold uppercase"
+            style={{ letterSpacing: "2px", color: "#5eead4" }}
+          >
+            The Glass Box
+          </span>
+        </div>
+
+        {/* Headline */}
+        <h2
+          className="mt-6 text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white leading-[1.08] max-w-3xl"
+          style={{
+            letterSpacing: "-0.5px",
+            opacity: inView ? 1 : 0,
+            transform: inView ? "translateY(0)" : "translateY(20px)",
+            transition: "all 0.8s ease-out 0.1s",
+          }}
+        >
+          Most platforms hand you a number.
+          <br />
+          <span style={{ color: "#5eead4" }}>We hand you the evidence behind it.</span>
+        </h2>
+
+        {/* Subhead */}
+        <p
+          className="mt-6 text-base sm:text-lg leading-relaxed max-w-2xl"
+          style={{
+            color: "rgba(255,255,255,0.65)",
+            opacity: inView ? 1 : 0,
+            transform: inView ? "translateY(0)" : "translateY(20px)",
+            transition: "all 0.8s ease-out 0.2s",
+          }}
+        >
+          Click any figure in a Hemera report and see what&apos;s underneath — the exact emission
+          factor, the statistical confidence interval, the public registry link, the analyst who
+          signed off on it. No &ldquo;proprietary methodology.&rdquo; No &ldquo;trust us.&rdquo;
+          Just evidence.
+        </p>
+
+        {/* Hero comparison */}
+        <div
+          className="mt-14 grid gap-6 items-center max-w-4xl"
+          style={{
+            gridTemplateColumns: "1fr auto 1fr",
+            opacity: inView ? 1 : 0,
+            transform: inView ? "translateY(0)" : "translateY(30px)",
+            transition: "all 0.9s cubic-bezier(0.16, 1, 0.3, 1) 0.3s",
+          }}
+        >
+          {/* Black box */}
+          <div
+            className="rounded-2xl p-8 text-white flex flex-col"
+            style={{
+              background: "#000",
+              border: "1px solid rgba(255,255,255,0.08)",
+              minHeight: "280px",
+            }}
+          >
+            <div
+              className="text-[10px] font-extrabold uppercase mb-5"
+              style={{ letterSpacing: "1.5px", color: "rgba(255,255,255,0.4)" }}
+            >
+              Typical platform
+            </div>
+            <div className="flex-1 flex flex-col justify-center items-center">
+              <div
+                className="font-extrabold"
+                style={{
+                  fontSize: "52px",
+                  color: "rgba(255,255,255,0.92)",
+                  letterSpacing: "-1px",
+                }}
+              >
+                1,234
+              </div>
+              <div
+                className="text-xs font-semibold mt-1"
+                style={{ color: "rgba(255,255,255,0.4)" }}
+              >
+                tCO₂e
+              </div>
+            </div>
+            <div
+              className="pt-4 mt-4 text-[11px] text-center italic"
+              style={{
+                borderTop: "1px solid rgba(255,255,255,0.08)",
+                color: "rgba(255,255,255,0.3)",
+              }}
+            >
+              &ldquo;DEFRA-aligned methodology&rdquo;
+              <br />
+              <span className="text-[10px]">(trust us)</span>
+            </div>
+          </div>
+
+          {/* VS divider */}
+          <div className="flex flex-col items-center gap-2">
+            <div
+              className="w-px h-10"
+              style={{ background: "linear-gradient(to bottom, transparent, rgba(255,255,255,0.2))" }}
+            />
+            <div
+              className="text-[11px] font-extrabold"
+              style={{ letterSpacing: "2px", color: "rgba(255,255,255,0.35)" }}
+            >
+              VS
+            </div>
+            <div
+              className="w-px h-10"
+              style={{ background: "linear-gradient(to top, transparent, rgba(255,255,255,0.2))" }}
+            />
+          </div>
+
+          {/* Glass box */}
+          <div
+            className="rounded-2xl p-8 text-white relative"
+            style={{
+              background:
+                "linear-gradient(135deg, rgba(20,184,166,0.18) 0%, rgba(255,255,255,0.04) 100%)",
+              backdropFilter: "blur(14px)",
+              WebkitBackdropFilter: "blur(14px)",
+              border: "1px solid rgba(20,184,166,0.4)",
+              boxShadow:
+                "0 0 50px rgba(20,184,166,0.22), inset 0 1px 0 rgba(255,255,255,0.28)",
+              minHeight: "280px",
+            }}
+          >
+            <div
+              className="text-[10px] font-extrabold uppercase mb-5"
+              style={{ letterSpacing: "1.5px", color: "#5eead4" }}
+            >
+              Hemera
+            </div>
+            <div className="text-center">
+              <div className="flex items-baseline justify-center gap-2">
+                <div
+                  className="font-extrabold text-white"
+                  style={{ fontSize: "52px", letterSpacing: "-1px" }}
+                >
+                  1,234
+                </div>
+                <div className="text-base font-bold" style={{ color: "#5eead4" }}>
+                  ± 4.2%
+                </div>
+              </div>
+              <div
+                className="text-[11px] font-semibold mt-0.5"
+                style={{ color: "rgba(255,255,255,0.5)" }}
+              >
+                tCO₂e · 95% confidence interval
+              </div>
+            </div>
+            <div
+              className="mt-4 pt-3.5 text-[10px] leading-[1.85]"
+              style={{
+                borderTop: "1px solid rgba(255,255,255,0.12)",
+                color: "rgba(255,255,255,0.75)",
+                fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+              }}
+            >
+              <div>
+                <span
+                  className="inline-block"
+                  style={{ width: "60px", color: "rgba(255,255,255,0.38)" }}
+                >
+                  factor
+                </span>
+                DEFRA &apos;24 · HGV Artic.
+              </div>
+              <div>
+                <span
+                  className="inline-block"
+                  style={{ width: "60px", color: "rgba(255,255,255,0.38)" }}
+                >
+                  method
+                </span>
+                Monte Carlo simulation
+              </div>
+              <div>
+                <span
+                  className="inline-block"
+                  style={{ width: "60px", color: "rgba(255,255,255,0.38)" }}
+                >
+                  quality
+                </span>
+                Pedigree 2.1 / 5
+              </div>
+              <div>
+                <span
+                  className="inline-block"
+                  style={{ width: "60px", color: "rgba(255,255,255,0.38)" }}
+                >
+                  source
+                </span>
+                <span style={{ color: "#5eead4" }}>defra.gov.uk/ghg-2024</span>
+              </div>
+              <div>
+                <span
+                  className="inline-block"
+                  style={{ width: "60px", color: "rgba(255,255,255,0.38)" }}
+                >
+                  verified
+                </span>
+                J.Martin, 12 Apr 2026
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Proof tiles */}
+        <div className="mt-20">
+          <div
+            className="text-[11px] font-extrabold uppercase mb-5"
+            style={{ letterSpacing: "2px", color: "rgba(255,255,255,0.4)" }}
+          >
+            What&apos;s inside every Hemera number
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3.5">
+            {tiles.map((tile, i) => (
+              <div
+                key={tile.n}
+                className="rounded-xl p-5"
+                style={{
+                  background:
+                    "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
+                  backdropFilter: "blur(8px)",
+                  WebkitBackdropFilter: "blur(8px)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  opacity: inView ? 1 : 0,
+                  transform: inView ? "translateY(0)" : "translateY(20px)",
+                  transition: `all 0.7s cubic-bezier(0.16, 1, 0.3, 1) ${0.5 + i * 0.08}s`,
+                }}
+              >
+                <div
+                  className="text-lg font-extrabold mb-2"
+                  style={{ color: "#5eead4" }}
+                >
+                  {tile.n}
+                </div>
+                <div className="text-[13px] font-bold text-white mb-1.5">{tile.title}</div>
+                <div
+                  className="text-[11px] leading-[1.55]"
+                  style={{ color: "rgba(255,255,255,0.55)" }}
+                >
+                  {tile.body}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ================================================================== */
 /*  SCIENCE — Academic rigor section                                   */
 /* ================================================================== */
 
@@ -742,9 +1064,8 @@ function About() {
           style={{ opacity: inView ? 1 : 0, transform: inView ? "translateY(0)" : "translateY(20px)", transition: "all 0.8s ease-out 0.25s" }}>
           We combine academic rigour with cutting-edge technology to deliver supply chain intelligence
           that stands up to scrutiny &mdash; fast, statistically significant, and with quantified uncertainty
-          on every number. No black-box calculations. No unexplained figures. We walk you through every
-          result, because if you can&apos;t explain it, you can&apos;t trust it. Our approach is collaborative &mdash;
-          we work with your suppliers, not against them &mdash; because real sustainability happens through partnership.
+          on every number. Our approach is collaborative &mdash; we work with your suppliers, not against them
+          &mdash; because real sustainability happens through partnership.
         </p>
 
         <div className="flex items-center justify-center gap-6 mt-12"
@@ -901,6 +1222,7 @@ export default function LandingPage() {
       <Stats />
       <HemeraScope />
       <Approach />
+      <GlassBox />
       <Video />
       <Science />
       <Collaboration />
