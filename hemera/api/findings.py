@@ -8,6 +8,7 @@ from hemera.database import get_db
 from hemera.models.finding import SupplierFinding
 from hemera.models.supplier_engagement import SupplierEngagement
 from hemera.models.supplier import Supplier
+from hemera.models.user import User
 from hemera.dependencies import require_admin
 from hemera.services.clerk import ClerkUser
 
@@ -150,6 +151,10 @@ def create_engagement(
     if not supplier:
         raise HTTPException(status_code=404, detail="Supplier not found")
 
+    user = db.query(User).filter(User.clerk_id == current_user.clerk_id).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found in database")
+
     eng = SupplierEngagement(
         supplier_id=supplier_id,
         engagement_type=req.engagement_type,
@@ -160,7 +165,7 @@ def create_engagement(
         contact_email=req.contact_email,
         next_action=req.next_action,
         contacted_at=datetime.utcnow() if req.status in ("contacted", "in_progress") else None,
-        created_by=1,  # TODO: get from auth context
+        created_by=user.id,
     )
     db.add(eng)
     db.commit()

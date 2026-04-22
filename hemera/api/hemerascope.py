@@ -10,6 +10,7 @@ from hemera.models.finding import SupplierFinding, ReportSelection, ReportAction
 from hemera.models.supplier import Supplier, SupplierSource
 from hemera.models.supplier_engagement import SupplierEngagement
 from hemera.models.transaction import Transaction
+from hemera.models.user import User
 from hemera.dependencies import require_admin, get_current_user
 from hemera.services.clerk import ClerkUser
 
@@ -331,6 +332,10 @@ def save_selections(
     if not engagement.supplier_report_status or engagement.supplier_report_status == "pending":
         engagement.supplier_report_status = "curating"
 
+    user = db.query(User).filter(User.clerk_id == current_user.clerk_id).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found in database")
+
     saved = 0
     for item in req.selections:
         existing = db.query(ReportSelection).filter(
@@ -357,7 +362,7 @@ def save_selections(
                 client_detail=item.client_detail,
                 client_language_source=item.client_language_source,
                 analyst_note=item.analyst_note,
-                selected_by=1,  # TODO: from auth context
+                selected_by=user.id,
             )
             db.add(sel)
         saved += 1
@@ -376,6 +381,10 @@ def save_actions(
     """Save recommended actions for a supplier in this engagement."""
     _load_engagement(engagement_id, db)
 
+    user = db.query(User).filter(User.clerk_id == current_user.clerk_id).first()
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found in database")
+
     # Clear existing actions for this supplier
     db.query(ReportAction).filter(
         ReportAction.engagement_id == engagement_id,
@@ -390,7 +399,7 @@ def save_actions(
             priority=action.get("priority", 1),
             linked_finding_ids=action.get("linked_finding_ids"),
             language_source=action.get("language_source", "analyst"),
-            created_by=1,  # TODO: from auth context
+            created_by=user.id,
         )
         db.add(ra)
 
