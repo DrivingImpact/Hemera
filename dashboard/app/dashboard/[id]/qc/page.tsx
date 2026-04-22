@@ -4,6 +4,7 @@ import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { EmissionFactorContext } from "@/lib/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const HARD_GATE_THRESHOLD = 0.05;
@@ -549,6 +550,25 @@ export default function QCPage() {
     ? `https://www.gov.uk/government/publications/greenhouse-gas-reporting-conversion-factors-${d.emission_factor.year}`
     : null;
 
+  const [verifyOpen, setVerifyOpen] = useState(false);
+  const [verifyData, setVerifyData] = useState<EmissionFactorContext | null>(null);
+  const [verifyLoading, setVerifyLoading] = useState(false);
+
+  const openVerify = async () => {
+    setVerifyOpen(true);
+    setVerifyLoading(true);
+    try {
+      const token = await getToken();
+      const res = await fetch(`${API_URL}/api/emission-factors/by-transaction/${card.transaction_id}/context`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        setVerifyData(await res.json());
+      }
+    } catch { /* ignore */ }
+    setVerifyLoading(false);
+  };
+
   return (
     <div className="max-w-2xl mx-auto space-y-4">
       {/* Progress bar */}
@@ -630,21 +650,124 @@ export default function QCPage() {
             <div className="text-sm mt-0.5">{d.emission_factor.value} {d.emission_factor.unit}</div>
             <div className="text-[11px] text-muted mt-0.5 flex items-center gap-1.5">
               <span>{d.emission_factor.source} · Level {d.emission_factor.level} · {d.emission_factor.region} {d.emission_factor.year}</span>
-              {defraUrl && (
-                <a
-                  href={defraUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-0.5 text-teal hover:underline font-medium"
-                >
-                  Verify
-                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </a>
-              )}
+              <button
+                onClick={openVerify}
+                className="inline-flex items-center gap-0.5 text-teal hover:underline font-medium"
+              >
+                Verify
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+              </button>
             </div>
           </div>
+
+          {/* Emission Factor Verification Modal */}
+          {verifyOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => { setVerifyOpen(false); setVerifyData(null); }}>
+              <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                {/* Modal header */}
+                <div className="px-6 py-4 border-b border-[#E5E5E0] flex items-center justify-between bg-[#FAFAF7] rounded-t-2xl">
+                  <div>
+                    <h3 className="font-semibold text-[15px]">Emission Factor Verification</h3>
+                    <p className="text-xs text-muted mt-0.5">{d.emission_factor.source} · {d.emission_factor.year}</p>
+                  </div>
+                  <button onClick={() => { setVerifyOpen(false); setVerifyData(null); }} className="text-muted hover:text-slate p-1">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12" /></svg>
+                  </button>
+                </div>
+
+                {verifyLoading ? (
+                  <div className="p-12 text-center">
+                    <div className="w-6 h-6 mx-auto rounded-full border-2 border-teal/30 border-t-teal animate-spin" />
+                    <p className="text-xs text-muted mt-3">Loading factor context...</p>
+                  </div>
+                ) : verifyData ? (
+                  <div className="p-6 space-y-5">
+                    {/* Calculation breakdown */}
+                    {verifyData.calculation && (
+                      <div className="bg-[#F0FDF4] border border-[#BBF7D0] rounded-lg p-4">
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.5px] text-[#065F46] mb-2">Calculation</div>
+                        <div className="text-sm font-mono">
+                          {verifyData.calculation.quantity?.toLocaleString()} {verifyData.calculation.unit} × {verifyData.calculation.factor_value} {verifyData.calculation.factor_unit} = <span className="font-bold">{verifyData.calculation.co2e_kg?.toFixed(2)} kgCO2e</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Matched factor */}
+                    <div>
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.5px] text-muted mb-2">Matched Factor</div>
+                      <div className="text-sm">
+                        <span className="font-medium">{verifyData.factor.category}</span>
+                        {verifyData.factor.subcategory && <span className="text-muted"> &gt; {verifyData.factor.subcategory}</span>}
+                      </div>
+                      <div className="text-xs text-muted mt-1">
+                        {verifyData.factor.source_sheet && <span>Sheet: {verifyData.factor.source_sheet} · </span>}
+                        {verifyData.factor.source_row && <span>Row: {verifyData.factor.source_row} · </span>}
+                        Scope {verifyData.factor.scope} · {verifyData.factor.region} · {verifyData.factor.factor_value} {verifyData.factor.unit}
+                      </div>
+                    </div>
+
+                    {/* Context table */}
+                    {verifyData.context_rows.length > 0 && (
+                      <div>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.5px] text-muted mb-2">
+                          DEFRA Table: {verifyData.factor.source_sheet}
+                        </div>
+                        <div className="border border-[#E5E5E0] rounded-lg overflow-hidden">
+                          <table className="w-full text-xs">
+                            <thead>
+                              <tr className="bg-[#FAFAF7] text-left">
+                                <th className="px-3 py-2 font-semibold text-muted">Row</th>
+                                <th className="px-3 py-2 font-semibold text-muted">Category</th>
+                                <th className="px-3 py-2 font-semibold text-muted">Subcategory</th>
+                                <th className="px-3 py-2 font-semibold text-muted text-right">Factor</th>
+                                <th className="px-3 py-2 font-semibold text-muted">Unit</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {[...verifyData.context_rows, verifyData.factor]
+                                .sort((a, b) => (a.source_row || 0) - (b.source_row || 0))
+                                .map((row) => {
+                                  const isMatch = row.id === verifyData.factor.id;
+                                  return (
+                                    <tr key={row.id ?? `r-${row.source_row}`} className={isMatch ? "bg-teal/10 border-l-2 border-l-teal font-medium" : "hover:bg-[#FAFAF7]"}>
+                                      <td className="px-3 py-1.5 tabular-nums text-muted">{row.source_row ?? "—"}</td>
+                                      <td className="px-3 py-1.5">{row.category}</td>
+                                      <td className="px-3 py-1.5 text-muted">{row.subcategory || "—"}</td>
+                                      <td className="px-3 py-1.5 tabular-nums text-right">{row.factor_value}</td>
+                                      <td className="px-3 py-1.5 text-muted">{row.unit}</td>
+                                    </tr>
+                                  );
+                                })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+
+                    {verifyData.context_rows.length === 0 && (
+                      <div className="bg-[#FFFBEB] border border-amber/30 rounded-lg p-3 text-xs text-amber-800">
+                        No DEFRA source data available for this factor. It may be from a non-DEFRA source or the factor metadata is not yet linked.
+                      </div>
+                    )}
+
+                    {/* Fallback link */}
+                    {defraUrl && (
+                      <div className="pt-2 border-t border-[#F0F0EB]">
+                        <a href={defraUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-teal hover:underline inline-flex items-center gap-1">
+                          View full DEFRA dataset on gov.uk
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="p-8 text-center text-muted text-sm">Failed to load factor context.</div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Arithmetic */}
           <CheckRow

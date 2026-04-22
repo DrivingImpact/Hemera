@@ -8,7 +8,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
-from hemera.api import upload, engagements, suppliers, reports, qc, auth, supplier_review, findings, ai_tasks, hemerascope, export
+from hemera.api import upload, engagements, suppliers, reports, qc, auth, supplier_review, findings, ai_tasks, hemerascope, export, emission_factors
 
 logger = logging.getLogger("hemera")
 
@@ -73,6 +73,7 @@ app.include_router(findings.router, prefix="/api", tags=["findings"])
 app.include_router(ai_tasks.router, prefix="/api", tags=["ai-tasks"])
 app.include_router(hemerascope.router, prefix="/api", tags=["hemerascope"])
 app.include_router(export.router, prefix="/api", tags=["export"])
+app.include_router(emission_factors.router, prefix="/api", tags=["emission-factors"])
 
 
 @app.exception_handler(Exception)

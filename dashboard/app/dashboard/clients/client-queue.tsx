@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { EngagementListItem } from "@/lib/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -113,6 +113,14 @@ export function ClientQueue({
     [apiFetch]
   );
 
+  const deleteEngagement = useCallback(
+    async (id: number) => {
+      await apiFetch(`/engagements/${id}`, { method: "DELETE" });
+      setEngagements((prev) => prev.filter((e) => e.id !== id));
+    },
+    [apiFetch]
+  );
+
   // Group engagements by stage
   const stageGroups = STAGES.map((stage) => ({
     stage,
@@ -120,10 +128,6 @@ export function ClientQueue({
       .filter((e) => stage.statuses.includes(e.status))
       .sort((a, b) => (b.created_at || "").localeCompare(a.created_at || "")),
   }));
-
-  // Also include qc_passed as "review report" since we don't have "released" status yet
-  // The "completed" stage will show qc_passed items that admin has reviewed
-  // For now, qc_passed goes to "Review Report"
 
   const totalAction = stageGroups
     .filter((g) => ["process", "carbon_review"].includes(g.stage.key))
@@ -164,6 +168,7 @@ export function ClientQueue({
                 eng={eng}
                 stage={stage}
                 onUpdate={updateEngagement}
+                onDelete={deleteEngagement}
               />
             ))}
           </div>
@@ -180,22 +185,28 @@ export function ClientQueue({
 }
 
 /* ------------------------------------------------------------------ */
-/*  Engagement card with inline editing                                */
+/*  Engagement card with inline editing, delete, and info dropdown     */
 /* ------------------------------------------------------------------ */
 
 function EngagementCard({
   eng,
   stage,
   onUpdate,
+  onDelete,
 }: {
   eng: EngagementListItem;
   stage: Stage;
   onUpdate: (id: number, patch: { display_name?: string; admin_notes?: string }) => Promise<void>;
+  onDelete: (id: number) => Promise<void>;
 }) {
   const [editingName, setEditingName] = useState(false);
   const [editingNotes, setEditingNotes] = useState(false);
   const [nameValue, setNameValue] = useState(eng.display_name || "");
   const [notesValue, setNotesValue] = useState(eng.admin_notes || "");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
+  const infoRef = useRef<HTMLDivElement>(null);
 
   const date = eng.created_at
     ? new Date(eng.created_at).toLocaleDateString("en-GB", {
@@ -215,8 +226,62 @@ function EngagementCard({
     setEditingNotes(false);
   };
 
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await onDelete(eng.id);
+    } catch {
+      setDeleting(false);
+      setShowDeleteConfirm(false);
+    }
+  };
+
+  // Close info popover on click outside
+  useEffect(() => {
+    if (!showInfo) return;
+    const handler = (e: MouseEvent) => {
+      if (infoRef.current && !infoRef.current.contains(e.target as Node)) {
+        setShowInfo(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showInfo]);
+
+  // Close info on Escape
+  useEffect(() => {
+    if (!showInfo) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowInfo(false);
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [showInfo]);
+
   return (
-    <div className="bg-surface rounded-xl border border-[#E5E5E0] p-5 space-y-3 hover:border-teal/30 transition-colors">
+    <div className={`bg-surface rounded-xl border border-[#E5E5E0] p-5 space-y-3 hover:border-teal/30 transition-all ${deleting ? "opacity-0 scale-95" : ""}`}>
+      {/* Delete confirmation */}
+      {showDeleteConfirm && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center justify-between">
+          <span className="text-sm text-red-800">Delete this engagement? It will be moved to the bin.</span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="px-3 py-1 bg-red-600 text-white text-xs font-semibold rounded hover:bg-red-700 disabled:opacity-50"
+            >
+              {deleting ? "Deleting..." : "Delete"}
+            </button>
+            <button
+              onClick={() => setShowDeleteConfirm(false)}
+              className="px-3 py-1 text-xs text-muted hover:underline"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Top row */}
       <div className="flex items-start gap-4">
         <div className="flex-1 min-w-0">
@@ -247,6 +312,38 @@ function EngagementCard({
             {eng.display_name && eng.org_name && eng.display_name !== eng.org_name && (
               <span className="text-[10px] text-muted bg-paper px-1.5 py-0.5 rounded">{eng.org_name}</span>
             )}
+
+            {/* Info dropdown toggle */}
+            <div className="relative" ref={infoRef}>
+              <button
+                onClick={() => setShowInfo(!showInfo)}
+                className="text-muted hover:text-teal transition-colors p-0.5"
+                title="Engagement details"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 16v-4" />
+                  <path d="M12 8h.01" />
+                </svg>
+              </button>
+
+              {/* Info popover */}
+              {showInfo && (
+                <div className="absolute left-0 top-7 z-50 bg-white border border-[#E5E5E0] rounded-lg shadow-lg p-4 w-72 space-y-2">
+                  <div className="text-xs font-semibold uppercase tracking-[0.5px] text-muted mb-2">Engagement Details</div>
+                  <InfoRow label="Uploaded by" value={eng.uploaded_by_email} />
+                  <InfoRow label="Organisation" value={eng.org_name} />
+                  {eng.contact_email && <InfoRow label="Contact" value={eng.contact_email} />}
+                  <InfoRow label="Upload date" value={date} />
+                  {eng.upload_filename && <InfoRow label="File" value={eng.upload_filename} />}
+                  <InfoRow label="Transactions" value={eng.transaction_count?.toLocaleString() ?? "—"} />
+                  {eng.total_co2e != null && eng.total_co2e > 0 && (
+                    <InfoRow label="Total CO2e" value={`${eng.total_co2e.toFixed(1)} tCO2e`} />
+                  )}
+                  <InfoRow label="Status" value={eng.status} />
+                </div>
+              )}
+            </div>
           </div>
           <div className="text-muted text-xs mt-0.5 flex items-center gap-3 flex-wrap">
             <span>#{eng.id}</span>
@@ -266,42 +363,49 @@ function EngagementCard({
           </div>
         </div>
 
-        {/* Action buttons */}
-        {stage.key === "processing" ? (
-          <div className="flex-shrink-0 flex items-center gap-2 text-muted text-xs">
-            <div className="w-4 h-4 rounded-full border-2 border-amber/30 border-t-amber animate-spin" />
-            Processing
-          </div>
-        ) : stage.key === "review" ? (
-          <div className="flex-shrink-0 flex items-center gap-2">
-            <Link
-              href={`/dashboard/${eng.id}/qc`}
-              className="px-4 py-2 rounded-lg text-xs font-semibold transition-opacity hover:opacity-90 bg-teal text-white"
-            >
-              {eng.qc_progress && eng.qc_progress.reviewed > 0 ? "Continue Carbon" : "Carbon Review"}
-            </Link>
-            <Link
-              href={`/dashboard/${eng.id}/hemerascope`}
-              className="px-4 py-2 rounded-lg text-xs font-semibold transition-opacity hover:opacity-90 bg-[#6366F1] text-white"
-            >
-              Supplier Review
-            </Link>
-          </div>
-        ) : stage.key === "review_report" ? (
-          <Link
-            href={stage.actionHref(eng)}
-            className={`flex-shrink-0 px-5 py-2.5 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90 ${stage.actionStyle}`}
+        {/* Action buttons + delete */}
+        <div className="flex-shrink-0 flex items-center gap-2">
+          {/* Delete button */}
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="p-1.5 text-muted hover:text-red-500 transition-colors rounded hover:bg-red-50"
+            title="Delete engagement"
           >
-            {stage.actionLabel(eng)}
-          </Link>
-        ) : (
-          <Link
-            href={stage.actionHref(eng)}
-            className={`flex-shrink-0 px-5 py-2.5 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90 ${stage.actionStyle}`}
-          >
-            {stage.actionLabel(eng)}
-          </Link>
-        )}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="3,6 5,6 21,6" />
+              <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6" />
+            </svg>
+          </button>
+
+          {stage.key === "processing" ? (
+            <div className="flex items-center gap-2 text-muted text-xs">
+              <div className="w-4 h-4 rounded-full border-2 border-amber/30 border-t-amber animate-spin" />
+              Processing
+            </div>
+          ) : stage.key === "review" ? (
+            <>
+              <Link
+                href={`/dashboard/${eng.id}/qc`}
+                className="px-4 py-2 rounded-lg text-xs font-semibold transition-opacity hover:opacity-90 bg-teal text-white"
+              >
+                {eng.qc_progress && eng.qc_progress.reviewed > 0 ? "Continue Carbon" : "Carbon Review"}
+              </Link>
+              <Link
+                href={`/dashboard/${eng.id}/hemerascope`}
+                className="px-4 py-2 rounded-lg text-xs font-semibold transition-opacity hover:opacity-90 bg-[#6366F1] text-white"
+              >
+                Supplier Review
+              </Link>
+            </>
+          ) : (
+            <Link
+              href={stage.actionHref(eng)}
+              className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-opacity hover:opacity-90 ${stage.actionStyle}`}
+            >
+              {stage.actionLabel(eng)}
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* Progress bar */}
@@ -323,7 +427,7 @@ function EngagementCard({
             <div className="flex items-center gap-2">
               <button onClick={saveNotes} className="text-teal text-[11px] font-semibold hover:underline">Save</button>
               <button onClick={() => setEditingNotes(false)} className="text-muted text-[11px] hover:underline">Cancel</button>
-              <span className="text-[10px] text-muted">⌘+Enter to save</span>
+              <span className="text-[10px] text-muted">Cmd+Enter to save</span>
             </div>
           </div>
         ) : (
@@ -339,6 +443,20 @@ function EngagementCard({
           </button>
         )}
       </div>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  Info row for the ownership popover                                 */
+/* ------------------------------------------------------------------ */
+
+function InfoRow({ label, value }: { label: string; value: string | null | undefined }) {
+  if (!value) return null;
+  return (
+    <div className="flex items-start gap-2">
+      <span className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted w-20 flex-shrink-0 pt-0.5">{label}</span>
+      <span className="text-xs text-slate break-all">{value}</span>
     </div>
   );
 }

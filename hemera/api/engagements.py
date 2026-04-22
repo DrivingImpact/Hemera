@@ -1,5 +1,6 @@
 """Engagement endpoints — CRUD for client reports."""
-from fastapi import APIRouter, Depends, HTTPException
+from datetime import datetime
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from hemera.database import get_db
@@ -17,9 +18,12 @@ from hemera.services.pipeline import run_processing_pipeline
 router = APIRouter()
 
 
-def _load_engagement(engagement_id: int, db, current_user):
+def _load_engagement(engagement_id: int, db, current_user, include_deleted: bool = False):
     """Load engagement with auth check. Raises HTTPException on failure."""
-    e = db.query(Engagement).filter(Engagement.id == engagement_id).first()
+    query = db.query(Engagement).filter(Engagement.id == engagement_id)
+    if not include_deleted:
+        query = query.filter(Engagement.deleted_at.is_(None))
+    e = query.first()
     if not e:
         raise HTTPException(status_code=404, detail="Not found")
     if current_user.role != "admin" and e.org_name != current_user.org_name:
@@ -32,11 +36,19 @@ def _load_transactions(engagement_id: int, db):
 
 
 @router.get("/engagements")
-def list_engagements(db: Session = Depends(get_db), current_user: ClerkUser = Depends(get_current_user)):
+def list_engagements(
+    deleted: bool = Query(False),
+    db: Session = Depends(get_db),
+    current_user: ClerkUser = Depends(get_current_user),
+):
     from sqlalchemy import func, case
     query = db.query(Engagement)
     if current_user.role != "admin":
         query = query.filter(Engagement.org_name == current_user.org_name)
+    if deleted and current_user.role == "admin":
+        query = query.filter(Engagement.deleted_at.isnot(None))
+    else:
+        query = query.filter(Engagement.deleted_at.is_(None))
     engagements = query.order_by(Engagement.created_at.desc()).all()
 
     # For delivered engagements, get QC progress counts
@@ -110,9 +122,13 @@ def list_engagements(db: Session = Depends(get_db), current_user: ClerkUser = De
             "uploaded_by_email": e.uploaded_by_email,
             "display_name": e.display_name,
             "admin_notes": e.admin_notes,
+            "contact_email": e.contact_email,
+            "upload_filename": e.upload_filename,
             "qc_progress": qc_progress.get(e.id),
             "supplier_progress": supplier_progress.get(e.id),
             "supplier_report_status": e.supplier_report_status,
+            "deleted_at": e.deleted_at.isoformat() if e.deleted_at else None,
+            "deleted_by": e.deleted_by,
         }
         for e in engagements
     ]
@@ -124,14 +140,49 @@ def delete_engagement(
     db: Session = Depends(get_db),
     current_user: ClerkUser = Depends(get_current_user),
 ):
-    """Delete an engagement and its transactions. Only allowed for uploaded/processing engagements."""
+    """Soft-delete an engagement. Allowed for admin or the user who uploaded it."""
     e = _load_engagement(engagement_id, db, current_user)
-    if e.status not in ("uploaded", "processing"):
-        raise HTTPException(status_code=400, detail="Cannot delete an engagement that is being reviewed or approved")
+    if current_user.role != "admin" and e.uploaded_by_email != current_user.email:
+        raise HTTPException(status_code=403, detail="Access denied")
+    e.deleted_at = datetime.utcnow()
+    e.deleted_by = current_user.email
+    db.commit()
+    return {"detail": "Deleted"}
+
+
+@router.post("/engagements/{engagement_id}/restore")
+def restore_engagement(
+    engagement_id: int,
+    db: Session = Depends(get_db),
+    current_user: ClerkUser = Depends(require_admin),
+):
+    """Admin-only: restore a soft-deleted engagement."""
+    e = _load_engagement(engagement_id, db, current_user, include_deleted=True)
+    if e.deleted_at is None:
+        raise HTTPException(status_code=400, detail="Engagement is not deleted")
+    e.deleted_at = None
+    e.deleted_by = None
+    db.commit()
+    return {"detail": "Restored"}
+
+
+@router.delete("/engagements/{engagement_id}/permanent")
+def permanent_delete_engagement(
+    engagement_id: int,
+    db: Session = Depends(get_db),
+    current_user: ClerkUser = Depends(require_admin),
+):
+    """Admin-only: permanently delete a soft-deleted engagement and all related records."""
+    from hemera.models.finding import ReportSelection, ReportAction
+    e = _load_engagement(engagement_id, db, current_user, include_deleted=True)
+    if e.deleted_at is None:
+        raise HTTPException(status_code=400, detail="Engagement must be soft-deleted first")
+    db.query(ReportAction).filter(ReportAction.engagement_id == engagement_id).delete()
+    db.query(ReportSelection).filter(ReportSelection.engagement_id == engagement_id).delete()
     db.query(Transaction).filter(Transaction.engagement_id == engagement_id).delete()
     db.delete(e)
     db.commit()
-    return {"detail": "Deleted"}
+    return {"detail": "Permanently deleted"}
 
 
 class EngagementPatch(BaseModel):

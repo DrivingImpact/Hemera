@@ -35,6 +35,8 @@ const ADMIN_SECTIONS: { label: string; items: NavItem[] }[] = [
     label: "Admin",
     items: [
       { name: "Clients", href: "/clients", icon: "◉", absolute: true },
+      { name: "Suppliers", href: "/suppliers", icon: "◯", absolute: true },
+      { name: "Bin", href: "/bin", icon: "◯", absolute: true },
       { name: "Upload", href: "/upload", icon: "◯", absolute: true },
     ],
   },

@@ -12,7 +12,7 @@ import re
 from pathlib import Path
 from sqlalchemy.orm import Session
 from hemera.models.emission_factor import EmissionFactor
-from hemera.services.defra_parser import parse_activity_factors, parse_eeio_factors
+from hemera.services.defra_parser import parse_activity_factors, parse_eeio_factors, parse_full_set_factors
 
 
 # Default location for DEFRA workbooks
@@ -21,6 +21,11 @@ _DEFAULT_DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "de
 # Pattern to extract year from activity flat file names
 _ACTIVITY_FILE_PATTERN = re.compile(
     r"ghg-conversion-factors-(\d{4})-flat.*\.xlsx$"
+)
+
+# Pattern to extract year from full-set file names
+_FULL_SET_FILE_PATTERN = re.compile(
+    r"ghg-conversion-factors-(\d{4})-full-set\.xlsx$"
 )
 
 # Pattern to extract year from EEIO file names
@@ -56,6 +61,13 @@ def seed_emission_factors(db: Session, data_dir: str | Path | None = None) -> in
             year = int(match.group(1))
             all_factors.extend(parse_activity_factors(str(f), year))
 
+    # Discover and parse full-set files
+    for f in sorted(data_path.iterdir()):
+        match = _FULL_SET_FILE_PATTERN.search(f.name)
+        if match:
+            year = int(match.group(1))
+            all_factors.extend(parse_full_set_factors(str(f), year))
+
     # Discover and parse EEIO files
     for f in sorted(data_path.iterdir()):
         match = _EEIO_FILE_PATTERN.search(f.name)
@@ -84,6 +96,9 @@ def seed_emission_factors(db: Session, data_dir: str | Path | None = None) -> in
             year=f["year"],
             region=f["region"],
             keywords=f.get("keywords"),
+            source_sheet=f.get("source_sheet"),
+            source_row=f.get("source_row"),
+            source_hierarchy=f.get("source_hierarchy"),
         )
         db.add(ef)
         count += 1

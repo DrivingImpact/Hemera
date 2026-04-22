@@ -51,6 +51,10 @@ class Engagement(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     delivered_at: Mapped[datetime | None] = mapped_column(DateTime)
 
+    # Soft delete
+    deleted_at: Mapped[datetime | None] = mapped_column(DateTime)
+    deleted_by: Mapped[str | None] = mapped_column(String(255))
+
     # Relationships
     transactions = relationship("Transaction", back_populates="engagement")
     report_selections = relationship("ReportSelection", back_populates="engagement")

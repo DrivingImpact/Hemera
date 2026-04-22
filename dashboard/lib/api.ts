@@ -9,6 +9,9 @@ import type {
   TransactionPage,
   SupplierListItem,
   SupplierDetail,
+  AdminSupplierFilters,
+  CompaniesHouseResult,
+  EmissionFactorContext,
 } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -91,4 +94,46 @@ export async function getDataQuality(engagementId: number) {
 
 export function getPdfUrl(engagementId: number) {
   return `${API_URL}/api/reports/${engagementId}/pdf`;
+}
+
+// Soft delete
+export async function deleteEngagement(id: number) {
+  return apiFetch<{ detail: string }>(`/engagements/${id}`, { method: "DELETE" });
+}
+
+export async function restoreEngagement(id: number) {
+  return apiFetch<{ detail: string }>(`/engagements/${id}/restore`, { method: "POST" });
+}
+
+export async function permanentDeleteEngagement(id: number) {
+  return apiFetch<{ detail: string }>(`/engagements/${id}/permanent`, { method: "DELETE" });
+}
+
+export async function listDeletedEngagements() {
+  return apiFetch<EngagementListItem[]>("/engagements?deleted=true");
+}
+
+// Admin suppliers
+export async function getAdminSuppliers(filters: AdminSupplierFilters = {}) {
+  const params = new URLSearchParams();
+  for (const [key, val] of Object.entries(filters)) {
+    if (val !== undefined && val !== null && val !== "") params.set(key, String(val));
+  }
+  return apiFetch<SupplierListItem[]>(`/suppliers?${params}`);
+}
+
+export async function searchCompaniesHouse(q: string) {
+  return apiFetch<CompaniesHouseResult[]>(`/suppliers/search/companies-house?q=${encodeURIComponent(q)}`);
+}
+
+export async function createSupplierFromCH(companyNumber: string, companyName: string, enrich = false) {
+  return apiFetch<SupplierListItem>("/suppliers/from-companies-house", {
+    method: "POST",
+    body: JSON.stringify({ company_number: companyNumber, company_name: companyName, enrich }),
+  });
+}
+
+export async function getEmissionFactorContext(factorId: number, transactionId?: number) {
+  const params = transactionId ? `?transaction_id=${transactionId}` : "";
+  return apiFetch<EmissionFactorContext>(`/emission-factors/${factorId}/context${params}`);
 }
