@@ -56,6 +56,8 @@ app.add_middleware(
         "http://localhost:3000",
         "https://hemera-nx8p.vercel.app",
         "https://hemera-nx8p-drivingimpacts-projects.vercel.app",
+        "https://hemerascope.com",
+        "https://www.hemerascope.com",
     ],
     allow_credentials=True,
     allow_methods=["*"],
