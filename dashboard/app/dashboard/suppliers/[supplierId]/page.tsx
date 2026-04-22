@@ -438,11 +438,52 @@ export default function SupplierDetailPage() {
               )}
             </div>
 
+            {/* AI Analysis buttons — always visible */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={async () => {
+                  try {
+                    await apiFetch(`/suppliers/${supplierId}/ai-analysis`, {
+                      method: "POST",
+                      body: JSON.stringify({ mode: "api", task_types: ["risk_analysis", "recommended_actions"] }),
+                    });
+                    // Refresh supplier data
+                    const data = await apiFetch<FullSupplierDetail>(`/suppliers/${supplierId}`);
+                    setSupplier(data);
+                  } catch (err) {
+                    console.error("AI analysis failed:", err);
+                  }
+                }}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-teal text-white hover:opacity-90 transition-opacity"
+              >
+                Run AI Analysis (API)
+              </button>
+              <button
+                onClick={async () => {
+                  try {
+                    const result = await apiFetch<{ tasks: { prompt_text: string; task_type: string }[] }>(`/suppliers/${supplierId}/ai-analysis`, {
+                      method: "POST",
+                      body: JSON.stringify({ mode: "manual", task_types: ["risk_analysis", "recommended_actions"] }),
+                    });
+                    // Copy prompts to clipboard for Max
+                    const prompts = result.tasks.map(t => `--- ${t.task_type} ---\n${t.prompt_text}`).join("\n\n");
+                    await navigator.clipboard.writeText(prompts);
+                    alert("Prompts copied to clipboard. Paste into Claude Max, get the response, then paste it back via the AI Tasks page.");
+                  } catch (err) {
+                    console.error("AI prompt generation failed:", err);
+                  }
+                }}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-[#E5E5E0] text-muted hover:text-teal hover:border-teal/30 transition-colors"
+              >
+                Run AI Analysis (Max)
+              </button>
+              <span className="text-[10px] text-muted">API calls Claude directly. Max copies the prompt for you to paste into Claude.</span>
+            </div>
+
             {!hasAny ? (
-              <div className="bg-surface rounded-xl border border-[#E5E5E0] p-6 text-center">
+              <div className="bg-surface rounded-xl border border-[#E5E5E0] p-5 text-center">
                 <p className="text-sm text-muted">
-                  AI analysis will run automatically after enrichment, or click{" "}
-                  <span className="font-semibold">Rerun Analysis</span> above.
+                  No AI analysis yet. Click one of the buttons above to run risk analysis and generate recommended actions.
                 </p>
               </div>
             ) : (

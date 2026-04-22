@@ -5,6 +5,7 @@ import uuid
 from datetime import datetime
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Query, HTTPException
+from pydantic import BaseModel
 from sqlalchemy import func, case, exists
 from sqlalchemy.orm import Session
 
@@ -17,6 +18,7 @@ from hemera.models.finding import SupplierFinding
 from hemera.models.ai_task import AITask
 from hemera.services.enrichment import enrich_supplier, enrich_batch
 from hemera.services.companies_house import search_company, get_company
+from hemera.services.ai_task_runner import create_ai_task
 
 router = APIRouter()
 
@@ -415,4 +417,96 @@ async def enrich_all_unenriched(
     return {
         "enriched": len(results),
         "results": results,
+    }
+
+
+class AIAnalysisRequest(BaseModel):
+    mode: str = "api"  # "api" = call Claude now, "manual" = stage prompt for Max
+    task_types: list[str] = ["risk_analysis", "recommended_actions"]
+
+
+@router.post("/suppliers/{supplier_id}/ai-analysis")
+def run_supplier_ai_analysis(
+    supplier_id: int,
+    body: AIAnalysisRequest,
+    db: Session = Depends(get_db),
+    _admin=Depends(require_admin),
+):
+    """Run AI analysis on a supplier. Admin chooses API (automatic) or Manual (Max mode).
+
+    In API mode, Claude is called immediately and the response is stored.
+    In Manual mode, prompts are generated and staged — the admin copies them
+    to Claude Max, gets the response, and pastes it back.
+    """
+    supplier = db.query(Supplier).filter(Supplier.id == supplier_id).first()
+    if not supplier:
+        raise HTTPException(status_code=404, detail="Supplier not found")
+
+    # Build context from supplier's current data
+    latest_score = (
+        db.query(SupplierScore)
+        .filter(SupplierScore.supplier_id == supplier_id)
+        .order_by(SupplierScore.scored_at.desc())
+        .first()
+    )
+
+    all_sources = (
+        db.query(SupplierSource)
+        .filter(SupplierSource.supplier_id == supplier_id)
+        .all()
+    )
+
+    active_findings = (
+        db.query(SupplierFinding)
+        .filter(SupplierFinding.supplier_id == supplier_id, SupplierFinding.is_active == True)
+        .all()
+    )
+
+    context = {
+        "supplier_name": supplier.name,
+        "sector": supplier.sector,
+        "sic_codes": supplier.sic_codes,
+        "hemera_score": supplier.hemera_score,
+        "domain_scores": {
+            "governance_identity": latest_score.governance_identity if latest_score else None,
+            "labour_ethics": latest_score.labour_ethics if latest_score else None,
+            "carbon_climate": latest_score.carbon_climate if latest_score else None,
+            "water_biodiversity": latest_score.water_biodiversity if latest_score else None,
+            "product_supply_chain": latest_score.product_supply_chain if latest_score else None,
+            "transparency_disclosure": latest_score.transparency_disclosure if latest_score else None,
+            "anti_corruption": latest_score.anti_corruption if latest_score else None,
+            "social_value": latest_score.social_value if latest_score else None,
+        } if latest_score else {},
+        "sources_summary": [
+            {"layer": s.layer, "source": s.source_name, "summary": s.summary}
+            for s in all_sources
+        ],
+        "deterministic_findings": [
+            {"severity": f.severity, "title": f.title, "domain": f.domain, "detail": f.detail}
+            for f in active_findings
+        ],
+    }
+
+    tasks_created = []
+    for task_type in body.task_types:
+        if task_type == "recommended_actions":
+            task_context = {"supplier_name": supplier.name, "findings": context["deterministic_findings"]}
+        else:
+            task_context = context
+
+        task = create_ai_task(db, task_type, "supplier", supplier.id, body.mode, task_context)
+        tasks_created.append({
+            "id": task.id,
+            "task_type": task.task_type,
+            "mode": task.mode,
+            "status": task.status,
+            "prompt_text": task.prompt_text if body.mode != "api" else None,
+            "response_text": task.response_text,
+        })
+
+    db.commit()
+
+    return {
+        "supplier_id": supplier.id,
+        "tasks": tasks_created,
     }
