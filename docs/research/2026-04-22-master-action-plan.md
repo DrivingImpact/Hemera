@@ -1,310 +1,198 @@
-# HemeraScope — Master Action Plan
+# HemeraScope — Action Plan
 
-**Last updated:** 2026-04-22
-**Founders:** Nico (CTO), Tom (COO)
+Nico (CTO), Tom (COO). Last updated 2026-04-22.
 
----
-
-## What is robots.txt?
-
-A `robots.txt` file sits at the root of your website (hemerascope.com/robots.txt) and tells search engines what they can and can't crawl. Without it, Google and others may or may not index your pages — you have no control. With it, you can:
-
-- Allow all public pages to be indexed (landing, legal pages)
-- Block private pages (dashboard, admin, API endpoints)
-- Point to your sitemap so Google finds all your pages
-
-**I'll build this for you — takes 2 minutes.**
-
-A `sitemap.xml` lists every public URL on your site with priority and update frequency. Google reads it to know what to crawl. Next.js can auto-generate it.
+Companies House is with Tom — everything below can be done independently. When the company number arrives, Claude fills all 25 placeholders in one commit.
 
 ---
 
-## Action Plan — Prioritised
+## Do now (doesn't need Companies House)
 
-### THIS WEEK (Before Launch)
+### 1. Test the website
+Open hemerascope.com and go through everything:
+- Landing page loads, all sections, footer links work
+- Sign in/up works (if not: add hemerascope.com in Clerk dashboard → Domains)
+- Dashboard: client queue, suppliers page, bin, upload, QC cards, Excel export
+- If API calls fail: check `NEXT_PUBLIC_API_URL` is set in Vercel env vars to your Render URL
 
-#### 1. Companies House Registration — Today/Tomorrow
-- Register Hemera Intelligence Ltd at **gov.uk/set-up-limited-company**
-- Cost: £12 (online) or £30 (paper)
-- You'll get a company number immediately on online registration
-- **Give Nico the company number + registered address → Claude fills all 25 placeholders in one commit**
+### 2. Test supplier matching
+Upload a CSV with known names (DHL, Tesco, Amazon). Process it. Check:
+- Matched suppliers are correct (active entities, not dissolved)
+- Companies House lookup on admin suppliers page returns sensible results
+- Enrichment runs and generates findings
 
-#### 2. Check Everything on the Webpage Works
-What to check (hemerascope.com):
+### 3. Test supplier enrichment
+Pick a supplier, click "Rerun analysis". Check all 13 layers return data or graceful "no data". Check the Hemera Score and findings look right.
 
-**Landing page:**
-- [ ] All sections load (hero, stats, how it works, glass box, standards, CTA, footer)
-- [ ] Footer links to /legal/* pages work
-- [ ] Sign in / sign up buttons work (Clerk auth on the new domain)
-- [ ] Mobile layout (test at 375px width)
-- [ ] Video placeholder — decide: keep or remove
+### 4. ICO registration
+ico.org.uk/for-organisations/register. £40/year. 10 minutes. You get a registration number back — goes in the legal pages and footer.
 
-**Dashboard (after sign in):**
-- [ ] Client queue loads, shows engagements
-- [ ] Delete button + confirmation works
-- [ ] Info dropdown shows uploader details
-- [ ] Admin suppliers page loads, search works
-- [ ] Companies House lookup works
-- [ ] Supplier detail page loads, enrichment layers expand
-- [ ] AI Intelligence buttons work (Max copies prompt, API calls Claude)
-- [ ] Admin bin page works (restore + permanent delete)
-- [ ] Excel export downloads a valid .xlsx
-- [ ] Emission factor verify modal opens with DEFRA table
-- [ ] QC card flow works (swipe pass/fail)
-- [ ] Upload flow works (both spend and activity data types)
+### 5. Cookie consent banner
+Not built yet. Legally needed before public launch. Ask Claude to build it — takes about an hour. Simple banner: Accept / Reject / Manage. Stores choice in a cookie.
 
-**If anything fails, it's likely:**
-- CORS (backend not allowing hemerascope.com) — already fixed
-- Clerk domain (need to add hemerascope.com in Clerk dashboard → Domains)
-- `NEXT_PUBLIC_API_URL` not set in Vercel env vars → needs Render backend URL
+### 6. Build robots.txt and sitemap
+Ask Claude — 2 minutes. Tells Google what to crawl and what not to (block /dashboard, allow landing + legal pages).
 
-#### 3. Fuzzy Name / AI Name Check
-The supplier matcher uses fuzzy matching (SequenceMatcher, 0.85 threshold) with status-based ranking (active > dissolved). The DHL bug was fixed in the April 12 batch.
+### 7. Favicon and social sharing image
+Need a favicon and an og:image (1200x630px) so links shared on LinkedIn/X show a proper preview. Do this during the brand session with Tom.
 
-**To verify it's working well:**
-- [ ] Upload a test CSV with known supplier names (DHL, Tesco, Amazon, local suppliers)
-- [ ] Check the client queue → process → verify matched suppliers are correct
-- [ ] In admin suppliers page, search for a company → verify results are sensible
-- [ ] Try Companies House lookup for edge cases (common names, abbreviations)
+### 8. Enable MFA on everything
+GitHub, Vercel, Render, Clerk dashboard, Cloudflare, email accounts. Takes 30 minutes. Required for Cyber Essentials.
 
-**If matching is poor, improvements could include:**
-- Normalisation (strip Ltd, Limited, PLC, Inc before matching)
-- Multiple candidate matching (currently picks best above threshold)
-- AI classification fallback for ambiguous names (add as an option, not automatic)
-
-#### 4. Recheck Supplier Method
-The 13-layer enrichment protocol. Verify by enriching a known supplier and checking:
-- [ ] Layer 1 (Corporate Identity) returns Companies House data
-- [ ] Layer 2 (Ownership & Sanctions) checks PSCs and OpenSanctions
-- [ ] Layer 3 (Financial Health) pulls charges, gender pay gap
-- [ ] Layer 4 (Carbon & Environmental) checks Environment Agency
-- [ ] Layer 5 (Labour & Ethics) checks modern slavery registry
-- [ ] Remaining layers return data or graceful "no data found"
-- [ ] Hemera Score calculates correctly
-- [ ] Findings are generated for each data point
-
-#### 5. ICO Registration
-- **Go to:** ico.org.uk/for-organisations/register
-- **Cost:** £40/year (Tier 1)
-- **Time:** 10 minutes, number within days
-- **Blocker:** Number needed for legal pages and landing footer
-
-#### 6. Cookie Consent Banner
-- **Status:** Not built yet
-- **Recommendation:** Build a simple one (Nico, ~1 hour with Claude)
-- Only essential cookie is Clerk session (doesn't need consent)
-- Banner is for future-proofing and showing compliance
-- Store preference in `hemera_consent` cookie
-
-#### 7. Imperial Entrepreneurship Lab Call
-**Topics to cover:**
-
-*Legal advice:*
-- Review your Privacy Policy's anonymised supplier retention clause (Recital 26 — this is the legally novel bit)
-- Controller vs processor classification for HemeraScope
-- DPA template for client contracts
-- Whether the 12-month liability cap in T&Cs is enforceable for your specific services
-- DUAA 2025 impact on your cookie approach
-
-*AI and innovation funds:*
-- Innovate UK Smart Grants (up to £500k for disruptive R&D)
-- Innovate UK SBRI (Small Business Research Initiative) — government problem-solving contracts
-- UKRI Future Leaders Fellowships (if either founder is doing research)
-- EIC Accelerator (EU, up to €2.5M equity + grant — UK eligible post-Brexit via Horizon association)
-- Creative Destruction Lab (CDL) — structured mentorship programme
-- Carbon Trust programmes — they fund green innovation specifically
-- Imperial Enterprise Lab's own grants/investment programmes
-- Nesta challenges (if any ESG/sustainability challenges are running)
-
-*Questions to ask Imperial:*
-- Do they have legal clinics for startups? (Many university enterprise labs do)
-- Can they connect you with IP lawyers? (Your methodology may be protectable)
-- Any upcoming demo days or investor introductions?
-- Access to Imperial's sustainability research groups for academic validation?
-
-#### 8. Solicitor Review — What They Need
-
-Send them a package:
-
-**Documents to review (priority order):**
-1. **Privacy Policy** — `dashboard/app/legal/privacy/page.tsx` (or export as PDF). Key issue: anonymised supplier retention clause under Recital 26. Ask: is this truly anonymised or merely pseudonymised?
-2. **Terms & Conditions** — `dashboard/app/legal/terms/page.tsx`. Key issue: 12-month liability cap, IP ownership of anonymised insights, termination provisions.
-3. **Cookie Statement** — `dashboard/app/legal/cookies/page.tsx`. Key issue: PECR compliance, DUAA 2025 impact.
-4. **Full legal research doc** — `docs/research/2026-04-12-legal-statements.md` (613 lines, all the legal reasoning and flagged issues).
-5. **Modern Slavery Statement** — voluntary, but review for accuracy.
-
-**Tell the solicitor:**
-- You're a UK SaaS company processing client spend/supplier data for carbon reporting
-- You use AI (Anthropic Claude) for classification and analysis — they should check the AI disclosure
-- You store data on US-hosted services (Render, Vercel, Anthropic) — they should check adequacy decisions
-- You want to publish these on hemerascope.com within 2 weeks
-- You also need a standalone DPA template for client contracts
-
-**Expected cost:** £500-2,000 for the full review.
-**Look for:** A solicitor who specialises in tech/SaaS data protection law, ideally familiar with ESG or sustainability sector. Imperial's enterprise lab may have recommendations.
+### 9. Run dependency audits
+```bash
+cd /Users/nicohenry/Documents/Hemera && .venv/bin/pip audit
+cd dashboard && npm audit
+```
+Fix anything flagged. Cyber Essentials requires patches within 14 days.
 
 ---
 
-### NEXT WEEK
+## Do this week
 
-#### 9. Logo & Brand Guidelines (with Tom)
-- Review `docs/brand-guidelines.md` — existing guidelines are documented
-- Design deliverables needed:
-  - **Favicon** (16x16, 32x32, 180x180 Apple touch icon)
-  - **og:image** (1200x630px for social sharing)
-  - **Logo variations** (dark bg, light bg, icon-only, wordmark)
-  - **Slide deck template** (for pitches, client presentations)
-  - **Report cover page** (for PDF reports delivered to clients)
-- Decide: is the current teal/slate/amber palette final?
-- Decide: HemeraScope wordmark typography — Plus Jakarta Sans bold, or custom?
+### 10. Logo and brand session with Tom
+- Favicon (16x16, 32x32, 180x180)
+- og:image for social sharing
+- Logo variations (dark bg, light bg, icon-only, wordmark)
+- Slide deck template for pitches
+- Confirm the teal/slate/amber palette is final
 
-#### 10. Cyber Essentials
-- **Prep this week** (enable MFA, run audits, document services)
-- **Book assessment next week** via CyberSmart (cybersmart.co.uk) — they guide you through it
-- **~£320+VAT, 2-6 weeks**
+### 11. Imperial Entrepreneurship Lab call
+Ask about:
+- Legal clinics for startups (free solicitor access?)
+- IP protection for your methodology
+- Upcoming demo days or investor intros
+- Connection to Imperial sustainability research groups
 
-#### 11. UNGC Participant
-- **Go to:** unglobalcompact.org/participation/join
-- **CEO (Tom) signs** the commitment letter
-- **Free** for companies under $1M revenue
-- **Yields:** "We Support the UN Global Compact" logo
-- **Requirement:** Annual Communication on Progress report
+Funding to ask about:
+- Innovate UK Smart Grants (up to £500k)
+- Innovate UK SBRI (government problem-solving contracts)
+- Carbon Trust green innovation programmes
+- EIC Accelerator (up to €2.5M, UK eligible via Horizon)
+- Imperial's own grants/programmes
 
-#### 12. Living Wage Accreditation
-- **Go to:** livingwage.org.uk/accredited-living-wage-employers
-- **Commit to paying** the real Living Wage (currently £12.00/hr UK, £13.15/hr London)
-- **Cost:** Free for small employers (under 10 staff, turnover under £1M)
-- **Yields:** Living Wage Employer badge/logo
-- **Why it matters:** Directly relevant for an ESG consultancy — demonstrates you practice what you preach on labour standards. Buyers in procurement/sustainability notice this.
-- **Note:** This is about the *real* Living Wage (set by Living Wage Foundation), not the government minimum. They're different.
+Legal questions for them:
+- Anonymised supplier data retention (Recital 26) — is it truly anonymised?
+- Controller vs processor classification
+- DPA template needs
+- AI disclosure requirements
+
+### 12. Solicitor review
+Send them: Privacy Policy, Terms & Conditions, Cookie Statement, the full legal research doc (`docs/research/2026-04-12-legal-statements.md`), Modern Slavery Statement.
+
+Tell them: UK SaaS company, processes supplier/spend data for carbon reporting, uses AI (Anthropic Claude), stores data on US services (Render, Vercel), wants to publish within 2 weeks, also needs a DPA template for clients.
+
+Key issues they must check: anonymised supplier retention clause, 12-month liability cap, PECR/DUAA cookie compliance, US data hosting adequacy.
+
+£500-2,000. Ask Imperial if they have recommendations.
+
+### 13. Nico — start GHG Protocol training
+Free online course at ghgprotocol.org. Covers the Corporate Standard — the foundation of everything HemeraScope does. Do this before your first real client engagement.
 
 ---
 
-### WEEKS 3-4
+## Do next week
 
-#### 13. Client Potential List & Strategy
+### 14. Cyber Essentials
+Book via CyberSmart (cybersmart.co.uk). ~£320+VAT. They guide you through the 80-question self-assessment. 2-6 weeks to certificate. Full prep checklist in `docs/research/2026-04-22-cyber-essentials-summary.md`.
 
-**Target segments (priority order):**
+### 15. UNGC Participant
+unglobalcompact.org/participation/join. Tom signs the commitment letter. Free under $1M revenue. You get the "We Support the UN Global Compact" logo. Annual report required.
 
-1. **UK Students' Unions** (current pilots)
-   - There are ~130 SUs in the UK affiliated with NUS
-   - Many have sustainability officers and carbon reporting mandates
-   - Price-sensitive but reputation-conscious
-   - Referral potential: one good report → other SUs hear about it
+### 16. Living Wage accreditation
+livingwage.org.uk/accredited-living-wage-employers. Free for small employers. Commit to the real Living Wage (£12/hr UK, £13.15/hr London — not the government minimum). Badge for your website. Directly relevant for an ESG company.
 
-2. **UK Universities** (natural step up from SUs)
-   - HEFE (Higher Education Funding England) requires carbon reporting
-   - Procurement teams deal with hundreds of suppliers
-   - Budgets: £5k-50k for sustainability consulting
+---
 
-3. **UK Charities & CICs**
-   - Charity Commission regulated, increasing ESG scrutiny
-   - Often have grant-funded sustainability projects
-   - Price range: £500-5,000
+## Do in weeks 3-4
 
-4. **UK SMEs with supply chain pressure**
-   - Companies supplying to large corporates who require Scope 3 data from suppliers
-   - Construction, food & drink, manufacturing sub-contractors
-   - Price range: £2,000-20,000
+### 17. About Us section
+Both founders on the landing page:
+- Nico Henry — Co-founder & CTO
+- Tom [surname] — Co-founder & COO
+- Photo, 1-2 lines each, why you built Hemera
 
-5. **UK Local Councils**
-   - Net zero commitments, public procurement obligations
-   - Must comply with Social Value Act 2012
-   - Price range: £10,000-50,000 (via frameworks or direct procurement)
+### 18. Video
+Script is in `docs/research/2026-04-22-video-brief.md`. Both founders on camera, 2-3 minutes, iPhone is fine. Replaces the placeholder on the landing page.
 
-**Strategy for list building:**
+### 19. Client list and strategy
+
+**Target segments:**
+1. UK Students' Unions (~130 affiliated with NUS, sustainability mandates, price-sensitive)
+2. UK Universities (HEFE carbon reporting requirements, £5k-50k budgets)
+3. UK Charities & CICs (increasing ESG scrutiny, £500-5k)
+4. UK SMEs under supply chain pressure (Scope 3 requirements from large buyers, £2k-20k)
+5. UK Local Councils (net zero commitments, Social Value Act, £10k-50k)
+
+**How to build the list:**
 - NUS directory for SU contacts
-- LinkedIn Sales Navigator (filter: Sustainability Officer/Manager, UK, education sector)
-- Charity Commission search for charities with >£1M income
-- GOV.UK Contracts Finder for upcoming sustainability/carbon tenders
-- B Corp directory for companies already ESG-minded (they value supply chain intelligence)
+- LinkedIn Sales Navigator (Sustainability Officer, UK, education)
+- Charity Commission search (charities >£1M income)
+- Contracts Finder (sustainability/carbon tenders)
+- B Corp directory (already ESG-minded companies)
 
-#### 14. About Us
-**For the landing page:**
-- Nico Henry — Co-founder & CTO. [Add: background, what he brings, why ESG]
-- Tom [surname] — Co-founder & COO. [Add: background, what he brings, why ESG]
-- Photo of both founders (professional but approachable)
-- 2-3 sentences on why Hemera exists, what drove you to build it
+### 20. Cost strategy
+Stay on free tiers for now. When you get your first paying client:
+- Render → $7/mo (avoids 30-second cold starts)
+- At 5+ clients: Vercel Pro $20/mo + Clerk Pro $25/mo
+- Total at 5 clients: ~$60/month
 
-#### 15. Video
-See `docs/research/2026-04-22-video-brief.md` — full script and production notes.
-Both founders on camera. 2-3 minutes. iPhone is fine.
+### 21. Launch marketing
 
-#### 16. Nico — Carbon Audit Training
-Options:
-- **GHG Protocol Corporate Standard course** — ghgprotocol.org (free online modules)
-- **IEMA Carbon Management** — iema.net (£300-600, accredited)
-- **Carbon Trust training** — carbontrust.com (various courses)
-- **CDP Accredited Provider training** — if you want to help clients with CDP disclosure
-- **Recommended first:** GHG Protocol free online course (establishes the foundation), then IEMA for formal accreditation
+**LinkedIn (main channel):**
+- Both founders post from personal accounts (5-10x more reach than company pages)
+- Nico: technical angle (confidence intervals, methodology)
+- Tom: business angle (why supply chains need transparency)
+- Join: UK Sustainability Professionals, ESG Network, Supply Chain groups
 
----
-
-### MONTH 2+
-
-#### 17. Cost Strategy & Paid Tiers
-
-**Current infrastructure costs:**
-| Service | Free Tier | First Paid Tier | When You Need Paid |
-|---------|-----------|-----------------|-------------------|
-| **Vercel** | Hobby (free) | Pro ($20/mo) | When you need custom domains with SSL, team access, analytics |
-| **Render** | Free (spins down after inactivity) | Starter ($7/mo) | When you need always-on (no cold starts), more RAM, custom domains |
-| **Clerk** | Free (10,000 MAUs) | Pro ($25/mo) | When you need custom branding, remove Clerk branding, SSO |
-| **PostgreSQL** | Render free (256MB) | Starter ($7/mo) | When you hit 256MB or need backups |
-| **Anthropic API** | Pay per use | Pay per use | Already paying — ~$0.003 per classification, ~$0.05 per risk analysis |
-| **Domain** | N/A | ~$10/year | Already registered |
-
-**Recommendation:**
-- **Now:** Stay on free tiers. Vercel Hobby + Render free is fine for early clients.
-- **First paying client:** Upgrade Render to Starter ($7/mo) to avoid cold starts (free tier spins down after 15 min inactivity — first request takes 30-60 seconds to wake).
-- **5+ clients:** Upgrade Vercel to Pro ($20/mo) for team access and analytics. Upgrade Clerk to Pro ($25/mo) for custom branding.
-- **Total at 5 clients:** ~$60/month infrastructure. Negligible vs your pricing.
-
-#### 18. Launch Strategy
-
-**LinkedIn (primary channel):**
-- Both founders post about the launch — personal accounts get 5-10x more reach than company pages
-- Nico: technical angle — "We built a carbon footprint tool that shows you the confidence interval, not just a number"
-- Tom: business angle — "Why we started HemeraScope and what we found in UK supply chains"
-- Company page: product updates, case studies (anonymised), methodology insights
-- Join and post in: UK Sustainability Professionals, ESG Network, Supply Chain Sustainability groups
-- Target connections: Sustainability Officers, Procurement Managers, CFOs at universities and charities
-
-**Instagram:**
-- Secondary channel — less B2B but good for brand building
-- Visual: infographics from reports (anonymised), behind-the-scenes, team shots
-- Stories: quick tips on carbon reporting, sustainability news
-- Less frequent than LinkedIn — 2-3 posts/week vs daily LinkedIn
-
-**Other channels:**
-- **X/Twitter** — sustainability community is active. Share methodology insights.
-- **Newsletter** — set up a Substack or Buttondown. Monthly "State of Supply Chain ESG" with insights from your data (anonymised). Builds authority.
-- **PR** — reach out to: BusinessGreen, Edie, The Sustainability Report, GreenBiz. Angle: "Imperial-backed startup brings academic rigour to carbon reporting"
-- **Events** — Sustainability Live (NEC Birmingham), ESG Investor Conference, university sustainability officer networks
-- **Webinars** — host a free "How to measure your carbon footprint with confidence intervals" session. Directly demonstrates the product.
-
-#### 19. Other Accreditations to Consider
-
-| Accreditation | Relevance | Cost | Timeline |
-|---------------|-----------|------|----------|
-| **Living Wage Employer** | High — ESG credibility | Free (small employer) | 2-4 weeks |
-| **Carbon Trust Standard** | Very high — validates your carbon measurement approach | £2,000-5,000 | 3-6 months |
-| **IEMA Corporate Member** | High — professional body for environmental management | £300-600/year | Immediate |
-| **GHG Protocol Scope 3 Evaluator** | Niche — demonstrates deep methodology knowledge | Training cost only | 1-2 months |
-| **Disability Confident Employer** | Good — government scheme, free | Free | 2-4 weeks |
-| **Investors in People** | Good — demonstrates people management quality | £2,000-5,000 | 3-6 months |
-| **Planet Mark** | High — certification for carbon reduction commitment | £1,000-3,000/year | 2-3 months |
-| **CDP Accredited Solutions Provider** | Very high if you help clients with CDP | Application fee | 2-3 months |
-
-**Recommended priority:** Living Wage (free, immediate) → IEMA membership (professional credibility) → Carbon Trust or Planet Mark (validates your core offering)
+**Also:**
+- Company LinkedIn page for product updates and case studies
+- Instagram for visual brand building (infographics, behind-the-scenes)
+- Newsletter (Substack or Buttondown) — monthly supply chain ESG insights
+- PR: pitch to BusinessGreen, Edie, GreenBiz. Angle: "Imperial-backed startup brings academic rigour to carbon reporting"
+- Webinar: "How to measure your carbon footprint with confidence intervals" — directly demos the product
 
 ---
 
-## Quick Reference — What to Do Tomorrow
+## Do in month 2+
 
-1. Companies House registration (if not already done)
-2. Fill the placeholder values form (Part 5 of launch-readiness.md)
-3. Enable MFA on all accounts (GitHub, Vercel, Render, Clerk, Cloudflare, email)
-4. Test hemerascope.com in a browser — run through the checklist in section 2
-5. Logo/brand session with Tom
-6. ICO registration (ico.org.uk)
+### 22. More accreditations
+
+| What | Cost | Time | Why |
+|------|------|------|-----|
+| Cyber Essentials Plus | £1,500-2,500 | 2-4 weeks after CE | Technical audit, needed for some gov contracts |
+| IEMA Corporate Member | £300-600/year | Immediate | Professional body for environmental management |
+| Carbon Trust Standard | £2,000-5,000 | 3-6 months | Validates your carbon measurement approach |
+| Planet Mark | £1,000-3,000/year | 2-3 months | Carbon reduction commitment certification |
+| Disability Confident Employer | Free | 2-4 weeks | Government scheme, good optics |
+| B Corp | Free to assess, £500-25k to certify | 12-18 months | Long game but very strong signal |
+| CDP Accredited Solutions Provider | Application fee | 2-3 months | If helping clients with CDP disclosure |
+
+### 23. Ongoing maintenance
+
+| When | What |
+|------|------|
+| Every 2 weeks | Dependency security patches (`pip audit`, `npm audit`) |
+| Monthly | Review sub-processor list, update if changed |
+| Quarterly | Review legal pages, update dates |
+| Annually | Renew ICO (£40), Cyber Essentials (£320), UNGC report |
+| Every June | Update DEFRA conversion factors (new set published annually) |
+
+---
+
+## When Companies House number arrives
+
+Give Claude these values and all 25 placeholders get filled in one commit:
+
+```
+Company number:        _______________
+Registered address:    _______________
+ICO registration:      _______________  (after ICO registration)
+Privacy email:         _______________  (e.g. privacy@hemerascope.com)
+Security email:        _______________
+Accessibility email:   _______________
+Whistleblowing email:  _______________
+Founder name (Tom):    _______________
+Effective date:        _______________  (set when solicitor approves)
+Payment terms:         _______________  (e.g. "Net 30, GBP, VAT inclusive")
+```
