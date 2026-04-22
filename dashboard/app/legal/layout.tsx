@@ -10,10 +10,20 @@ export default function LegalLayout({ children }: { children: ReactNode }) {
           <Link href="/" className="text-sm font-bold text-slate hover:text-teal transition-colors">
             ← HemeraScope
           </Link>
-          <nav className="flex items-center gap-5 text-xs">
+          <nav className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs">
+            {/* Core legal */}
             <Link href="/legal/privacy" className="text-muted hover:text-teal transition-colors">Privacy</Link>
             <Link href="/legal/terms" className="text-muted hover:text-teal transition-colors">Terms</Link>
             <Link href="/legal/cookies" className="text-muted hover:text-teal transition-colors">Cookies</Link>
+            <span className="text-[#E5E5E0]" aria-hidden="true">|</span>
+            {/* Trust & compliance */}
+            <Link href="/legal/security" className="text-muted hover:text-teal transition-colors">Security</Link>
+            <Link href="/legal/methodology" className="text-muted hover:text-teal transition-colors">Methodology</Link>
+            <Link href="/legal/sub-processors" className="text-muted hover:text-teal transition-colors">Sub-processors</Link>
+            <span className="text-[#E5E5E0]" aria-hidden="true">|</span>
+            {/* Statements */}
+            <Link href="/legal/modern-slavery" className="text-muted hover:text-teal transition-colors">Modern Slavery</Link>
+            <Link href="/legal/accessibility" className="text-muted hover:text-teal transition-colors">Accessibility</Link>
           </nav>
         </div>
       </header>
