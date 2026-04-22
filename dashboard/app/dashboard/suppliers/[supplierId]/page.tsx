@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useAuth } from "@clerk/nextjs";
 import { useCallback, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
+import AITaskButtons from "@/components/ai-task-buttons";
 import type { SupplierDetail } from "@/lib/types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -89,6 +90,7 @@ interface RecommendedActions {
 interface AIAnalysis {
   risk_analysis: RiskAnalysis | string | null;
   recommended_actions: RecommendedActions | string | null;
+  engagement_summary: Record<string, unknown> | string | null;
   last_analysed_at: string | null;
 }
 
@@ -402,248 +404,184 @@ export default function SupplierDetailPage() {
       </div>
 
       {/* ============================================================ */}
-      {/*  AI INTELLIGENCE                                              */}
+      {/*  AI INTELLIGENCE — before deterministic findings              */}
       {/* ============================================================ */}
-      {(() => {
-        const ai = supplier.ai_analysis;
-        const hasRisk = ai?.risk_analysis && typeof ai.risk_analysis === "object";
-        const hasActions = ai?.recommended_actions && typeof ai.recommended_actions === "object";
-        const risk = hasRisk ? (ai.risk_analysis as RiskAnalysis) : null;
-        const actions = hasActions ? (ai.recommended_actions as RecommendedActions) : null;
-        const hasAny = hasRisk || hasActions;
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xs font-semibold uppercase tracking-[0.5px] text-muted">
+            AI Intelligence
+          </h2>
+          {supplier.ai_analysis?.last_analysed_at && (
+            <span className="text-[10px] text-muted">
+              Last analysed{" "}
+              {new Date(supplier.ai_analysis.last_analysed_at).toLocaleDateString("en-GB", {
+                day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
+              })}
+            </span>
+          )}
+        </div>
 
-        const VERDICT_STYLES: Record<string, { bg: string; text: string; label: string }> = {
-          correct: { bg: "bg-red-tint", text: "text-[#991B1B]", label: "Confirmed" },
-          likely_registry_gap: { bg: "bg-amber-tint", text: "text-[#92400E]", label: "Likely registry gap" },
-          uncertain: { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]", label: "Uncertain" },
-        };
-
-        return (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xs font-semibold uppercase tracking-[0.5px] text-muted">
-                AI Intelligence
-              </h2>
-              {ai?.last_analysed_at && (
-                <span className="text-[10px] text-muted">
-                  Last analysed{" "}
-                  {new Date(ai.last_analysed_at).toLocaleDateString("en-GB", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </span>
-              )}
-            </div>
-
-            {/* AI Analysis buttons — always visible */}
-            <div className="flex items-center gap-2 flex-wrap">
-              <button
-                onClick={async () => {
-                  try {
-                    await apiFetch(`/suppliers/${supplierId}/ai-analysis`, {
-                      method: "POST",
-                      body: JSON.stringify({ mode: "api", task_types: ["risk_analysis", "recommended_actions"] }),
-                    });
-                    // Refresh supplier data
-                    const data = await apiFetch<FullSupplierDetail>(`/suppliers/${supplierId}`);
-                    setSupplier(data);
-                  } catch (err) {
-                    console.error("AI analysis failed:", err);
-                  }
-                }}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-teal text-white hover:opacity-90 transition-opacity"
-              >
-                Run AI Analysis (API)
-              </button>
-              <button
-                onClick={async () => {
-                  try {
-                    const result = await apiFetch<{ tasks: { prompt_text: string; task_type: string }[] }>(`/suppliers/${supplierId}/ai-analysis`, {
-                      method: "POST",
-                      body: JSON.stringify({ mode: "manual", task_types: ["risk_analysis", "recommended_actions"] }),
-                    });
-                    // Copy prompts to clipboard for Max
-                    const prompts = result.tasks.map(t => `--- ${t.task_type} ---\n${t.prompt_text}`).join("\n\n");
-                    await navigator.clipboard.writeText(prompts);
-                    alert("Prompts copied to clipboard. Paste into Claude Max, get the response, then paste it back via the AI Tasks page.");
-                  } catch (err) {
-                    console.error("AI prompt generation failed:", err);
-                  }
-                }}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold border border-[#E5E5E0] text-muted hover:text-teal hover:border-teal/30 transition-colors"
-              >
-                Run AI Analysis (Max)
-              </button>
-              <span className="text-[10px] text-muted">API calls Claude directly. Max copies the prompt for you to paste into Claude.</span>
-            </div>
-
-            {!hasAny ? (
-              <div className="bg-surface rounded-xl border border-[#E5E5E0] p-5 text-center">
-                <p className="text-sm text-muted">
-                  No AI analysis yet. Click one of the buttons above to run risk analysis and generate recommended actions.
-                </p>
+        {/* 1. AI Risk Analysis */}
+        <div className="rounded-xl border-2 border-purple-300 bg-purple-50/30 p-5 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-[#6366F1]">AI Risk Analysis</h3>
+          </div>
+          {(() => {
+            const ai = supplier.ai_analysis;
+            const risk = ai?.risk_analysis && typeof ai.risk_analysis === "object" ? (ai.risk_analysis as RiskAnalysis) : null;
+            const VERDICT_STYLES: Record<string, { bg: string; text: string; label: string }> = {
+              correct: { bg: "bg-red-100", text: "text-[#991B1B]", label: "Confirmed" },
+              likely_registry_gap: { bg: "bg-amber-100", text: "text-[#92400E]", label: "Likely registry gap" },
+              uncertain: { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]", label: "Uncertain" },
+            };
+            return risk ? (
+              <div className="space-y-3">
+                <div className="bg-white border border-purple-200 rounded-lg p-4">
+                  <p className="text-sm leading-relaxed">{risk.risk_summary}</p>
+                </div>
+                {risk.verified_findings?.length > 0 && (
+                  <div className="space-y-2">
+                    {risk.verified_findings.map((vf, idx) => {
+                      const style = VERDICT_STYLES[vf.verdict] || VERDICT_STYLES.uncertain;
+                      return (
+                        <div key={idx} className="bg-white rounded-lg border border-[#E5E5E0] p-3 space-y-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className={`inline-block px-2 py-0.5 rounded text-[11px] font-semibold ${style.bg} ${style.text}`}>{style.label}</span>
+                            <span className="text-sm font-semibold">{vf.corrected_title || vf.original_title}</span>
+                          </div>
+                          <p className="text-xs text-muted leading-relaxed">{vf.reasoning}</p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {risk.additional_risks?.length > 0 && (
+                  <div><h4 className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted mb-1">Additional Risks</h4>
+                    <ul className="space-y-0.5">{risk.additional_risks.map((r, i) => <li key={i} className="text-sm flex items-start gap-1.5"><span className="text-[#C2410C]">&#x2022;</span>{r}</li>)}</ul>
+                  </div>
+                )}
+                {risk.opportunities?.length > 0 && (
+                  <div><h4 className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted mb-1">Opportunities</h4>
+                    <ul className="space-y-0.5">{risk.opportunities.map((o, i) => <li key={i} className="text-sm flex items-start gap-1.5"><span className="text-[#065F46]">&#x2022;</span>{o}</li>)}</ul>
+                  </div>
+                )}
+                {risk.score_context && <div className="bg-white rounded-lg p-3 border border-purple-200"><p className="text-xs text-muted">{risk.score_context}</p></div>}
               </div>
             ) : (
-              <div className="space-y-2">
-                {/* Risk Analysis */}
-                {risk && (
-                  <Collapsible
-                    title="Risk Analysis"
-                    defaultOpen={true}
-                    badge={<Badge variant="teal">AI-verified</Badge>}
-                  >
-                    <div className="space-y-4 pt-3">
-                      {/* Risk summary */}
-                      <div className="bg-[#F0FDFA] border border-teal/20 rounded-lg p-4">
-                        <p className="text-sm leading-relaxed">{risk.risk_summary}</p>
-                      </div>
+              <p className="text-sm text-muted italic">No risk analysis yet.</p>
+            );
+          })()}
+          <AITaskButtons
+            taskType="risk_analysis"
+            targetType="supplier"
+            targetId={Number(supplierId)}
+            context={{
+              supplier_name: supplier.name,
+              sector: supplier.sector,
+              sic_codes: supplier.sic_codes,
+              hemera_score: supplier.hemera_score,
+              deterministic_findings: (supplier.findings ?? []).map(f => ({ severity: f.severity, title: f.title, domain: f.domain, detail: f.detail })),
+            }}
+            onResult={async () => {
+              const data = await apiFetch<FullSupplierDetail>(`/suppliers/${supplierId}`);
+              setSupplier(data);
+            }}
+          />
+        </div>
 
-                      {/* Verified findings */}
-                      {risk.verified_findings && risk.verified_findings.length > 0 && (
-                        <div className="space-y-2">
-                          <h3 className="text-xs font-semibold text-muted uppercase tracking-[0.5px]">
-                            Finding Verification
-                          </h3>
-                          {risk.verified_findings.map((vf, idx) => {
-                            const style = VERDICT_STYLES[vf.verdict] || VERDICT_STYLES.uncertain;
-                            return (
-                              <div
-                                key={idx}
-                                className="bg-surface rounded-lg border border-[#E5E5E0] p-3 space-y-1.5"
-                              >
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span
-                                    className={`inline-block px-2 py-0.5 rounded text-[11px] font-semibold ${style.bg} ${style.text}`}
-                                  >
-                                    {style.label}
-                                  </span>
-                                  <span className="text-sm font-semibold">
-                                    {vf.corrected_title || vf.original_title}
-                                  </span>
-                                </div>
-                                <p className="text-xs text-muted leading-relaxed">{vf.reasoning}</p>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-
-                      {/* Additional risks */}
-                      {risk.additional_risks && risk.additional_risks.length > 0 && (
-                        <div className="space-y-1.5">
-                          <h3 className="text-xs font-semibold text-muted uppercase tracking-[0.5px]">
-                            Additional Risks Identified
-                          </h3>
-                          <ul className="space-y-1">
-                            {risk.additional_risks.map((r, idx) => (
-                              <li key={idx} className="flex items-start gap-2 text-sm">
-                                <span className="text-[#C2410C] mt-0.5 flex-shrink-0">&#x2022;</span>
-                                <span>{r}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-
-                      {/* Opportunities */}
-                      {risk.opportunities && risk.opportunities.length > 0 && (
-                        <div className="space-y-1.5">
-                          <h3 className="text-xs font-semibold text-muted uppercase tracking-[0.5px]">
-                            Opportunities
-                          </h3>
-                          <ul className="space-y-1">
-                            {risk.opportunities.map((o, idx) => (
-                              <li key={idx} className="flex items-start gap-2 text-sm">
-                                <span className="text-[#065F46] mt-0.5 flex-shrink-0">&#x2022;</span>
-                                <span>{o}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-
-                      {/* Score context */}
-                      {risk.score_context && (
-                        <div className="bg-paper rounded-lg p-3">
-                          <h3 className="text-xs font-semibold text-muted uppercase tracking-[0.5px] mb-1">
-                            Score Context
-                          </h3>
-                          <p className="text-sm text-muted leading-relaxed">{risk.score_context}</p>
-                        </div>
-                      )}
-                    </div>
-                  </Collapsible>
-                )}
-
-                {/* Recommended Actions */}
-                {actions && actions.recommended_actions && actions.recommended_actions.length > 0 && (
-                  <Collapsible
-                    title="Recommended Actions"
-                    defaultOpen={true}
-                    badge={
-                      <Badge variant="amber">
-                        {actions.recommended_actions.length} action
-                        {actions.recommended_actions.length !== 1 ? "s" : ""}
-                      </Badge>
-                    }
-                  >
-                    <div className="space-y-2 pt-3">
-                      {actions.recommended_actions.map((a, idx) => (
-                        <div
-                          key={idx}
-                          className="bg-surface rounded-lg border border-[#E5E5E0] p-4 space-y-2"
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="text-[10px] bg-paper text-muted px-1.5 py-0.5 rounded font-semibold">
-                              {idx + 1}
-                            </span>
-                            <p className="text-sm font-semibold">{a.finding}</p>
-                          </div>
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                            <div>
-                              <p className="text-[10px] uppercase tracking-[0.5px] text-muted font-semibold mb-0.5">
-                                Action
-                              </p>
-                              <p className="text-sm">{a.action}</p>
-                            </div>
-                            <div>
-                              <p className="text-[10px] uppercase tracking-[0.5px] text-muted font-semibold mb-0.5">
-                                Expected Benefit
-                              </p>
-                              <p className="text-sm">{a.benefit}</p>
-                            </div>
-                            <div>
-                              <p className="text-[10px] uppercase tracking-[0.5px] text-muted font-semibold mb-0.5">
-                                Hemera&apos;s Role
-                              </p>
-                              <p className="text-sm">{a.hemera_role}</p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </Collapsible>
-                )}
-
-                {/* Fallback for raw text responses */}
-                {ai?.risk_analysis && typeof ai.risk_analysis === "string" && (
-                  <Collapsible title="Risk Analysis (raw)" badge={<Badge variant="slate">Raw</Badge>}>
-                    <pre className="text-xs text-muted whitespace-pre-wrap pt-3">{ai.risk_analysis}</pre>
-                  </Collapsible>
-                )}
-                {ai?.recommended_actions && typeof ai.recommended_actions === "string" && (
-                  <Collapsible title="Recommended Actions (raw)" badge={<Badge variant="slate">Raw</Badge>}>
-                    <pre className="text-xs text-muted whitespace-pre-wrap pt-3">{ai.recommended_actions}</pre>
-                  </Collapsible>
-                )}
-              </div>
-            )}
+        {/* 2. Recommended Actions */}
+        <div className="rounded-xl border-2 border-purple-300 bg-purple-50/30 p-5 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-[#6366F1]">Recommended Actions</h3>
           </div>
-        );
-      })()}
+          {(() => {
+            const ai = supplier.ai_analysis;
+            const actions = ai?.recommended_actions && typeof ai.recommended_actions === "object" ? (ai.recommended_actions as RecommendedActions) : null;
+            return actions?.recommended_actions?.length ? (
+              <div className="space-y-2">
+                {actions.recommended_actions.map((a, idx) => (
+                  <div key={idx} className="bg-white rounded-lg border border-[#E5E5E0] p-4 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] bg-purple-100 text-[#6366F1] px-1.5 py-0.5 rounded font-bold">{idx + 1}</span>
+                      <p className="text-sm font-semibold">{a.finding}</p>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <div><p className="text-[10px] uppercase tracking-[0.5px] text-muted font-semibold mb-0.5">Action</p><p className="text-sm">{a.action}</p></div>
+                      <div><p className="text-[10px] uppercase tracking-[0.5px] text-muted font-semibold mb-0.5">Expected Benefit</p><p className="text-sm">{a.benefit}</p></div>
+                      <div><p className="text-[10px] uppercase tracking-[0.5px] text-muted font-semibold mb-0.5">Hemera&apos;s Role</p><p className="text-sm">{a.hemera_role}</p></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-muted italic">No recommended actions yet.</p>
+            );
+          })()}
+          <AITaskButtons
+            taskType="recommended_actions"
+            targetType="supplier"
+            targetId={Number(supplierId)}
+            context={{
+              supplier_name: supplier.name,
+              findings: (supplier.findings ?? []).map(f => ({ severity: f.severity, title: f.title, domain: f.domain, detail: f.detail })),
+            }}
+            onResult={async () => {
+              const data = await apiFetch<FullSupplierDetail>(`/suppliers/${supplierId}`);
+              setSupplier(data);
+            }}
+          />
+        </div>
+
+        {/* 3. Engagement Summary */}
+        <div className="rounded-xl border-2 border-purple-300 bg-purple-50/30 p-5 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-[#6366F1]">Engagement Strategy</h3>
+          </div>
+          {(() => {
+            const ai = supplier.ai_analysis;
+            const summary = ai?.engagement_summary;
+            if (summary && typeof summary === "object") {
+              const s = summary as { engagement_summary?: string; progress_highlights?: string[]; next_steps?: string[] };
+              return (
+                <div className="space-y-3">
+                  {s.engagement_summary && <div className="bg-white border border-purple-200 rounded-lg p-4"><p className="text-sm leading-relaxed">{s.engagement_summary}</p></div>}
+                  {s.progress_highlights && s.progress_highlights.length > 0 && (
+                    <div><h4 className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted mb-1">Progress</h4>
+                      <ul className="space-y-0.5">{s.progress_highlights.map((h: string, i: number) => <li key={i} className="text-sm flex items-start gap-1.5"><span className="text-[#065F46]">&#x2022;</span>{h}</li>)}</ul>
+                    </div>
+                  )}
+                  {s.next_steps && s.next_steps.length > 0 && (
+                    <div><h4 className="text-[10px] font-semibold uppercase tracking-[0.5px] text-muted mb-1">Next Steps</h4>
+                      <ul className="space-y-0.5">{s.next_steps.map((n: string, i: number) => <li key={i} className="text-sm flex items-start gap-1.5"><span className="text-[#6366F1]">&#x2022;</span>{n}</li>)}</ul>
+                    </div>
+                  )}
+                </div>
+              );
+            }
+            if (summary && typeof summary === "string") {
+              return <pre className="text-xs text-muted whitespace-pre-wrap">{summary}</pre>;
+            }
+            return <p className="text-sm text-muted italic">No engagement strategy yet.</p>;
+          })()}
+          <AITaskButtons
+            taskType="engagement_summary"
+            targetType="supplier"
+            targetId={Number(supplierId)}
+            context={{
+              supplier_name: supplier.name,
+              engagements: (supplier.engagements ?? []).map((e) => ({
+                subject: e.org_name || "",
+                status: e.status || "",
+                notes: "",
+              })),
+            }}
+            onResult={async () => {
+              const data = await apiFetch<FullSupplierDetail>(`/suppliers/${supplierId}`);
+              setSupplier(data);
+            }}
+          />
+        </div>
+      </div>
 
       {/* ============================================================ */}
       {/*  ENRICHMENT LAYERS                                            */}

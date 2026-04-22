@@ -289,12 +289,14 @@ def get_supplier(supplier_id: int, db: Session = Depends(get_db), _admin=Depends
     ai_analysis = {
         "risk_analysis": None,
         "recommended_actions": None,
+        "engagement_summary": None,
         "last_analysed_at": None,
     }
 
+    ai_task_types = ("risk_analysis", "recommended_actions", "engagement_summary")
     for task in ai_tasks:
         task_type = task.task_type
-        if task_type in ("risk_analysis", "recommended_actions") and ai_analysis[task_type] is None:
+        if task_type in ai_task_types and ai_analysis.get(task_type) is None:
             try:
                 parsed = json.loads(task.response_text)
             except (json.JSONDecodeError, TypeError):
