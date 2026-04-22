@@ -1,5 +1,6 @@
 """Supplier registry endpoints."""
 
+import json
 import uuid
 from datetime import datetime
 
@@ -13,6 +14,7 @@ from hemera.models.supplier import Supplier, SupplierScore, SupplierSource
 from hemera.models.transaction import Transaction
 from hemera.models.engagement import Engagement
 from hemera.models.finding import SupplierFinding
+from hemera.models.ai_task import AITask
 from hemera.services.enrichment import enrich_supplier, enrich_batch
 from hemera.services.companies_house import search_company, get_company
 
@@ -270,6 +272,35 @@ def get_supplier(supplier_id: int, db: Session = Depends(get_db), _admin=Depends
         .all()
     )
 
+    # Get completed AI analysis tasks for this supplier
+    ai_tasks = (
+        db.query(AITask)
+        .filter(
+            AITask.target_type == "supplier",
+            AITask.target_id == supplier_id,
+            AITask.status == "completed",
+        )
+        .order_by(AITask.completed_at.desc())
+        .all()
+    )
+
+    ai_analysis = {
+        "risk_analysis": None,
+        "recommended_actions": None,
+        "last_analysed_at": None,
+    }
+
+    for task in ai_tasks:
+        task_type = task.task_type
+        if task_type in ("risk_analysis", "recommended_actions") and ai_analysis[task_type] is None:
+            try:
+                parsed = json.loads(task.response_text)
+            except (json.JSONDecodeError, TypeError):
+                parsed = task.response_text
+            ai_analysis[task_type] = parsed
+            if ai_analysis["last_analysed_at"] is None and task.completed_at:
+                ai_analysis["last_analysed_at"] = task.completed_at.isoformat()
+
     return {
         "id": s.id,
         "ch_number": s.ch_number,
@@ -341,6 +372,7 @@ def get_supplier(supplier_id: int, db: Session = Depends(get_db), _admin=Depends
             }
             for f in findings
         ],
+        "ai_analysis": ai_analysis,
     }
 
 

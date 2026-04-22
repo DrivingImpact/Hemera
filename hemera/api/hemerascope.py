@@ -333,8 +333,7 @@ def save_selections(
         engagement.supplier_report_status = "curating"
 
     user = db.query(User).filter(User.clerk_id == current_user.clerk_id).first()
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found in database")
+    user_id = user.id if user else 0
 
     saved = 0
     for item in req.selections:
@@ -362,7 +361,7 @@ def save_selections(
                 client_detail=item.client_detail,
                 client_language_source=item.client_language_source,
                 analyst_note=item.analyst_note,
-                selected_by=user.id,
+                selected_by=user_id,
             )
             db.add(sel)
         saved += 1
@@ -382,8 +381,7 @@ def save_actions(
     _load_engagement(engagement_id, db)
 
     user = db.query(User).filter(User.clerk_id == current_user.clerk_id).first()
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found in database")
+    user_id = user.id if user else 0
 
     # Clear existing actions for this supplier
     db.query(ReportAction).filter(
@@ -399,7 +397,7 @@ def save_actions(
             priority=action.get("priority", 1),
             linked_finding_ids=action.get("linked_finding_ids"),
             language_source=action.get("language_source", "analyst"),
-            created_by=user.id,
+            created_by=user_id,
         )
         db.add(ra)
 

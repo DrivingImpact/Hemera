@@ -32,6 +32,7 @@ from hemera.services.scraping_sources import (
 from hemera.services.esg_scorer import calculate_esg_score
 from hemera.models.finding import SupplierFinding
 from hemera.services.finding_generator import generate_findings_from_sources
+from hemera.services.ai_task_runner import create_ai_task
 
 log = logging.getLogger(__name__)
 
@@ -203,6 +204,46 @@ async def enrich_supplier(
     results["flags"] = esg_result.flags
     results["layers_completed"] = esg_result.layers_completed
     results["findings_generated"] = len(finding_dicts)
+
+    # ── Trigger AI analysis tasks ──
+    try:
+        ai_context = {
+            "supplier_name": supplier.name,
+            "sector": supplier.sector,
+            "sic_codes": supplier.sic_codes,
+            "hemera_score": esg_result.hemera_score,
+            "domain_scores": {
+                "governance_identity": score.governance_identity,
+                "labour_ethics": score.labour_ethics,
+                "carbon_climate": score.carbon_climate,
+                "water_biodiversity": score.water_biodiversity,
+                "product_supply_chain": score.product_supply_chain,
+                "transparency_disclosure": score.transparency_disclosure,
+                "anti_corruption": score.anti_corruption,
+                "social_value": score.social_value,
+            },
+            "sources_summary": [
+                {"layer": s.layer, "source": s.source_name, "summary": s.summary}
+                for s in all_sources
+            ],
+            "deterministic_findings": [
+                {"severity": fd.get("severity"), "title": fd.get("title"),
+                 "domain": fd.get("domain"), "detail": fd.get("detail")}
+                for fd in finding_dicts
+            ],
+        }
+
+        create_ai_task(db, "risk_analysis", "supplier", supplier.id, "api", ai_context)
+        create_ai_task(
+            db, "recommended_actions", "supplier", supplier.id, "api",
+            {"supplier_name": supplier.name, "findings": ai_context["deterministic_findings"]},
+        )
+        db.commit()
+        results["ai_tasks_created"] = 2
+        log.info(f"AI analysis tasks created for supplier '{supplier.name}' (id={supplier.id})")
+    except Exception as e:
+        log.error(f"AI analysis trigger failed for supplier '{supplier.name}': {e}")
+        results["ai_tasks_created"] = 0
 
     return results
 

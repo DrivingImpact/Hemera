@@ -152,8 +152,7 @@ def create_engagement(
         raise HTTPException(status_code=404, detail="Supplier not found")
 
     user = db.query(User).filter(User.clerk_id == current_user.clerk_id).first()
-    if not user:
-        raise HTTPException(status_code=401, detail="User not found in database")
+    user_id = user.id if user else 0
 
     eng = SupplierEngagement(
         supplier_id=supplier_id,
@@ -165,7 +164,7 @@ def create_engagement(
         contact_email=req.contact_email,
         next_action=req.next_action,
         contacted_at=datetime.utcnow() if req.status in ("contacted", "in_progress") else None,
-        created_by=user.id,
+        created_by=user_id,
     )
     db.add(eng)
     db.commit()

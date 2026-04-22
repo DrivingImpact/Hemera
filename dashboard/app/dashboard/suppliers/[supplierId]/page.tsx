@@ -59,9 +59,43 @@ interface EngagementLink {
   co2e_tonnes: number;
 }
 
+interface VerifiedFinding {
+  original_title: string;
+  verdict: "correct" | "likely_registry_gap" | "uncertain";
+  reasoning: string;
+  corrected_title?: string;
+}
+
+interface RiskAnalysis {
+  risk_summary: string;
+  verified_findings: VerifiedFinding[];
+  additional_risks: string[];
+  opportunities: string[];
+  score_context: string;
+}
+
+interface RecommendedAction {
+  finding: string;
+  action: string;
+  benefit: string;
+  hemera_role: string;
+}
+
+interface RecommendedActions {
+  supplier_name: string;
+  recommended_actions: RecommendedAction[];
+}
+
+interface AIAnalysis {
+  risk_analysis: RiskAnalysis | string | null;
+  recommended_actions: RecommendedActions | string | null;
+  last_analysed_at: string | null;
+}
+
 interface FullSupplierDetail extends SupplierDetail {
   findings?: Finding[];
   engagements?: EngagementLink[];
+  ai_analysis?: AIAnalysis;
 }
 
 /* ------------------------------------------------------------------ */
@@ -147,6 +181,7 @@ export default function SupplierDetailPage() {
   // Filters for findings
   const [domainFilter, setDomainFilter] = useState<string>("all");
   const [severityFilter, setSeverityFilter] = useState<string>("all");
+  const [findingSearch, setFindingSearch] = useState<string>("");
 
   const apiFetch = useCallback(
     async <T,>(path: string, options?: RequestInit): Promise<T> => {
@@ -263,6 +298,10 @@ export default function SupplierDetailPage() {
   const filteredFindings = findings.filter((f) => {
     if (domainFilter !== "all" && f.domain !== domainFilter) return false;
     if (severityFilter !== "all" && f.severity !== severityFilter) return false;
+    if (findingSearch) {
+      const q = findingSearch.toLowerCase();
+      if (!f.title.toLowerCase().includes(q) && !f.detail?.toLowerCase().includes(q)) return false;
+    }
     return true;
   });
 
@@ -363,6 +402,209 @@ export default function SupplierDetailPage() {
       </div>
 
       {/* ============================================================ */}
+      {/*  AI INTELLIGENCE                                              */}
+      {/* ============================================================ */}
+      {(() => {
+        const ai = supplier.ai_analysis;
+        const hasRisk = ai?.risk_analysis && typeof ai.risk_analysis === "object";
+        const hasActions = ai?.recommended_actions && typeof ai.recommended_actions === "object";
+        const risk = hasRisk ? (ai.risk_analysis as RiskAnalysis) : null;
+        const actions = hasActions ? (ai.recommended_actions as RecommendedActions) : null;
+        const hasAny = hasRisk || hasActions;
+
+        const VERDICT_STYLES: Record<string, { bg: string; text: string; label: string }> = {
+          correct: { bg: "bg-red-tint", text: "text-[#991B1B]", label: "Confirmed" },
+          likely_registry_gap: { bg: "bg-amber-tint", text: "text-[#92400E]", label: "Likely registry gap" },
+          uncertain: { bg: "bg-[#F3F4F6]", text: "text-[#6B7280]", label: "Uncertain" },
+        };
+
+        return (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xs font-semibold uppercase tracking-[0.5px] text-muted">
+                AI Intelligence
+              </h2>
+              {ai?.last_analysed_at && (
+                <span className="text-[10px] text-muted">
+                  Last analysed{" "}
+                  {new Date(ai.last_analysed_at).toLocaleDateString("en-GB", {
+                    day: "numeric",
+                    month: "short",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              )}
+            </div>
+
+            {!hasAny ? (
+              <div className="bg-surface rounded-xl border border-[#E5E5E0] p-6 text-center">
+                <p className="text-sm text-muted">
+                  AI analysis will run automatically after enrichment, or click{" "}
+                  <span className="font-semibold">Rerun Analysis</span> above.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {/* Risk Analysis */}
+                {risk && (
+                  <Collapsible
+                    title="Risk Analysis"
+                    defaultOpen={true}
+                    badge={<Badge variant="teal">AI-verified</Badge>}
+                  >
+                    <div className="space-y-4 pt-3">
+                      {/* Risk summary */}
+                      <div className="bg-[#F0FDFA] border border-teal/20 rounded-lg p-4">
+                        <p className="text-sm leading-relaxed">{risk.risk_summary}</p>
+                      </div>
+
+                      {/* Verified findings */}
+                      {risk.verified_findings && risk.verified_findings.length > 0 && (
+                        <div className="space-y-2">
+                          <h3 className="text-xs font-semibold text-muted uppercase tracking-[0.5px]">
+                            Finding Verification
+                          </h3>
+                          {risk.verified_findings.map((vf, idx) => {
+                            const style = VERDICT_STYLES[vf.verdict] || VERDICT_STYLES.uncertain;
+                            return (
+                              <div
+                                key={idx}
+                                className="bg-surface rounded-lg border border-[#E5E5E0] p-3 space-y-1.5"
+                              >
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span
+                                    className={`inline-block px-2 py-0.5 rounded text-[11px] font-semibold ${style.bg} ${style.text}`}
+                                  >
+                                    {style.label}
+                                  </span>
+                                  <span className="text-sm font-semibold">
+                                    {vf.corrected_title || vf.original_title}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-muted leading-relaxed">{vf.reasoning}</p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {/* Additional risks */}
+                      {risk.additional_risks && risk.additional_risks.length > 0 && (
+                        <div className="space-y-1.5">
+                          <h3 className="text-xs font-semibold text-muted uppercase tracking-[0.5px]">
+                            Additional Risks Identified
+                          </h3>
+                          <ul className="space-y-1">
+                            {risk.additional_risks.map((r, idx) => (
+                              <li key={idx} className="flex items-start gap-2 text-sm">
+                                <span className="text-[#C2410C] mt-0.5 flex-shrink-0">&#x2022;</span>
+                                <span>{r}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Opportunities */}
+                      {risk.opportunities && risk.opportunities.length > 0 && (
+                        <div className="space-y-1.5">
+                          <h3 className="text-xs font-semibold text-muted uppercase tracking-[0.5px]">
+                            Opportunities
+                          </h3>
+                          <ul className="space-y-1">
+                            {risk.opportunities.map((o, idx) => (
+                              <li key={idx} className="flex items-start gap-2 text-sm">
+                                <span className="text-[#065F46] mt-0.5 flex-shrink-0">&#x2022;</span>
+                                <span>{o}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {/* Score context */}
+                      {risk.score_context && (
+                        <div className="bg-paper rounded-lg p-3">
+                          <h3 className="text-xs font-semibold text-muted uppercase tracking-[0.5px] mb-1">
+                            Score Context
+                          </h3>
+                          <p className="text-sm text-muted leading-relaxed">{risk.score_context}</p>
+                        </div>
+                      )}
+                    </div>
+                  </Collapsible>
+                )}
+
+                {/* Recommended Actions */}
+                {actions && actions.recommended_actions && actions.recommended_actions.length > 0 && (
+                  <Collapsible
+                    title="Recommended Actions"
+                    defaultOpen={true}
+                    badge={
+                      <Badge variant="amber">
+                        {actions.recommended_actions.length} action
+                        {actions.recommended_actions.length !== 1 ? "s" : ""}
+                      </Badge>
+                    }
+                  >
+                    <div className="space-y-2 pt-3">
+                      {actions.recommended_actions.map((a, idx) => (
+                        <div
+                          key={idx}
+                          className="bg-surface rounded-lg border border-[#E5E5E0] p-4 space-y-2"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] bg-paper text-muted px-1.5 py-0.5 rounded font-semibold">
+                              {idx + 1}
+                            </span>
+                            <p className="text-sm font-semibold">{a.finding}</p>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div>
+                              <p className="text-[10px] uppercase tracking-[0.5px] text-muted font-semibold mb-0.5">
+                                Action
+                              </p>
+                              <p className="text-sm">{a.action}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] uppercase tracking-[0.5px] text-muted font-semibold mb-0.5">
+                                Expected Benefit
+                              </p>
+                              <p className="text-sm">{a.benefit}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] uppercase tracking-[0.5px] text-muted font-semibold mb-0.5">
+                                Hemera&apos;s Role
+                              </p>
+                              <p className="text-sm">{a.hemera_role}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </Collapsible>
+                )}
+
+                {/* Fallback for raw text responses */}
+                {ai?.risk_analysis && typeof ai.risk_analysis === "string" && (
+                  <Collapsible title="Risk Analysis (raw)" badge={<Badge variant="slate">Raw</Badge>}>
+                    <pre className="text-xs text-muted whitespace-pre-wrap pt-3">{ai.risk_analysis}</pre>
+                  </Collapsible>
+                )}
+                {ai?.recommended_actions && typeof ai.recommended_actions === "string" && (
+                  <Collapsible title="Recommended Actions (raw)" badge={<Badge variant="slate">Raw</Badge>}>
+                    <pre className="text-xs text-muted whitespace-pre-wrap pt-3">{ai.recommended_actions}</pre>
+                  </Collapsible>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* ============================================================ */}
       {/*  ENRICHMENT LAYERS                                            */}
       {/* ============================================================ */}
       <div className="space-y-2">
@@ -427,8 +669,20 @@ export default function SupplierDetailPage() {
 
         {findings.length > 0 ? (
           <>
-            {/* Filters */}
+            {/* Search + Filters */}
             <div className="flex items-center gap-3 flex-wrap">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={findingSearch}
+                  onChange={(e) => setFindingSearch(e.target.value)}
+                  placeholder="Search findings..."
+                  className="text-xs border border-[#E5E5E0] rounded-lg pl-8 pr-3 py-1.5 bg-surface text-slate outline-none w-52 focus:border-teal/40"
+                />
+                <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" />
+                </svg>
+              </div>
               <select
                 value={domainFilter}
                 onChange={(e) => setDomainFilter(e.target.value)}
@@ -453,17 +707,19 @@ export default function SupplierDetailPage() {
                   </option>
                 ))}
               </select>
-              {(domainFilter !== "all" || severityFilter !== "all") && (
+              {(domainFilter !== "all" || severityFilter !== "all" || findingSearch) && (
                 <button
                   onClick={() => {
                     setDomainFilter("all");
                     setSeverityFilter("all");
+                    setFindingSearch("");
                   }}
                   className="text-[11px] text-teal font-semibold hover:underline"
                 >
                   Clear filters
                 </button>
               )}
+              <span className="text-[10px] text-muted">{filteredFindings.length} of {findings.length}</span>
             </div>
 
             {/* Finding cards */}
