@@ -36,7 +36,6 @@ const ADMIN_SECTIONS: { label: string; items: NavItem[] }[] = [
     items: [
       { name: "Clients", href: "/clients", icon: "◉", absolute: true },
       { name: "Suppliers", href: "/suppliers", icon: "◯", absolute: true },
-      { name: "Bin", href: "/bin", icon: "◯", absolute: true },
       { name: "Upload", href: "/upload", icon: "◯", absolute: true },
     ],
   },
@@ -105,6 +104,26 @@ export function Sidebar({
           </div>
         ))}
       </nav>
+
+      {/* Bin — pinned to bottom, admin only */}
+      {isAdmin && (
+        <div className="border-t border-white/10 px-5 py-3">
+          <Link
+            href="/dashboard/bin"
+            className={`flex items-center gap-2.5 px-0 py-1.5 text-[13px] transition-colors ${
+              pathname.startsWith("/dashboard/bin")
+                ? "text-white"
+                : "text-[#64748B] hover:text-[#94A3B8]"
+            }`}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="opacity-60">
+              <polyline points="3,6 5,6 21,6" />
+              <path d="M19,6v14a2,2,0,0,1-2,2H7a2,2,0,0,1-2-2V6m3,0V4a2,2,0,0,1,2-2h4a2,2,0,0,1,2,2V6" />
+            </svg>
+            Bin
+          </Link>
+        </div>
+      )}
     </aside>
   );
 }
