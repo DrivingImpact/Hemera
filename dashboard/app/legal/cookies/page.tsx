@@ -8,7 +8,7 @@ export default function CookiesPage() {
     <article className="space-y-6 text-[14px] leading-relaxed text-slate">
       <header className="space-y-1 pb-4 border-b border-[#E5E5E0]">
         <h1 className="text-3xl font-bold text-slate">Cookie Statement</h1>
-        <p className="text-muted text-sm">Last updated: [DATE] · Version 1.0</p>
+        <p className="text-muted text-sm">Last updated: [pending — effective date] · Version 1.0</p>
       </header>
 
       <section className="space-y-3">

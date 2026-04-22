@@ -8,12 +8,12 @@ export default function TermsPage() {
     <article className="space-y-6 text-[14px] leading-relaxed text-slate">
       <header className="space-y-1 pb-4 border-b border-[#E5E5E0]">
         <h1 className="text-3xl font-bold text-slate">HemeraScope Subscription Terms</h1>
-        <p className="text-muted text-sm">Last updated: [DATE] · Version 1.0</p>
+        <p className="text-muted text-sm">Last updated: [pending — effective date] · Version 1.0</p>
       </header>
 
       <Section title="1. Definitions">
         <ul>
-          <li><strong>Hemera</strong> — Hemera Intelligence Ltd, a company registered in England and Wales (company number [########]), registered office [address].</li>
+          <li><strong>Hemera</strong> — Hemera Intelligence Ltd, a company registered in England and Wales (company number [pending — Companies House]), registered office [pending — registered address].</li>
           <li><strong>Client, you, your</strong> — the organisation identified as the customer on the Order Form.</li>
           <li><strong>Order Form</strong> — the document signed by both parties identifying the subscription plan, fees, term, and authorised users.</li>
           <li><strong>Services</strong> — the HemeraScope SaaS platform and any professional services described in the Order Form, including carbon footprint reporting, supplier intelligence, and analyst work product.</li>

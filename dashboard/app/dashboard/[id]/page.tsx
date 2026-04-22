@@ -6,6 +6,7 @@ import { ScopeDonut } from "@/components/charts/scope-donut";
 import { PlotlyChart } from "@/components/charts/plotly-wrapper";
 import { SCOPE_COLORS } from "@/lib/plotly-theme";
 import { fmtTonnes, fmtGBP } from "@/lib/format";
+import { ExcelDownloadButton } from "./excel-download-button";
 import type { CategorySummary, EngagementSupplier } from "@/lib/types";
 
 export default async function OverviewPage({
@@ -104,7 +105,10 @@ export default async function OverviewPage({
 
   return (
     <div className="space-y-5">
-      <HeroBanner engagement={engagement} />
+      <div className="flex items-center justify-between">
+        <HeroBanner engagement={engagement} />
+        <ExcelDownloadButton engagementId={engagementId} orgName={engagement.org_name} />
+      </div>
 
       <div className="grid grid-cols-[1.5fr_1fr] gap-4">
         {/* Left: Scope donut (row-span-2) */}

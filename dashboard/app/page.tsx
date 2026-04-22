@@ -1198,8 +1198,8 @@ function Footer() {
 
         <div className="flex flex-col md:flex-row items-center justify-between gap-3 pt-6 border-t border-slate/5 text-[11px] text-muted/80">
           <div>
-            © 2026 Hemera Intelligence Ltd. Registered in England and Wales, company number [########].
-            Registered office: [address]. ICO registration number [########].
+            © 2026 Hemera Intelligence Ltd. Registered in England and Wales, company number [pending].
+            Registered office: [pending]. ICO registration number [pending].
           </div>
         </div>
       </div>

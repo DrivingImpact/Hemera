@@ -9,15 +9,15 @@ export default function PrivacyPolicyPage() {
       <header className="space-y-1 pb-4 border-b border-[#E5E5E0]">
         <h1 className="text-3xl font-bold text-slate">Privacy Policy</h1>
         <p className="text-muted text-sm">
-          Hemera Intelligence Ltd · Last updated: [DATE] · Version 1.0
+          Hemera Intelligence Ltd · Last updated: [pending — effective date] · Version 1.0
         </p>
       </header>
 
       <Section title="1. Who we are and our role under UK data protection law">
         <p>
           Hemera Intelligence Ltd (&ldquo;Hemera&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;,
-          &ldquo;our&rdquo;) is a company registered in England and Wales, company number [########],
-          with its registered office at [address]. We trade under the product name{" "}
+          &ldquo;our&rdquo;) is a company registered in England and Wales, company number [pending — Companies House],
+          with its registered office at [pending — registered address]. We trade under the product name{" "}
           <strong>HemeraScope</strong>.
         </p>
         <p>We operate in two distinct roles under the UK GDPR:</p>
@@ -35,7 +35,7 @@ export default function PrivacyPolicyPage() {
         </ul>
         <p>
           We are registered with the Information Commissioner&apos;s Office (ICO) under registration
-          number <strong>[########]</strong>.
+          number <strong>[pending — ICO registration]</strong>.
         </p>
       </Section>
 
@@ -94,7 +94,7 @@ export default function PrivacyPolicyPage() {
         <ul>
           <li>
             <strong>Our sub-processors and service providers</strong> — the current list is
-            available on our Trust page at [URL]. As of the last update these include Clerk, Inc.
+            available on our Trust page at [pending — trust page URL]. As of the last update these include Clerk, Inc.
             (US-based authentication), our hosting provider, our database host, our email provider
             and any analytics or error-monitoring tools.
           </li>
@@ -161,7 +161,7 @@ export default function PrivacyPolicyPage() {
           </li>
         </ul>
         <p>
-          To exercise any of these rights, email <strong>[privacy@hemera.xxx]</strong>. We&apos;ll
+          To exercise any of these rights, email <strong>[pending — privacy email, e.g. privacy@hemerascope.com]</strong>. We&apos;ll
           respond within one month. You can also complain to the ICO at{" "}
           <a href="https://ico.org.uk/make-a-complaint/" className="text-teal hover:underline">
             ico.org.uk/make-a-complaint
@@ -217,10 +217,10 @@ export default function PrivacyPolicyPage() {
       <Section title="13. Contact us">
         <ul>
           <li>
-            <strong>Email:</strong> [privacy@hemera.xxx]
+            <strong>Email:</strong> [pending — privacy email, e.g. privacy@hemerascope.com]
           </li>
           <li>
-            <strong>Post:</strong> Hemera Intelligence Ltd, [address]
+            <strong>Post:</strong> Hemera Intelligence Ltd, [pending — registered address]
           </li>
         </ul>
       </Section>

@@ -24,19 +24,25 @@ export default function LegalLayout({ children }: { children: ReactNode }) {
           <p className="text-[12px] text-amber-900 leading-relaxed">
             <strong>Draft — not yet legally reviewed.</strong> This document is a working draft
             prepared for internal use. It has not yet been reviewed by a qualified UK solicitor and
-            must not be relied on as a legally binding statement. See{" "}
-            <code className="bg-amber-100 px-1 rounded text-[11px]">docs/research/2026-04-12-legal-statements.md</code>{" "}
-            for the full drafts and flagged review items.
+            must not be relied on as a legally binding statement.
           </p>
         </div>
       </div>
 
-      <main className="max-w-3xl mx-auto px-6 py-12">{children}</main>
+      <main className="max-w-3xl mx-auto px-6 py-12 relative">
+        {/* Large DRAFT watermark across the page */}
+        <div className="pointer-events-none fixed inset-0 z-10 flex items-center justify-center overflow-hidden" aria-hidden="true">
+          <span className="text-[120px] sm:text-[180px] font-black text-amber-200/30 uppercase tracking-[0.2em] -rotate-12 select-none whitespace-nowrap">
+            DRAFT
+          </span>
+        </div>
+        <div className="relative z-20">{children}</div>
+      </main>
 
       <footer className="border-t border-[#E5E5E0] mt-16">
         <div className="max-w-3xl mx-auto px-6 py-6 text-[11px] text-muted">
           Hemera Intelligence Ltd, trading as HemeraScope. Registered in England and Wales, company
-          number [########]. Registered office: [address]. ICO registration number [########].
+          number [pending — Companies House]. Registered office: [pending — registered address]. ICO registration number [pending — ICO registration].
         </div>
       </footer>
     </div>
