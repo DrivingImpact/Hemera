@@ -1,0 +1,12 @@
+# HemeraScope — robots.txt
+# Allow search engines to index public pages, block private dashboard
+
+User-agent: *
+Allow: /
+Allow: /legal/
+Disallow: /dashboard/
+Disallow: /api/
+Disallow: /sign-in/
+Disallow: /sign-up/
+
+Sitemap: https://hemerascope.com/sitemap.xml

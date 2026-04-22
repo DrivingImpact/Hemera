@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
+import { PostHogProvider } from "@/components/posthog-provider";
+import { CookieBanner } from "@/components/cookie-banner";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -16,7 +18,10 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body className="bg-paper text-slate font-sans antialiased">
-          {children}
+          <PostHogProvider>
+            {children}
+          </PostHogProvider>
+          <CookieBanner />
         </body>
       </html>
     </ClerkProvider>
