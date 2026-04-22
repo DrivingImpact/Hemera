@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HemeraScope — Brand Assets Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; background: #F5F5F0; color: #1E293B; }
+
+  .page { max-width: 1100px; margin: 0 auto; padding: 60px 40px; }
+  .page-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #0D9488; margin-bottom: 8px; }
+  .page-subtitle { font-size: 28px; font-weight: 800; color: #1E293B; margin-bottom: 48px; }
+
+  .section { margin-bottom: 64px; }
+  .section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px; color: #64748B; margin-bottom: 20px; padding-bottom: 8px; border-bottom: 1px solid #E5E5E0; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 24px; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px; }
+  .grid-6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; }
+
+  .card { background: white; border-radius: 12px; border: 1px solid #E5E5E0; overflow: hidden; }
+  .card-body { padding: 20px; }
+  .card-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #64748B; margin-bottom: 4px; }
+  .card-note { font-size: 11px; color: #94A3B8; margin-top: 8px; line-height: 1.5; }
+
+  /* ── LOGO MARKS ── */
+
+  .logo-display { display: flex; align-items: center; justify-content: center; padding: 40px; min-height: 160px; }
+  .logo-display.dark { background: #1E293B; }
+  .logo-display.light { background: #FFFFFF; }
+  .logo-display.paper { background: #F5F5F0; }
+  .logo-display.teal { background: #0D9488; }
+
+  /* The H mark */
+  .h-mark {
+    display: flex; align-items: center; justify-content: center;
+  }
+  .h-mark svg { display: block; }
+
+  /* Wordmark */
+  .wordmark { font-weight: 800; letter-spacing: -0.02em; }
+  .wordmark .hemera { opacity: 0.6; }
+  .wordmark .scope { opacity: 1; }
+
+  /* ── FAVICON GRID ── */
+  .favicon-row { display: flex; align-items: end; gap: 24px; padding: 32px; }
+  .favicon-item { text-align: center; }
+  .favicon-item .size { font-size: 10px; color: #94A3B8; margin-top: 6px; }
+  .favicon-box { display: flex; align-items: center; justify-content: center; background: #F5F5F0; border-radius: 4px; }
+
+  /* ── COLOUR SWATCHES ── */
+  .swatch { border-radius: 10px; overflow: hidden; }
+  .swatch-color { height: 80px; }
+  .swatch-info { padding: 10px 12px; background: white; }
+  .swatch-name { font-size: 12px; font-weight: 700; }
+  .swatch-hex { font-size: 11px; color: #94A3B8; font-family: monospace; }
+
+  /* ── OG IMAGE PREVIEW ── */
+  .og-preview { border-radius: 12px; overflow: hidden; border: 1px solid #E5E5E0; }
+  .og-image {
+    width: 100%; aspect-ratio: 1200/630; position: relative;
+    background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+  .og-image::before {
+    content: ''; position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 20% 50%, rgba(13,148,136,0.15) 0%, transparent 50%),
+      radial-gradient(circle at 80% 30%, rgba(13,148,136,0.08) 0%, transparent 40%);
+  }
+  .og-content { position: relative; z-index: 1; text-align: center; padding: 40px; }
+  .og-content .og-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 2.5px; color: #0D9488; margin-bottom: 16px; }
+  .og-content .og-title { font-size: 42px; font-weight: 800; color: white; line-height: 1.15; letter-spacing: -0.02em; }
+  .og-content .og-title span { color: #0D9488; }
+  .og-content .og-sub { font-size: 16px; color: #94A3B8; margin-top: 14px; font-weight: 500; }
+  .og-content .og-url { font-size: 12px; color: #475569; margin-top: 20px; letter-spacing: 0.5px; }
+
+  /* ── TYPOGRAPHY PREVIEW ── */
+  .type-row { display: flex; align-items: baseline; gap: 20px; padding: 12px 0; border-bottom: 1px solid #F0F0EB; }
+  .type-meta { width: 120px; flex-shrink: 0; }
+  .type-meta .role { font-size: 11px; font-weight: 600; color: #64748B; }
+  .type-meta .spec { font-size: 10px; color: #94A3B8; }
+  .type-sample { flex: 1; }
+
+  /* ── BADGE PREVIEW ── */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+  .badge-teal { background: #CCFBF1; color: #0D9488; }
+  .badge-amber { background: #FEF3C7; color: #92400E; }
+  .badge-red { background: #FEE2E2; color: #991B1B; }
+  .badge-slate { background: #F1F5F9; color: #64748B; }
+
+  /* ── BUSINESS CARD PREVIEW ── */
+  .biz-card {
+    width: 100%; aspect-ratio: 3.5/2; border-radius: 8px; overflow: hidden;
+    position: relative; display: flex;
+  }
+  .biz-card-left {
+    width: 35%; background: #1E293B; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .biz-card-right {
+    flex: 1; background: white; padding: 24px 28px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .biz-card-name { font-size: 15px; font-weight: 700; color: #1E293B; }
+  .biz-card-title { font-size: 11px; color: #64748B; margin-top: 2px; font-weight: 500; }
+  .biz-card-divider { width: 24px; height: 2px; background: #0D9488; margin: 10px 0; }
+  .biz-card-detail { font-size: 10px; color: #94A3B8; line-height: 1.6; }
+
+  /* ── SLIDE DECK COVER ── */
+  .slide-cover {
+    width: 100%; aspect-ratio: 16/9; border-radius: 8px;
+    background: linear-gradient(135deg, #1E293B 0%, #0F172A 100%);
+    position: relative; overflow: hidden;
+    display: flex; align-items: center; padding: 60px;
+  }
+  .slide-cover::before {
+    content: ''; position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 85% 20%, rgba(13,148,136,0.12) 0%, transparent 40%),
+      radial-gradient(circle at 10% 80%, rgba(13,148,136,0.06) 0%, transparent 30%);
+  }
+  .slide-content { position: relative; z-index: 1; }
+  .slide-badge { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 2.5px; color: #0D9488; margin-bottom: 16px; }
+  .slide-title { font-size: 32px; font-weight: 800; color: white; line-height: 1.2; letter-spacing: -0.01em; }
+  .slide-sub { font-size: 14px; color: #64748B; margin-top: 12px; }
+  .slide-footer { position: absolute; bottom: 24px; left: 60px; right: 60px; display: flex; justify-content: space-between; font-size: 10px; color: #475569; z-index: 1; }
+
+  /* ── REPORT HEADER ── */
+  .report-header {
+    width: 100%; padding: 32px 40px; border-radius: 8px 8px 0 0;
+    background: #1E293B; position: relative; overflow: hidden;
+  }
+  .report-header::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, #0D9488, #0D9488 33%, #F59E0B 33%, #F59E0B 66%, #1E293B 66%);
+  }
+  .report-wordmark { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #0D9488; }
+  .report-title { font-size: 24px; font-weight: 800; color: white; margin-top: 12px; }
+  .report-meta { font-size: 12px; color: #94A3B8; margin-top: 6px; }
+  .report-body { background: white; border-radius: 0 0 8px 8px; padding: 32px 40px; border: 1px solid #E5E5E0; border-top: 0; }
+  .report-body p { font-size: 13px; color: #64748B; line-height: 1.7; }
+
+  .decision-box {
+    background: #FFFBEB; border: 2px dashed #F59E0B; border-radius: 8px; padding: 16px 20px; margin-top: 16px;
+  }
+  .decision-box .label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #92400E; margin-bottom: 4px; }
+  .decision-box p { font-size: 12px; color: #92400E; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="page-title">HemeraScope</div>
+  <div class="page-subtitle">Brand Assets Preview</div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!--  SECTION 1: LOGO MARKS                             -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-label">1. Logo Marks — The H</div>
+    <div class="grid-4">
+
+      <!-- Dark bg -->
+      <div class="card">
+        <div class="logo-display dark">
+          <svg width="64" height="64" viewBox="0 0 32 32">
+            <rect width="32" height="32" rx="6" fill="#1E293B"/>
+            <path d="M8 7.5h3.2v7h9.6v-7H24v17h-3.2v-7.2H11.2v7.2H8z" fill="#0D9488"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <div class="card-label">Icon — Dark</div>
+          <div class="card-note">Slate bg, teal H. Primary favicon and app icon.</div>
+        </div>
+      </div>
+
+      <!-- Light bg -->
+      <div class="card">
+        <div class="logo-display light" style="border-bottom: 1px solid #E5E5E0;">
+          <svg width="64" height="64" viewBox="0 0 32 32">
+            <rect width="32" height="32" rx="6" fill="#F5F5F0" stroke="#E5E5E0" stroke-width="0.5"/>
+            <path d="M8 7.5h3.2v7h9.6v-7H24v17h-3.2v-7.2H11.2v7.2H8z" fill="#1E293B"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <div class="card-label">Icon — Light</div>
+          <div class="card-note">Paper bg, slate H. For light contexts.</div>
+        </div>
+      </div>
+
+      <!-- Teal bg -->
+      <div class="card">
+        <div class="logo-display teal">
+          <svg width="64" height="64" viewBox="0 0 32 32">
+            <rect width="32" height="32" rx="6" fill="#0D9488"/>
+            <path d="M8 7.5h3.2v7h9.6v-7H24v17h-3.2v-7.2H11.2v7.2H8z" fill="white"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <div class="card-label">Icon — Teal</div>
+          <div class="card-note">Teal bg, white H. For accent contexts.</div>
+        </div>
+      </div>
+
+      <!-- No bg -->
+      <div class="card">
+        <div class="logo-display paper">
+          <svg width="64" height="64" viewBox="0 0 32 32">
+            <path d="M4 3.5h5.2v11h13.6v-11H28v25h-5.2v-11.2H9.2v11.2H4z" fill="#1E293B"/>
+          </svg>
+        </div>
+        <div class="card-body">
+          <div class="card-label">Mark — Standalone</div>
+          <div class="card-note">No container. For watermarks, embossing.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!--  SECTION 2: WORDMARKS                              -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-label">2. Wordmarks</div>
+    <div class="grid-2">
+
+      <div class="card">
+        <div class="logo-display dark" style="gap: 16px;">
+          <svg width="36" height="36" viewBox="0 0 32 32">
+            <rect width="32" height="32" rx="6" fill="#0D9488" fill-opacity="0.15"/>
+            <path d="M8 7.5h3.2v7h9.6v-7H24v17h-3.2v-7.2H11.2v7.2H8z" fill="#0D9488"/>
+          </svg>
+          <span class="wordmark" style="font-size: 26px; color: white;">
+            <span class="hemera">Hemera</span><span class="scope" style="color: #0D9488;">Scope</span>
+          </span>
+        </div>
+        <div class="card-body">
+          <div class="card-label">Full Wordmark — Dark</div>
+          <div class="card-note">For headers, hero sections, dark backgrounds.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="logo-display light" style="gap: 16px; border-bottom: 1px solid #E5E5E0;">
+          <svg width="36" height="36" viewBox="0 0 32 32">
+            <rect width="32" height="32" rx="6" fill="#1E293B"/>
+            <path d="M8 7.5h3.2v7h9.6v-7H24v17h-3.2v-7.2H11.2v7.2H8z" fill="#0D9488"/>
+          </svg>
+          <span class="wordmark" style="font-size: 26px; color: #1E293B;">
+            <span class="hemera">Hemera</span><span class="scope" style="color: #0D9488;">Scope</span>
+          </span>
+        </div>
+        <div class="card-body">
+          <div class="card-label">Full Wordmark — Light</div>
+          <div class="card-note">For white/paper backgrounds, documents.</div>
+        </div>
+      </div>
+
+      <div class="card" style="grid-column: span 2;">
+        <div class="logo-display dark" style="justify-content: flex-start; padding-left: 40px;">
+          <div>
+            <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 2.5px; color: #0D9488; margin-bottom: 4px;">HEMERA</div>
+            <div style="font-size: 11px; color: #94A3B8; font-weight: 500;">Supply Chain &amp; Carbon Intelligence</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-label">Compact — Sidebar / Nav</div>
+          <div class="card-note">The format currently used in the dashboard sidebar. Teal wordmark + muted tagline.</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!--  SECTION 3: FAVICON SIZES                          -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-label">3. Favicon Sizes</div>
+    <div class="card">
+      <div class="favicon-row">
+        <div class="favicon-item">
+          <div class="favicon-box" style="width: 16px; height: 16px;">
+            <svg width="16" height="16" viewBox="0 0 32 32">
+              <rect width="32" height="32" rx="6" fill="#1E293B"/>
+              <path d="M8 7.5h3.2v7h9.6v-7H24v17h-3.2v-7.2H11.2v7.2H8z" fill="#0D9488"/>
+            </svg>
+          </div>
+          <div class="size">16px</div>
+        </div>
+        <div class="favicon-item">
+          <div class="favicon-box" style="width: 32px; height: 32px;">
+            <svg width="32" height="32" viewBox="0 0 32 32">
+              <rect width="32" height="32" rx="6" fill="#1E293B"/>
+              <path d="M8 7.5h3.2v7h9.6v-7H24v17h-3.2v-7.2H11.2v7.2H8z" fill="#0D9488"/>
+            </svg>
+          </div>
+          <div class="size">32px</div>
+        </div>
+        <div class="favicon-item">
+          <div class="favicon-box" style="width: 48px; height: 48px;">
+            <svg width="48" height="48" viewBox="0 0 32 32">
+              <rect width="32" height="32" rx="6" fill="#1E293B"/>
+              <path d="M8 7.5h3.2v7h9.6v-7H24v17h-3.2v-7.2H11.2v7.2H8z" fill="#0D9488"/>
+            </svg>
+          </div>
+          <div class="size">48px</div>
+        </div>
+        <div class="favicon-item">
+          <div class="favicon-box" style="width: 64px; height: 64px;">
+            <svg width="64" height="64" viewBox="0 0 32 32">
+              <rect width="32" height="32" rx="6" fill="#1E293B"/>
+              <path d="M8 7.5h3.2v7h9.6v-7H24v17h-3.2v-7.2H11.2v7.2H8z" fill="#0D9488"/>
+            </svg>
+          </div>
+          <div class="size">64px</div>
+        </div>
+        <div class="favicon-item">
+          <div class="favicon-box" style="width: 180px; height: 180px; border-radius: 36px;">
+            <svg width="180" height="180" viewBox="0 0 32 32">
+              <rect width="32" height="32" rx="6" fill="#1E293B"/>
+              <path d="M8 7.5h3.2v7h9.6v-7H24v17h-3.2v-7.2H11.2v7.2H8z" fill="#0D9488"/>
+            </svg>
+          </div>
+          <div class="size">180px (Apple Touch)</div>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="card-note">SVG favicon scales to all sizes. The H mark remains legible at 16px. Apple Touch Icon uses iOS rounding.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!--  SECTION 4: OG IMAGE (Social Sharing)              -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-label">4. Social Sharing Image (og:image) — 1200x630</div>
+    <div class="og-preview">
+      <div class="og-image">
+        <div class="og-content">
+          <div class="og-badge">Carbon Intelligence</div>
+          <div class="og-title">
+            <span>Hemera</span><span>Scope</span>
+          </div>
+          <div class="og-sub">Supply chain transparency with confidence intervals, not guesswork.</div>
+          <div class="og-url">hemerascope.com</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-note" style="margin-top: 12px;">This is what appears when hemerascope.com is shared on LinkedIn, X, Slack, iMessage, etc. Screenshot this at 1200x630 and save as og-image.png.</div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!--  SECTION 5: COLOUR PALETTE                         -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-label">5. Colour Palette</div>
+    <div class="grid-6">
+      <div class="swatch card">
+        <div class="swatch-color" style="background: #1E293B;"></div>
+        <div class="swatch-info"><div class="swatch-name">Slate</div><div class="swatch-hex">#1E293B</div></div>
+      </div>
+      <div class="swatch card">
+        <div class="swatch-color" style="background: #0D9488;"></div>
+        <div class="swatch-info"><div class="swatch-name">Teal</div><div class="swatch-hex">#0D9488</div></div>
+      </div>
+      <div class="swatch card">
+        <div class="swatch-color" style="background: #F59E0B;"></div>
+        <div class="swatch-info"><div class="swatch-name">Amber</div><div class="swatch-hex">#F59E0B</div></div>
+      </div>
+      <div class="swatch card">
+        <div class="swatch-color" style="background: #F5F5F0; border-bottom: 1px solid #E5E5E0;"></div>
+        <div class="swatch-info"><div class="swatch-name">Paper</div><div class="swatch-hex">#F5F5F0</div></div>
+      </div>
+      <div class="swatch card">
+        <div class="swatch-color" style="background: #64748B;"></div>
+        <div class="swatch-info"><div class="swatch-name">Muted</div><div class="swatch-hex">#64748B</div></div>
+      </div>
+      <div class="swatch card">
+        <div class="swatch-color" style="background: #10B981;"></div>
+        <div class="swatch-info"><div class="swatch-name">Success</div><div class="swatch-hex">#10B981</div></div>
+      </div>
+    </div>
+    <div style="margin-top: 16px;">
+      <div class="grid-4">
+        <div class="swatch card">
+          <div class="swatch-color" style="background: #CCFBF1; height: 48px;"></div>
+          <div class="swatch-info"><div class="swatch-name">Teal Tint</div><div class="swatch-hex">#CCFBF1</div></div>
+        </div>
+        <div class="swatch card">
+          <div class="swatch-color" style="background: #FEF3C7; height: 48px;"></div>
+          <div class="swatch-info"><div class="swatch-name">Amber Tint</div><div class="swatch-hex">#FEF3C7</div></div>
+        </div>
+        <div class="swatch card">
+          <div class="swatch-color" style="background: #FEE2E2; height: 48px;"></div>
+          <div class="swatch-info"><div class="swatch-name">Red Tint</div><div class="swatch-hex">#FEE2E2</div></div>
+        </div>
+        <div class="swatch card">
+          <div class="swatch-color" style="background: #F1F5F9; height: 48px;"></div>
+          <div class="swatch-info"><div class="swatch-name">Slate Tint</div><div class="swatch-hex">#F1F5F9</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!--  SECTION 6: TYPOGRAPHY                             -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-label">6. Typography — Plus Jakarta Sans</div>
+    <div class="card">
+      <div class="card-body" style="padding: 24px 28px;">
+        <div class="type-row">
+          <div class="type-meta"><div class="role">Display</div><div class="spec">32px / 800</div></div>
+          <div class="type-sample" style="font-size: 32px; font-weight: 800; letter-spacing: -0.02em;">2,643.5 tCO2e</div>
+        </div>
+        <div class="type-row">
+          <div class="type-meta"><div class="role">Heading 1</div><div class="spec">24px / 700</div></div>
+          <div class="type-sample" style="font-size: 24px; font-weight: 700;">Carbon Footprint Report</div>
+        </div>
+        <div class="type-row">
+          <div class="type-meta"><div class="role">Heading 2</div><div class="spec">18px / 700</div></div>
+          <div class="type-sample" style="font-size: 18px; font-weight: 700;">Scope 3 — Supply Chain Emissions</div>
+        </div>
+        <div class="type-row">
+          <div class="type-meta"><div class="role">Body</div><div class="spec">14px / 400</div></div>
+          <div class="type-sample" style="font-size: 14px; line-height: 1.65;">Every carbon figure comes with a confidence interval. Every supplier finding is traceable to a public registry.</div>
+        </div>
+        <div class="type-row">
+          <div class="type-meta"><div class="role">Label</div><div class="spec">11px / 600 / UC</div></div>
+          <div class="type-sample" style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; color: #64748B;">Total Emissions</div>
+        </div>
+        <div class="type-row" style="border-bottom: 0;">
+          <div class="type-meta"><div class="role">Caption</div><div class="spec">12px / 500</div></div>
+          <div class="type-sample" style="font-size: 12px; font-weight: 500; color: #94A3B8;">Source: DEFRA GHG Conversion Factors 2025 · Level 2 Activity · UK</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!--  SECTION 7: BADGES                                 -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-label">7. Badges &amp; Status Indicators</div>
+    <div class="card">
+      <div class="card-body" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+        <span class="badge badge-teal">High Confidence</span>
+        <span class="badge badge-teal">Scope 2</span>
+        <span class="badge badge-teal">Hemera Verified</span>
+        <span class="badge badge-amber">Medium Confidence</span>
+        <span class="badge badge-amber">Check</span>
+        <span class="badge badge-amber">In Progress</span>
+        <span class="badge badge-red">Critical</span>
+        <span class="badge badge-red">Low Confidence</span>
+        <span class="badge badge-slate">Unverified</span>
+        <span class="badge badge-slate">Draft</span>
+        <span class="badge" style="background: #EDE9FE; color: #6366F1;">AI-Verified</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!--  SECTION 8: REPORT HEADER                          -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-label">8. Report Header</div>
+    <div class="card" style="border: 0;">
+      <div class="report-header">
+        <div class="report-wordmark">HEMERA</div>
+        <div class="report-title">Carbon Footprint &amp; Supply Chain Intelligence Report</div>
+        <div class="report-meta">Prepared for [Client Name] · April 2026 · Confidential</div>
+      </div>
+      <div class="report-body">
+        <p>This report was produced using HemeraScope, Hemera Intelligence's proprietary carbon and supply chain intelligence platform. Every figure is accompanied by a confidence interval. Every supplier finding is traceable to public registries and government databases.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!--  SECTION 9: SLIDE DECK COVER                       -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-label">9. Slide Deck Cover</div>
+    <div class="card" style="border: 0;">
+      <div class="slide-cover">
+        <div class="slide-content">
+          <div class="slide-badge">HemeraScope</div>
+          <div class="slide-title">Supply Chain<br>Carbon Intelligence</div>
+          <div class="slide-sub">Confidence intervals, not guesswork.</div>
+        </div>
+        <div class="slide-footer">
+          <span>Hemera Intelligence Ltd · hemerascope.com</span>
+          <span>Confidential</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!--  SECTION 10: BUSINESS CARD                         -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-label">10. Business Card Concept</div>
+    <div class="grid-2">
+      <div class="card" style="border: 0;">
+        <div class="biz-card">
+          <div class="biz-card-left">
+            <svg width="40" height="40" viewBox="0 0 32 32">
+              <path d="M8 7.5h3.2v7h9.6v-7H24v17h-3.2v-7.2H11.2v7.2H8z" fill="#0D9488"/>
+            </svg>
+            <div style="font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #0D9488; margin-top: 12px;">HEMERA</div>
+          </div>
+          <div class="biz-card-right">
+            <div class="biz-card-name">Nico Henry</div>
+            <div class="biz-card-title">Co-founder & CTO</div>
+            <div class="biz-card-divider"></div>
+            <div class="biz-card-detail">
+              hemerascope.com<br>
+              nico@hemerascope.com<br>
+              Hemera Intelligence Ltd
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="border: 0;">
+        <div class="biz-card">
+          <div class="biz-card-left">
+            <svg width="40" height="40" viewBox="0 0 32 32">
+              <path d="M8 7.5h3.2v7h9.6v-7H24v17h-3.2v-7.2H11.2v7.2H8z" fill="#0D9488"/>
+            </svg>
+            <div style="font-size: 8px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #0D9488; margin-top: 12px;">HEMERA</div>
+          </div>
+          <div class="biz-card-right">
+            <div class="biz-card-name">Tom [Surname]</div>
+            <div class="biz-card-title">Co-founder & COO</div>
+            <div class="biz-card-divider"></div>
+            <div class="biz-card-detail">
+              hemerascope.com<br>
+              tom@hemerascope.com<br>
+              Hemera Intelligence Ltd
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!--  DECISIONS FOR TOM                                 -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <div class="section">
+    <div class="section-label">Decisions for Tomorrow</div>
+    <div class="decision-box">
+      <div class="label">Decide with Tom</div>
+      <p>1. Is the H mark right, or should it be a different symbol?<br>
+         2. Teal / slate / amber palette — final?<br>
+         3. "HemeraScope" as one word or "Hemera Scope" as two?<br>
+         4. Business card layout — this direction or something different?<br>
+         5. Slide deck — want a full template (title, content, chart, closing slides)?<br>
+         6. Do we need a strapline? Current: "Supply Chain & Carbon Intelligence"</p>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
