@@ -35,15 +35,27 @@ def calculate_emissions(
     co2e_values = []
 
     for t in transactions:
-        if not t.amount_gbp or t.is_duplicate:
+        if t.is_duplicate:
             continue
 
-        # Find the best emission factor
+        # Skip rows with no usable numeric value
+        is_activity = t.data_type == "activity"
+        if is_activity:
+            if not t.quantity:
+                continue
+        else:
+            if not t.amount_gbp:
+                continue
+
+        # Find the best emission factor (activity uses Level 2, spend Level 3-5)
         ef, level = _find_emission_factor(t, db)
 
         if ef:
-            # Calculate emissions
-            co2e_kg = abs(t.amount_gbp) * ef.factor_value
+            # Calculate emissions — activity: quantity × factor, spend: amount × factor
+            if is_activity:
+                co2e_kg = abs(t.quantity) * ef.factor_value
+            else:
+                co2e_kg = abs(t.amount_gbp) * ef.factor_value
             t.co2e_kg = co2e_kg
             t.ef_value = ef.factor_value
             t.ef_unit = ef.unit
@@ -113,8 +125,12 @@ def _find_emission_factor(
     # Level 1: Supplier-specific — skip for now (no supplier data yet)
     # This will be implemented when the registry has supplier-level carbon data.
 
-    # Level 2: Activity-based DEFRA — only if we know the physical activity
-    # This requires parsing utility bills, fuel records etc. Skip for MVP.
+    # Level 2: Activity-based DEFRA — prefer this when the transaction has
+    # physical quantities (kWh, litres, m3, kg, km) rather than spend in GBP.
+    if transaction.data_type == "activity" and transaction.activity_type:
+        ef = _find_activity_factor(transaction, db)
+        if ef:
+            return ef, 2
 
     # Level 3-4: Spend-based lookup by category
     if transaction.category_name:
@@ -157,3 +173,53 @@ def _find_emission_factor(
         return ef, 5
 
     return None, 0
+
+
+# Map canonical activity_type → (DEFRA category keywords, expected unit substring)
+# Used to narrow the DEFRA activity factor lookup.
+ACTIVITY_TYPE_LOOKUP: dict[str, tuple[list[str], str | None]] = {
+    "electricity":   (["electricity", "grid"],          "kWh"),
+    "natural_gas":   (["natural gas", "gas"],            "kWh"),
+    "diesel":        (["diesel"],                        "litre"),
+    "petrol":        (["petrol"],                        "litre"),
+    "lpg":           (["lpg", "liquefied petroleum"],    "litre"),
+    "heating_oil":   (["burning oil", "heating oil"],    "litre"),
+    "heat":          (["district heat", "heat"],         "kWh"),
+    "water":         (["water supply", "water"],         "m3"),
+    "waste":         (["waste"],                         "tonne"),
+    "distance":      (["passenger car", "van", "hgv"],   "km"),
+    "refrigerants":  (["refrigerant"],                   "kg"),
+    "other":         ([],                                 None),
+}
+
+
+def _find_activity_factor(
+    transaction: Transaction,
+    db: Session,
+) -> EmissionFactor | None:
+    """Look up a DEFRA (or other) activity-based factor for a transaction.
+
+    Filters to factor_type='activity' and matches the category keyword(s)
+    associated with the transaction's activity_type. Optionally narrows by
+    unit when possible (e.g. kWh vs m3 for gas).
+    """
+    at = transaction.activity_type or ""
+    keywords, unit_hint = ACTIVITY_TYPE_LOOKUP.get(at, ([], None))
+    if not keywords:
+        return None
+
+    query = db.query(EmissionFactor).filter(
+        EmissionFactor.factor_type == "activity",
+    )
+
+    # Build a keyword filter
+    from sqlalchemy import or_
+    query = query.filter(
+        or_(*[EmissionFactor.category.ilike(f"%{kw}%") for kw in keywords])
+    )
+
+    # Narrow by unit when a hint is available
+    if unit_hint:
+        query = query.filter(EmissionFactor.unit.ilike(f"%{unit_hint}%"))
+
+    return query.order_by(EmissionFactor.year.desc()).first()

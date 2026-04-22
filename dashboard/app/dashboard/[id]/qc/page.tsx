@@ -685,6 +685,62 @@ export default function QCPage() {
               <PedigreeIndicator label="Geographic" score={p.geographical} description={PEDIGREE_LABELS.geographical[p.geographical]} />
               <PedigreeIndicator label="Technology" score={p.technological} description={PEDIGREE_LABELS.technological[p.technological]} />
             </div>
+
+            {/* Plain-English uncertainty explainer (collapsible) */}
+            <details className="mt-3 group">
+              <summary className="cursor-pointer text-[11px] text-teal hover:underline font-medium select-none list-none flex items-center gap-1">
+                <svg
+                  className="w-3 h-3 transition-transform group-open:rotate-90"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2.5}
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+                What does this uncertainty actually mean?
+              </summary>
+              <div className="mt-2.5 p-3 bg-paper rounded-lg text-[11px] text-slate leading-relaxed space-y-2.5">
+                <p>
+                  <strong>Why we quantify uncertainty at all.</strong> Every emission factor is a
+                  statistical estimate, not a measurement. We want to be honest about how tight or
+                  loose that estimate is — so the client can trust the numbers that are solid and
+                  know which ones need better inputs.
+                </p>
+                <p>
+                  <strong>Reading GSD.</strong> The Geometric Standard Deviation describes how far
+                  the true CO₂e value might sit from our central estimate. A GSD near 1.0 means
+                  very tight (the factor is a near-perfect match). A GSD above 3 means the estimate
+                  could be off by a factor of several — usually a sign the wrong factor was applied
+                  or the source data is too vague to be confident.
+                </p>
+                <ul className="pl-4 list-disc space-y-0.5 text-muted">
+                  <li><strong>GSD ≤ 1.5</strong> — high quality. Ship it.</li>
+                  <li><strong>1.5 &lt; GSD ≤ 3</strong> — moderate. Acceptable but note the spread.</li>
+                  <li><strong>GSD &gt; 3</strong> — check whether the right factor was applied before passing QC.</li>
+                </ul>
+                <p>
+                  From GSD we derive the <strong>95% confidence interval</strong> shown on every
+                  figure in the client report — the same statistical bar used in peer-reviewed
+                  climate science. An analyst (you) validates the inputs before we stamp that
+                  confidence on them.
+                </p>
+                <p>
+                  <strong>The five Pedigree dimensions (1 = best, 5 = worst):</strong>
+                </p>
+                <ul className="pl-4 list-disc space-y-0.5 text-muted">
+                  <li><strong>Reliability</strong> — how trustworthy is the source of this factor (peer-reviewed → hearsay).</li>
+                  <li><strong>Completeness</strong> — does the factor cover all the relevant sub-processes?</li>
+                  <li><strong>Temporal</strong> — how old is the factor relative to when the spend happened?</li>
+                  <li><strong>Geographic</strong> — does the factor&apos;s region match the supplier&apos;s region?</li>
+                  <li><strong>Technology</strong> — does the factor match the actual technology used (e.g. HGV Artic vs Van)?</li>
+                </ul>
+                <p className="text-muted italic">
+                  If any score is 4 or 5, the factor may be mismatched to reality — investigate
+                  before passing this card.
+                </p>
+              </div>
+            </details>
           </div>
         </div>
       </div>

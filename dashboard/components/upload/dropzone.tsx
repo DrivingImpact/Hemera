@@ -16,8 +16,45 @@ interface UploadResult {
     date_range: string;
     total_spend_gbp: number;
     unique_suppliers: number;
+    data_type?: string;
+    activity_type?: string | null;
+    detected_unit?: string | null;
+    total_quantity?: number | null;
   };
 }
+
+type DataType = "spend" | "activity";
+
+type ActivityType =
+  | ""
+  | "electricity"
+  | "natural_gas"
+  | "diesel"
+  | "petrol"
+  | "lpg"
+  | "heating_oil"
+  | "heat"
+  | "water"
+  | "waste"
+  | "distance"
+  | "refrigerants"
+  | "other";
+
+const ACTIVITY_OPTIONS: { value: ActivityType; label: string; hint: string }[] = [
+  { value: "",             label: "Auto-detect from columns", hint: "Let us infer from column headers (kWh, litres, etc.)" },
+  { value: "electricity",  label: "Electricity",              hint: "kWh from utility bills" },
+  { value: "natural_gas",  label: "Natural gas",              hint: "kWh or m³ from gas bills" },
+  { value: "diesel",       label: "Diesel fuel",              hint: "Litres purchased" },
+  { value: "petrol",       label: "Petrol fuel",              hint: "Litres purchased" },
+  { value: "lpg",          label: "LPG",                      hint: "Litres purchased" },
+  { value: "heating_oil",  label: "Heating oil",              hint: "Litres purchased" },
+  { value: "heat",         label: "District heat",            hint: "kWh delivered" },
+  { value: "water",        label: "Water",                    hint: "m³ supplied" },
+  { value: "waste",        label: "Waste",                    hint: "Tonnes, by category" },
+  { value: "distance",     label: "Travel / freight",         hint: "km by vehicle class" },
+  { value: "refrigerants", label: "Refrigerant leakage",      hint: "kg of gas lost" },
+  { value: "other",        label: "Other (type it below)",    hint: "Describe the activity in your own words" },
+];
 
 export function UploadDropzone() {
   const { getToken } = useAuth();
@@ -28,6 +65,11 @@ export function UploadDropzone() {
   const [isDragging, setIsDragging] = useState(false);
   const [result, setResult] = useState<UploadResult | null>(null);
   const [errorMsg, setErrorMsg] = useState<string>("");
+
+  // New: data type selection
+  const [dataType, setDataType] = useState<DataType>("spend");
+  const [activityType, setActivityType] = useState<ActivityType>("");
+  const [rawActivityLabel, setRawActivityLabel] = useState<string>("");
 
   const uploadFile = useCallback(
     async (file: File) => {
@@ -40,6 +82,11 @@ export function UploadDropzone() {
 
         const formData = new FormData();
         formData.append("file", file);
+        formData.append("data_type", dataType);
+        if (dataType === "activity") {
+          if (activityType) formData.append("activity_type", activityType);
+          if (rawActivityLabel) formData.append("raw_activity_label", rawActivityLabel);
+        }
 
         setState("uploading");
         const res = await fetch(`${apiUrl}/api/upload`, {
@@ -65,7 +112,7 @@ export function UploadDropzone() {
         setState("error");
       }
     },
-    [getToken]
+    [getToken, dataType, activityType, rawActivityLabel, router]
   );
 
   const handleFiles = useCallback(
@@ -107,6 +154,7 @@ export function UploadDropzone() {
 
   if (state === "done" && result) {
     const p = result.parsing;
+    const isActivity = p.data_type === "activity";
     return (
       <div className="text-center space-y-4 py-8">
         <div className="w-14 h-14 rounded-full bg-[#D1FAE5] flex items-center justify-center mx-auto">
@@ -123,11 +171,17 @@ export function UploadDropzone() {
         <div className="grid grid-cols-3 gap-3 mt-6 max-w-sm mx-auto">
           <div className="bg-paper rounded-lg p-3 text-center">
             <div className="text-2xl font-bold text-teal tabular-nums">{p.transactions_parsed.toLocaleString()}</div>
-            <div className="text-[11px] text-muted mt-0.5">Transactions</div>
+            <div className="text-[11px] text-muted mt-0.5">{isActivity ? "Rows" : "Transactions"}</div>
           </div>
           <div className="bg-paper rounded-lg p-3 text-center">
-            <div className="text-2xl font-bold text-teal tabular-nums">£{(p.total_spend_gbp / 1000).toFixed(0)}k</div>
-            <div className="text-[11px] text-muted mt-0.5">Total spend</div>
+            <div className="text-2xl font-bold text-teal tabular-nums">
+              {isActivity && p.total_quantity != null
+                ? `${p.total_quantity.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                : `£${(p.total_spend_gbp / 1000).toFixed(0)}k`}
+            </div>
+            <div className="text-[11px] text-muted mt-0.5">
+              {isActivity ? `Total ${p.detected_unit ?? "quantity"}` : "Total spend"}
+            </div>
           </div>
           <div className="bg-paper rounded-lg p-3 text-center">
             <div className="text-2xl font-bold text-teal tabular-nums">{p.unique_suppliers}</div>
@@ -187,7 +241,79 @@ export function UploadDropzone() {
   }
 
   return (
-    <>
+    <div className="space-y-5">
+      {/* Data type picker */}
+      <div>
+        <label className="text-xs font-semibold uppercase tracking-wide text-muted mb-2 block">
+          What kind of data is this?
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setDataType("spend")}
+            className={`p-3 rounded-lg border text-left transition-colors ${
+              dataType === "spend"
+                ? "border-teal bg-teal/5"
+                : "border-[#E5E5E0] hover:border-teal/40"
+            }`}
+          >
+            <div className="font-semibold text-sm">Spend data</div>
+            <div className="text-[11px] text-muted mt-0.5">
+              Accounting export with supplier names + GBP amounts
+            </div>
+          </button>
+          <button
+            type="button"
+            onClick={() => setDataType("activity")}
+            className={`p-3 rounded-lg border text-left transition-colors ${
+              dataType === "activity"
+                ? "border-teal bg-teal/5"
+                : "border-[#E5E5E0] hover:border-teal/40"
+            }`}
+          >
+            <div className="font-semibold text-sm">Activity data</div>
+            <div className="text-[11px] text-muted mt-0.5">
+              Utility bills, fuel records, travel — kWh, litres, km, etc.
+            </div>
+          </button>
+        </div>
+      </div>
+
+      {/* Activity subtype picker — only visible when activity mode is selected */}
+      {dataType === "activity" && (
+        <div className="space-y-2">
+          <label className="text-xs font-semibold uppercase tracking-wide text-muted block">
+            Activity type
+          </label>
+          <select
+            value={activityType}
+            onChange={(e) => setActivityType(e.target.value as ActivityType)}
+            className="w-full border border-[#E5E5E0] rounded-lg px-3 py-2 text-sm bg-white focus:border-teal outline-none"
+          >
+            {ACTIVITY_OPTIONS.map((opt) => (
+              <option key={opt.value || "auto"} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          {activityType && (
+            <p className="text-[11px] text-muted">
+              {ACTIVITY_OPTIONS.find((o) => o.value === activityType)?.hint}
+            </p>
+          )}
+          {activityType === "other" && (
+            <input
+              type="text"
+              value={rawActivityLabel}
+              onChange={(e) => setRawActivityLabel(e.target.value)}
+              placeholder="e.g. Steam (kg) from on-site boiler"
+              className="w-full border border-[#E5E5E0] rounded-lg px-3 py-2 text-sm focus:border-teal outline-none"
+            />
+          )}
+        </div>
+      )}
+
+      {/* Dropzone */}
       <input
         ref={fileInputRef}
         type="file"
@@ -214,8 +340,12 @@ export function UploadDropzone() {
         <p className="mt-4 font-semibold">
           {isDragging ? "Drop your file here" : "Drag & drop or click to upload"}
         </p>
-        <p className="text-muted text-sm mt-1.5">CSV, Excel (.xlsx, .xls) — spend data with supplier and amount columns</p>
+        <p className="text-muted text-sm mt-1.5">
+          {dataType === "spend"
+            ? "CSV, Excel (.xlsx, .xls) — spend data with supplier and amount columns"
+            : "CSV, Excel (.xlsx, .xls) — activity data with supplier and a quantity column (kWh, litres, m³, kg, km)"}
+        </p>
       </div>
-    </>
+    </div>
   );
 }
