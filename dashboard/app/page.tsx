@@ -1076,8 +1076,8 @@ function About() {
               <div className="text-xl font-extrabold text-white mt-1">Nico Henry</div>
               <p className="text-white/50 text-sm mt-2 leading-relaxed">
                 Theoretical Physics, Imperial College London. President of Imperial College Union.
-                Trustee of Imperial College Union. Built the entire HemeraScope platform &mdash; the carbon
-                calculation engine, uncertainty quantification, and 13-layer supplier intelligence protocol.
+                Trustee of Imperial College Union. Leads the technical side of HemeraScope &mdash; methodology
+                design, data engineering, and product development.
               </p>
             </div>
           </div>
