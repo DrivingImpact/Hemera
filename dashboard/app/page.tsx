@@ -1046,30 +1046,80 @@ function About() {
         backgroundSize: "32px 32px",
       }} />
 
-      <div className="relative z-10 max-w-4xl mx-auto text-center">
-        <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-6"
+      <div className="relative z-10 max-w-5xl mx-auto">
+        {/* Heading */}
+        <div className="text-center mb-16"
           style={{ opacity: inView ? 1 : 0, transform: inView ? "translateY(0)" : "translateY(20px)", transition: "all 0.8s ease-out" }}>
-          About Hemera Intelligence
-        </h2>
-        <p className="text-white/60 text-lg leading-relaxed max-w-2xl mx-auto"
-          style={{ opacity: inView ? 1 : 0, transform: inView ? "translateY(0)" : "translateY(20px)", transition: "all 0.8s ease-out 0.1s" }}>
-          Named after the Greek goddess of daylight, Hemera Intelligence was founded on a simple belief:
-          supply chain sustainability should be transparent, rigorous, and accessible to all.
-        </p>
-        <p className="text-teal text-lg font-semibold italic max-w-2xl mx-auto mt-6"
-          style={{ opacity: inView ? 1 : 0, transform: inView ? "translateY(0)" : "translateY(20px)", transition: "all 0.8s ease-out 0.15s" }}>
-          Because sunshine is the best disinfectant.
-        </p>
-        <p className="text-white/40 text-base leading-relaxed max-w-2xl mx-auto mt-6"
-          style={{ opacity: inView ? 1 : 0, transform: inView ? "translateY(0)" : "translateY(20px)", transition: "all 0.8s ease-out 0.25s" }}>
-          We combine academic rigour with cutting-edge technology to deliver supply chain intelligence
-          that stands up to scrutiny &mdash; fast, statistically significant, and with quantified uncertainty
-          on every number. Our approach is collaborative &mdash; we work with your suppliers, not against them
-          &mdash; because real sustainability happens through partnership.
-        </p>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-white mb-4">
+            About Hemera Intelligence
+          </h2>
+          <p className="text-white/50 text-lg max-w-2xl mx-auto leading-relaxed">
+            Named after the Greek goddess of daylight. Founded on the belief that knowledge
+            about environmental and social impact should be accessible to every organisation
+            that wants to act on it.
+          </p>
+        </div>
 
-        <div className="flex items-center justify-center gap-6 mt-12"
+        {/* Founders */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+          {/* Nico */}
+          <div className="flex gap-6 items-start"
+            style={{ opacity: inView ? 1 : 0, transform: inView ? "translateY(0)" : "translateY(20px)", transition: "all 0.8s ease-out 0.1s" }}>
+            <img
+              src="/nico.png"
+              alt="Nico Henry"
+              className="w-24 h-24 rounded-xl object-cover flex-shrink-0"
+              style={{ background: "#D1FAE5" }}
+            />
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-teal">Co-founder &amp; CTO</div>
+              <div className="text-xl font-extrabold text-white mt-1">Nico Henry</div>
+              <p className="text-white/50 text-sm mt-2 leading-relaxed">
+                Theoretical Physics, Imperial College London. President of Imperial College Union.
+                Trustee of Imperial College Union. Built the entire HemeraScope platform &mdash; the carbon
+                calculation engine, uncertainty quantification, and 13-layer supplier intelligence protocol.
+              </p>
+            </div>
+          </div>
+
+          {/* Tom */}
+          <div className="flex gap-6 items-start"
+            style={{ opacity: inView ? 1 : 0, transform: inView ? "translateY(0)" : "translateY(20px)", transition: "all 0.8s ease-out 0.2s" }}>
+            <img
+              src="/tom.png"
+              alt="Tom Newman"
+              className="w-24 h-24 rounded-xl object-cover flex-shrink-0"
+              style={{ background: "#D1FAE5" }}
+            />
+            <div>
+              <div className="text-[10px] font-bold uppercase tracking-[1.5px] text-teal">Co-founder &amp; COO</div>
+              <div className="text-xl font-extrabold text-white mt-1">Tom Newman</div>
+              <p className="text-white/50 text-sm mt-2 leading-relaxed">
+                MBA, Imperial College London. Managing Director of Imperial College Union.
+                Former Trustee of UCAS. Governance, strategy, and commercial development
+                in purpose-driven organisations.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Shared values */}
+        <div className="bg-white/5 border border-white/10 rounded-2xl p-8 text-center"
           style={{ opacity: inView ? 1 : 0, transform: inView ? "translateY(0)" : "translateY(20px)", transition: "all 0.8s ease-out 0.3s" }}>
+          <p className="text-white/60 text-base leading-relaxed max-w-3xl mx-auto">
+            We&apos;ve both served as charity trustees. We both believe that collaboration &mdash; between
+            organisations, across supply chains &mdash; leads to better outcomes faster than compliance alone.
+            We built HemeraScope because knowledge about impact shouldn&apos;t be locked behind £50k
+            consulting fees. It should be accessible to every organisation that wants to act on it.
+          </p>
+          <p className="text-teal text-lg font-semibold italic mt-6">
+            Because sunshine is the best disinfectant.
+          </p>
+        </div>
+
+        {/* CTA */}
+        <div className="flex items-center justify-center gap-6 mt-12"
+          style={{ opacity: inView ? 1 : 0, transform: inView ? "translateY(0)" : "translateY(20px)", transition: "all 0.8s ease-out 0.4s" }}>
           <Link
             href="#demo"
             className="px-8 py-4 bg-teal text-white rounded-xl font-semibold text-sm hover:bg-teal/90 transition-colors"
