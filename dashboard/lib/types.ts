@@ -134,12 +134,12 @@ export interface AdminSupplierFilters {
 }
 
 export interface CompaniesHouseResult {
-  company_name: string;
-  company_number: string;
-  company_status: string;
-  registered_address: string;
-  date_of_creation: string;
-  sic_codes: string[];
+  ch_number: string;
+  name: string;
+  status?: string;
+  type?: string;
+  address?: string;
+  date_of_creation?: string;
 }
 
 export interface EmissionFactorContext {

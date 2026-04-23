@@ -151,20 +151,21 @@ export function SupplierList() {
         `/suppliers/search/companies-house?q=${encodeURIComponent(searchText.trim())}`,
       );
       setCHResults(data.results ?? data);
-    } catch {
+    } catch (e) {
       setCHResults([]);
+      setError(e instanceof Error ? e.message : "Companies House search failed");
     } finally {
       setCHLoading(false);
     }
   };
 
   /* ---- Add from Companies House ---- */
-  const addFromCH = async (companyNumber: string) => {
+  const addFromCH = async (companyNumber: string, companyName: string) => {
     setAddingCH((prev) => new Set(prev).add(companyNumber));
     try {
       await apiFetch("/suppliers/from-companies-house", {
         method: "POST",
-        body: JSON.stringify({ company_number: companyNumber, enrich: true }),
+        body: JSON.stringify({ company_number: companyNumber, company_name: companyName, enrich: true }),
       });
       setShowCH(false);
       setCHResults([]);
@@ -270,24 +271,19 @@ export function SupplierList() {
             ) : (
               <div className="divide-y divide-[#F0F0EB]">
                 {chResults.map((r) => (
-                  <div key={r.company_number} className="px-4 py-3 flex items-center gap-4">
+                  <div key={r.ch_number} className="px-4 py-3 flex items-center gap-4">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{r.company_name}</p>
+                      <p className="text-sm font-medium truncate">{r.name}</p>
                       <p className="text-xs text-muted mt-0.5">
-                        {r.company_number} &middot; {r.company_status} &middot; {r.registered_address}
+                        {[r.ch_number, r.status, r.address].filter(Boolean).join(" · ")}
                       </p>
-                      {r.sic_codes.length > 0 && (
-                        <p className="text-[10px] text-muted mt-0.5">
-                          SIC: {r.sic_codes.join(", ")}
-                        </p>
-                      )}
                     </div>
                     <button
-                      onClick={() => addFromCH(r.company_number)}
-                      disabled={addingCH.has(r.company_number)}
+                      onClick={() => addFromCH(r.ch_number, r.name)}
+                      disabled={addingCH.has(r.ch_number)}
                       className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-teal text-white hover:opacity-90 transition-opacity disabled:opacity-50 whitespace-nowrap"
                     >
-                      {addingCH.has(r.company_number) ? (
+                      {addingCH.has(r.ch_number) ? (
                         <span className="flex items-center gap-1.5">
                           <span className="inline-block w-3 h-3 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                           Adding...
