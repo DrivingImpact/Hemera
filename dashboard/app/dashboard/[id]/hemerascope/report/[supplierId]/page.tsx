@@ -34,9 +34,11 @@ interface RecommendedAction {
 
 interface EngagementTouchpoint {
   id: number;
-  date: string;
-  type: string;
-  notes: string;
+  engagement_type: string;
+  subject: string;
+  status: string;
+  contacted_at?: string | null;
+  created_at?: string | null;
 }
 
 interface SupplierDetail {
@@ -53,8 +55,27 @@ interface SupplierDetail {
   engagement_narrative?: string;
 }
 
+/* Raw shape from the backend /supplier-intelligence endpoint */
+interface APISupplierIntelItem {
+  supplier: {
+    id: number;
+    name: string;
+    sector?: string;
+    hemera_score?: number;
+    confidence?: string;
+    critical_flag?: boolean;
+    hemera_verified?: boolean;
+  };
+  txn_count: number;
+  total_spend: number;
+  total_co2e_kg: number;
+  findings: Array<{ title: string; detail: string; severity: FindingDetail["severity"]; domain: string; client_language?: string }>;
+  actions: Array<{ action_text: string; priority?: number | string }>;
+  hemera_engagements: EngagementTouchpoint[];
+}
+
 interface SupplierIntelligenceResponse {
-  suppliers: SupplierDetail[];
+  suppliers: APISupplierIntelItem[];
 }
 
 /* ------------------------------------------------------------------ */
@@ -160,13 +181,38 @@ export default function SupplierDetailPage() {
           throw new Error(text || `API error ${res.status}`);
         }
         const data: SupplierIntelligenceResponse = await res.json();
-        const found = data.suppliers?.find(
-          (s) => String(s.supplier_id) === supplierId
+        const raw = data.suppliers?.find(
+          (s) => String(s.supplier?.id) === supplierId
         );
-        if (!found) {
+        if (!raw) {
           throw new Error("Supplier not found in this report.");
         }
-        setSupplier(found);
+        const normalisedPriority = (p: number | string | undefined): "high" | "medium" | "low" | undefined => {
+          if (p == null) return undefined;
+          if (typeof p === "string") return (p === "high" || p === "medium" || p === "low") ? p : undefined;
+          if (p <= 1) return "high";
+          if (p === 2) return "medium";
+          return "low";
+        };
+        const flat: SupplierDetail = {
+          supplier_id: raw.supplier.id,
+          supplier_name: raw.supplier.name,
+          sector: raw.supplier.sector,
+          spend_gbp: raw.total_spend,
+          hemera_score: raw.supplier.hemera_score,
+          hemera_verified: raw.supplier.hemera_verified,
+          findings: raw.findings?.map((f, idx) => ({
+            id: idx,
+            title: f.title,
+            detail: f.detail,
+            severity: f.severity,
+            domain: f.domain,
+            client_language: f.client_language,
+          })),
+          actions: raw.actions?.map((a) => ({ text: a.action_text, priority: normalisedPriority(a.priority) })),
+          engagements: raw.hemera_engagements ?? [],
+        };
+        setSupplier(flat);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load");
       } finally {
@@ -391,11 +437,17 @@ export default function SupplierDetailPage() {
                   className="flex items-start gap-3 text-xs bg-[#FAFAF7] rounded-lg p-3"
                 >
                   <span className="text-[9px] font-bold uppercase px-2 py-0.5 rounded bg-[#F1F5F9] text-[#475569] flex-shrink-0 mt-0.5">
-                    {eng.type}
+                    {eng.engagement_type}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-slate leading-relaxed">{eng.notes}</p>
-                    <p className="text-muted mt-1">{eng.date}</p>
+                    <p className="text-slate leading-relaxed">{eng.subject}</p>
+                    {eng.created_at && (
+                      <p className="text-muted mt-1">
+                        {new Date(eng.created_at).toLocaleDateString("en-GB", {
+                          day: "numeric", month: "short", year: "numeric",
+                        })}
+                      </p>
+                    )}
                   </div>
                 </div>
               ))}

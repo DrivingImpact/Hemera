@@ -356,14 +356,19 @@ export default function HemerascopePage() {
   /* ---------------------------------------------------------------- */
 
   const handleLogEngagement = useCallback(
-    async (type: string, notes: string) => {
+    async (engagementType: string, subject: string, notes: string) => {
       if (!supplier) return;
       try {
         const eng = await apiFetch<EngagementTouchpoint>(
           `/suppliers/${supplier.supplier_id}/engagements`,
           {
             method: "POST",
-            body: JSON.stringify({ type, notes }),
+            body: JSON.stringify({
+              engagement_type: engagementType,
+              subject,
+              status: "new",
+              notes: notes || null,
+            }),
           }
         );
         setSuppliers((prev) =>

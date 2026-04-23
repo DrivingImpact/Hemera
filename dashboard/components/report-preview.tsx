@@ -16,9 +16,13 @@ export interface RecommendedAction {
 
 export interface EngagementTouchpoint {
   id: number;
-  date: string;
-  type: string;
-  notes: string;
+  engagement_type: string;
+  subject: string;
+  status: string;
+  notes?: string | null;
+  contacted_at?: string | null;
+  responded_at?: string | null;
+  created_at?: string | null;
 }
 
 interface ReportPreviewProps {
@@ -34,7 +38,7 @@ interface ReportPreviewProps {
   onClientLanguage: (findingId: number, text: string) => void;
   onRemoveFinding: (findingId: number) => void;
   onRiskAnalysisResult: (text: string) => void;
-  onLogEngagement: (type: string, notes: string) => void;
+  onLogEngagement: (engagementType: string, subject: string, notes: string) => void;
 }
 
 /* ------------------------------------------------------------------ */
@@ -57,6 +61,7 @@ export default function ReportPreview({
   onLogEngagement,
 }: ReportPreviewProps) {
   const [engType, setEngType] = useState("email");
+  const [engSubject, setEngSubject] = useState("");
   const [engNotes, setEngNotes] = useState("");
   const [showEngForm, setShowEngForm] = useState(false);
 
@@ -232,22 +237,36 @@ export default function ReportPreview({
 
         {showEngForm && (
           <div className="bg-[#FAFAF7] rounded-lg border border-[#E5E5E0] p-4 mb-3 space-y-3">
-            <div>
-              <label className="text-[11px] font-semibold text-muted block mb-1">
-                Type
-              </label>
-              <select
-                value={engType}
-                onChange={(e) => setEngType(e.target.value)}
-                className="w-full text-sm border border-[#E5E5E0] rounded-lg px-3 py-2 bg-white"
-              >
-                <option value="email">Email</option>
-                <option value="call">Call</option>
-                <option value="meeting">Meeting</option>
-                <option value="site_visit">Site Visit</option>
-                <option value="questionnaire">Questionnaire</option>
-                <option value="other">Other</option>
-              </select>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-[11px] font-semibold text-muted block mb-1">
+                  Type
+                </label>
+                <select
+                  value={engType}
+                  onChange={(e) => setEngType(e.target.value)}
+                  className="w-full text-sm border border-[#E5E5E0] rounded-lg px-3 py-2 bg-white"
+                >
+                  <option value="email">Email</option>
+                  <option value="call">Call</option>
+                  <option value="meeting">Meeting</option>
+                  <option value="site_visit">Site Visit</option>
+                  <option value="questionnaire">Questionnaire</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[11px] font-semibold text-muted block mb-1">
+                  Subject
+                </label>
+                <input
+                  type="text"
+                  value={engSubject}
+                  onChange={(e) => setEngSubject(e.target.value)}
+                  placeholder="e.g. SBTi discussion"
+                  className="w-full text-sm border border-[#E5E5E0] rounded-lg px-3 py-2 bg-white"
+                />
+              </div>
             </div>
             <div>
               <label className="text-[11px] font-semibold text-muted block mb-1">
@@ -262,11 +281,12 @@ export default function ReportPreview({
             </div>
             <button
               onClick={() => {
-                onLogEngagement(engType, engNotes);
+                onLogEngagement(engType, engSubject.trim(), engNotes);
+                setEngSubject("");
                 setEngNotes("");
                 setShowEngForm(false);
               }}
-              disabled={!engNotes.trim()}
+              disabled={!engSubject.trim()}
               className="px-4 py-2 bg-teal text-white text-xs rounded-lg font-semibold hover:opacity-90 disabled:opacity-50 transition-opacity"
             >
               Save Engagement
@@ -282,11 +302,18 @@ export default function ReportPreview({
                 className="flex items-start gap-3 text-xs bg-surface rounded-lg border border-[#E5E5E0] p-3"
               >
                 <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-[#F1F5F9] text-[#475569] flex-shrink-0 mt-0.5">
-                  {eng.type}
+                  {eng.engagement_type}
                 </span>
                 <div className="min-w-0">
-                  <p className="text-slate leading-relaxed">{eng.notes}</p>
-                  <p className="text-muted mt-1">{eng.date}</p>
+                  <p className="text-slate font-semibold">{eng.subject}</p>
+                  {eng.notes && <p className="text-muted mt-0.5 leading-relaxed">{eng.notes}</p>}
+                  {eng.created_at && (
+                    <p className="text-muted mt-1">
+                      {new Date(eng.created_at).toLocaleDateString("en-GB", {
+                        day: "numeric", month: "short", year: "numeric",
+                      })}
+                    </p>
+                  )}
                 </div>
               </div>
             ))}
@@ -307,9 +334,11 @@ export default function ReportPreview({
               context={{
                 supplier_name: supplierName,
                 engagements: engagements.map((e) => ({
-                  type: e.type,
-                  date: e.date,
-                  notes: e.notes,
+                  type: e.engagement_type,
+                  date: e.created_at ?? "",
+                  subject: e.subject,
+                  status: e.status,
+                  notes: e.notes ?? "",
                 })),
               }}
               onResult={() => {}}

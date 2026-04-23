@@ -33,8 +33,50 @@ interface SupplierFindings {
   client_language?: Record<number, string>;
 }
 
+/* Raw shape from GET /engagements/{id}/supplier-report — same as curation page */
+interface APIFinding {
+  id: number;
+  source: string;
+  domain: string;
+  severity: Finding["severity"];
+  title: string;
+  detail: string;
+  evidence_url?: string | null;
+  layer?: number | null;
+  source_name?: string | null;
+  selection?: {
+    included: boolean;
+    client_title?: string | null;
+    client_detail?: string | null;
+    analyst_note?: string | null;
+  } | null;
+}
+
+interface APISupplierItem {
+  supplier: {
+    id: number;
+    name: string;
+    legal_name?: string;
+    ch_number?: string;
+    sector?: string;
+    hemera_score?: number;
+    confidence?: string;
+    critical_flag?: boolean;
+  };
+  txn_count: number;
+  total_spend: number;
+  total_co2e_kg: number;
+  findings: APIFinding[];
+  actions: { id?: number; action_text: string; priority?: number; linked_finding_ids?: number[]; language_source?: string }[];
+  hemera_engagements: EngagementTouchpoint[];
+}
+
 interface SupplierReportResponse {
-  suppliers: SupplierFindings[];
+  engagement_id?: number;
+  client_name?: string;
+  status?: string;
+  supplier_count?: number;
+  suppliers: APISupplierItem[];
   executive_summary?: string;
 }
 
@@ -145,7 +187,49 @@ export default function ReviewPage() {
           return;
         }
 
-        setSuppliers(data.suppliers);
+        // Transform APISupplierItem shape → flat SupplierFindings shape.
+        // Specifically: build a selections map (finding_id → included) from
+        // each finding's nested selection field, and promote supplier fields.
+        const transformed: SupplierFindings[] = data.suppliers.map((item) => {
+          const selections: Record<number, boolean> = {};
+          const clientLang: Record<number, string> = {};
+          for (const f of item.findings) {
+            if (f.selection) {
+              selections[f.id] = f.selection.included;
+              if (f.selection.client_detail) {
+                clientLang[f.id] = f.selection.client_detail;
+              }
+            }
+          }
+          return {
+            supplier_id: item.supplier.id,
+            supplier_name: item.supplier.legal_name || item.supplier.name,
+            companies_house_number: item.supplier.ch_number ?? undefined,
+            sector: item.supplier.sector ?? undefined,
+            spend_gbp: item.total_spend,
+            co2e_kg: item.total_co2e_kg,
+            hemera_score: item.supplier.hemera_score ?? undefined,
+            confidence: item.supplier.confidence ?? undefined,
+            findings: item.findings.map((f) => ({
+              id: f.id,
+              source: f.source,
+              domain: f.domain,
+              severity: f.severity,
+              title: f.title,
+              detail: f.detail,
+              evidence_url: f.evidence_url ?? undefined,
+              layer: f.layer ?? undefined,
+              source_name: f.source_name ?? undefined,
+              included: f.selection ? f.selection.included : undefined,
+            })) as Finding[],
+            selections,
+            actions: item.actions.map((a) => ({ text: a.action_text })),
+            engagements: item.hemera_engagements ?? [],
+            client_language: clientLang,
+          };
+        });
+
+        setSuppliers(transformed);
         setExecSummary(data.executive_summary ?? "");
         setPageState("ready");
       } catch (err) {
@@ -491,10 +575,16 @@ export default function ReviewPage() {
                         className="flex items-center gap-2 text-xs text-muted"
                       >
                         <span className="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#F1F5F9] text-[#475569]">
-                          {eng.type}
+                          {eng.engagement_type}
                         </span>
-                        <span className="truncate">{eng.notes}</span>
-                        <span className="flex-shrink-0 ml-auto">{eng.date}</span>
+                        <span className="truncate">{eng.subject}</span>
+                        {eng.created_at && (
+                          <span className="flex-shrink-0 ml-auto">
+                            {new Date(eng.created_at).toLocaleDateString("en-GB", {
+                              day: "numeric", month: "short", year: "numeric",
+                            })}
+                          </span>
+                        )}
                       </div>
                     ))}
                     {supplier.engagements.length > 3 && (

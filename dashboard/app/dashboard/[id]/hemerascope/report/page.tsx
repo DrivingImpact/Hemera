@@ -23,8 +23,22 @@ interface SupplierSummary {
   hemera_verified?: boolean;
 }
 
+/* Raw shape from /supplier-intelligence — normalised in load() below */
+interface APISupplierIntelItem {
+  supplier: {
+    id: number;
+    name: string;
+    sector?: string;
+    hemera_score?: number;
+    hemera_verified?: boolean;
+  };
+  total_spend?: number;
+  findings?: Array<unknown>;
+  hemera_engagements?: Array<unknown>;
+}
+
 interface SupplierIntelligenceResponse {
-  suppliers: SupplierSummary[];
+  suppliers: APISupplierIntelItem[];
 }
 
 type SortField = "score" | "spend" | "name";
@@ -98,7 +112,19 @@ export default function ClientReportPage() {
           throw new Error(text || `API error ${res.status}`);
         }
         const data: SupplierIntelligenceResponse = await res.json();
-        setSuppliers(data.suppliers ?? []);
+        const flat: SupplierSummary[] = (data.suppliers ?? []).map((item) => ({
+          supplier_id: item.supplier.id,
+          supplier_name: item.supplier.name,
+          sector: item.supplier.sector,
+          spend_gbp: item.total_spend,
+          hemera_score: item.supplier.hemera_score,
+          hemera_verified: item.supplier.hemera_verified,
+          findings_summary: item.findings?.length
+            ? `${item.findings.length} findings`
+            : undefined,
+          engagement_count: item.hemera_engagements?.length,
+        }));
+        setSuppliers(flat);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load");
       } finally {
