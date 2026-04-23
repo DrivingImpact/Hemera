@@ -11,6 +11,63 @@ from hemera.services.ai_prompt_builder import build_prompt
 log = logging.getLogger(__name__)
 
 
+# Task-type → list of upstream task types whose most-recent completed output
+# should be injected into the context before building the prompt.
+_UPSTREAM_DEPS = {
+    "recommended_actions": ["risk_analysis"],
+    "engagement_summary": ["risk_analysis", "recommended_actions"],
+}
+
+
+def _parse_ai_response(text: str):
+    """Parse a stored AI response as JSON, tolerating ```json code fences."""
+    s = text.strip()
+    if s.startswith("```"):
+        first_nl = s.find("\n")
+        if first_nl != -1:
+            s = s[first_nl + 1 :]
+        if s.endswith("```"):
+            s = s[: s.rfind("```")]
+        s = s.strip()
+    try:
+        return json.loads(s)
+    except json.JSONDecodeError:
+        return None
+
+
+def _inject_upstream_results(db, task_type, target_type, target_id, context):
+    """Attach most-recent completed upstream AI task outputs to the context.
+
+    Downstream prompts (recommended_actions, engagement_summary) depend on
+    prior task outputs so the analyst builds one coherent thread instead of
+    three disconnected LLM calls.
+    """
+    deps = _UPSTREAM_DEPS.get(task_type, [])
+    if not deps or target_type != "supplier":
+        return context
+
+    enriched = {**(context or {})}
+    for dep_type in deps:
+        latest = (
+            db.query(AITask)
+            .filter(
+                AITask.task_type == dep_type,
+                AITask.target_type == target_type,
+                AITask.target_id == target_id,
+                AITask.status == "completed",
+            )
+            .order_by(AITask.completed_at.desc())
+            .first()
+        )
+        if latest and latest.response_text:
+            parsed = _parse_ai_response(latest.response_text)
+            if parsed is not None:
+                enriched[dep_type] = parsed
+            else:
+                enriched[f"{dep_type}_text"] = latest.response_text
+    return enriched
+
+
 def create_ai_task(db, task_type, target_type, target_id, mode, context):
     """Create an AITask record and execute or stage it depending on mode.
 
@@ -25,6 +82,7 @@ def create_ai_task(db, task_type, target_type, target_id, mode, context):
     Returns:
         The persisted AITask instance.
     """
+    context = _inject_upstream_results(db, task_type, target_type, target_id, context or {})
     prompt = build_prompt(task_type, context)
     prompt_hash = hashlib.sha256(prompt.encode()).hexdigest()
 

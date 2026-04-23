@@ -61,11 +61,60 @@ def test_engagement_summary_prompt():
         context={
             "supplier_name": "Tesco PLC",
             "engagements": [
-                {"subject": "SBTi Discussion", "status": "in_progress", "notes": "Positive response"},
+                {"type": "email", "date": "2026-03-01", "notes": "Positive response"},
             ],
         },
     )
-    assert "client-facing" in prompt.lower() or "client" in prompt.lower()
+    assert "Tesco PLC" in prompt
+    assert "engagement_summary" in prompt
+    # Reframed as a forward-looking strategy, not a retrospective summary.
+    assert "forward-looking" in prompt.lower() or "strategy" in prompt.lower()
+
+
+def test_recommended_actions_uses_upstream_risk_analysis():
+    """When risk_analysis is in context, the prompt must guide the model to
+    act on verified findings and ignore registry gaps."""
+    prompt = build_prompt(
+        task_type="recommended_actions",
+        context={
+            "supplier_name": "Tesco PLC",
+            "findings": [{"title": "Energy intensity"}],
+            "risk_analysis": {
+                "risk_summary": "Moderate carbon exposure",
+                "verified_findings": [
+                    {"original_title": "No MS statement", "verdict": "likely_registry_gap", "confidence": "high"},
+                    {"original_title": "Energy intensity above peers", "verdict": "correct", "confidence": "medium"},
+                ],
+                "additional_risks": [{"risk": "Scope 3 tail", "severity": "high", "rationale": "sector"}],
+                "opportunities": [{"opportunity": "SBTi validated", "evidence": "public"}],
+            },
+        },
+    )
+    assert "Energy intensity above peers" in prompt
+    assert "Scope 3 tail" in prompt
+    # The registry-gap finding must be called out so it's not actioned.
+    assert "registry gap" in prompt.lower() or "No MS statement" in prompt
+
+
+def test_engagement_strategy_uses_upstream_plan():
+    """Engagement strategy must anchor in the action plan's posture + actions."""
+    prompt = build_prompt(
+        task_type="engagement_summary",
+        context={
+            "supplier_name": "Tesco PLC",
+            "engagements": [],
+            "risk_analysis": {"risk_summary": "Material exposure"},
+            "recommended_actions": {
+                "strategic_posture": "remediate",
+                "posture_rationale": "carbon exposure",
+                "recommended_actions": [
+                    {"action": "Quarterly disclosure", "priority": "high", "timeframe": "90d", "hemera_role": "facilitate"},
+                ],
+            },
+        },
+    )
+    assert "remediate" in prompt
+    assert "Quarterly disclosure" in prompt
 
 
 def test_exec_summary_prompt():

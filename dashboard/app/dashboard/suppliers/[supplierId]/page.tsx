@@ -60,6 +60,19 @@ interface EngagementLink {
   co2e_tonnes: number;
 }
 
+interface HemeraEngagement {
+  id: number;
+  engagement_type: string;
+  subject: string;
+  status: string;
+  notes?: string | null;
+  contact_name?: string | null;
+  next_action?: string | null;
+  contacted_at?: string | null;
+  responded_at?: string | null;
+  created_at?: string | null;
+}
+
 interface VerifiedFinding {
   original_title: string;
   verdict: "correct" | "likely_registry_gap" | "uncertain";
@@ -97,6 +110,7 @@ interface AIAnalysis {
 interface FullSupplierDetail extends SupplierDetail {
   findings?: Finding[];
   engagements?: EngagementLink[];
+  hemera_engagements?: HemeraEngagement[];
   ai_analysis?: AIAnalysis;
 }
 
@@ -185,6 +199,13 @@ export default function SupplierDetailPage() {
   const [severityFilter, setSeverityFilter] = useState<string>("all");
   const [findingSearch, setFindingSearch] = useState<string>("");
 
+  // Hemera engagement touchpoint form
+  const [showEngForm, setShowEngForm] = useState(false);
+  const [engType, setEngType] = useState("email");
+  const [engSubject, setEngSubject] = useState("");
+  const [engNotes, setEngNotes] = useState("");
+  const [engSaving, setEngSaving] = useState(false);
+
   const apiFetch = useCallback(
     async <T,>(path: string, options?: RequestInit): Promise<T> => {
       const token = await getToken();
@@ -248,6 +269,35 @@ export default function SupplierDetailPage() {
     } catch (err) {
       setEnrichMsg(err instanceof Error ? err.message : "Failed to start enrichment");
       setEnriching(false);
+    }
+  };
+
+  /* ---------------------------------------------------------------- */
+  /*  Log Hemera engagement touchpoint                                 */
+  /* ---------------------------------------------------------------- */
+
+  const handleLogEngagement = async () => {
+    if (!supplierId || !engSubject.trim()) return;
+    setEngSaving(true);
+    try {
+      await apiFetch(`/suppliers/${supplierId}/engagements`, {
+        method: "POST",
+        body: JSON.stringify({
+          engagement_type: engType,
+          subject: engSubject.trim(),
+          status: "new",
+          notes: engNotes.trim() || null,
+        }),
+      });
+      setEngSubject("");
+      setEngNotes("");
+      setShowEngForm(false);
+      const data = await apiFetch<FullSupplierDetail>(`/suppliers/${supplierId}`);
+      setSupplier(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to log engagement");
+    } finally {
+      setEngSaving(false);
     }
   };
 
@@ -569,10 +619,12 @@ export default function SupplierDetailPage() {
             targetId={Number(supplierId)}
             context={{
               supplier_name: supplier.name,
-              engagements: (supplier.engagements ?? []).map((e) => ({
-                subject: e.org_name || "",
-                status: e.status || "",
-                notes: "",
+              engagements: (supplier.hemera_engagements ?? []).map((e) => ({
+                type: e.engagement_type,
+                date: e.created_at ?? "",
+                subject: e.subject,
+                status: e.status,
+                notes: e.notes ?? "",
               })),
             }}
             onResult={async () => {
@@ -805,11 +857,115 @@ export default function SupplierDetailPage() {
       </div>
 
       {/* ============================================================ */}
+      {/*  HEMERA ENGAGEMENT TOUCHPOINTS                                */}
+      {/* ============================================================ */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-xs font-semibold uppercase tracking-[0.5px] text-muted">
+            Hemera Engagement Touchpoints
+          </h2>
+          <button
+            onClick={() => setShowEngForm((v) => !v)}
+            className="text-xs text-teal hover:underline font-medium"
+          >
+            {showEngForm ? "Cancel" : "+ Log Engagement"}
+          </button>
+        </div>
+
+        {showEngForm && (
+          <div className="bg-[#FAFAF7] rounded-xl border border-[#E5E5E0] p-4 space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="text-[11px] font-semibold text-muted block mb-1">Type</label>
+                <select
+                  value={engType}
+                  onChange={(e) => setEngType(e.target.value)}
+                  className="w-full text-sm border border-[#E5E5E0] rounded-lg px-3 py-2 bg-white"
+                >
+                  <option value="email">Email</option>
+                  <option value="call">Call</option>
+                  <option value="meeting">Meeting</option>
+                  <option value="site_visit">Site Visit</option>
+                  <option value="questionnaire">Questionnaire</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-[11px] font-semibold text-muted block mb-1">Subject</label>
+                <input
+                  type="text"
+                  value={engSubject}
+                  onChange={(e) => setEngSubject(e.target.value)}
+                  placeholder="e.g. SBTi discussion"
+                  className="w-full text-sm border border-[#E5E5E0] rounded-lg px-3 py-2 bg-white"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-[11px] font-semibold text-muted block mb-1">Notes</label>
+              <textarea
+                value={engNotes}
+                onChange={(e) => setEngNotes(e.target.value)}
+                className="w-full text-sm border border-[#E5E5E0] rounded-lg px-3 py-2 bg-white resize-y min-h-[80px]"
+                placeholder="Describe the engagement..."
+              />
+            </div>
+            <button
+              onClick={handleLogEngagement}
+              disabled={!engSubject.trim() || engSaving}
+              className="px-4 py-2 bg-teal text-white text-xs rounded-lg font-semibold hover:opacity-90 disabled:opacity-50 transition-opacity"
+            >
+              {engSaving ? "Saving..." : "Save Engagement"}
+            </button>
+          </div>
+        )}
+
+        {supplier.hemera_engagements && supplier.hemera_engagements.length > 0 ? (
+          <div className="space-y-2">
+            {supplier.hemera_engagements.map((eng) => (
+              <div
+                key={eng.id}
+                className="bg-surface rounded-xl border border-[#E5E5E0] p-4 flex items-start gap-3"
+              >
+                <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded bg-[#F1F5F9] text-[#475569] flex-shrink-0 mt-0.5">
+                  {eng.engagement_type}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold truncate">{eng.subject}</p>
+                  {eng.notes && (
+                    <p className="text-xs text-muted mt-1 leading-relaxed whitespace-pre-wrap">{eng.notes}</p>
+                  )}
+                  <div className="flex items-center gap-3 mt-2 text-[11px] text-muted">
+                    <Badge variant={eng.status === "completed" ? "green" : eng.status === "in_progress" ? "amber" : "slate"}>
+                      {eng.status}
+                    </Badge>
+                    {eng.created_at && (
+                      <span>
+                        {new Date(eng.created_at).toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-surface rounded-xl border border-[#E5E5E0] p-6 text-center">
+            <p className="text-sm text-muted">No engagement touchpoints logged yet.</p>
+          </div>
+        )}
+      </div>
+
+      {/* ============================================================ */}
       {/*  ENGAGEMENTS                                                  */}
       {/* ============================================================ */}
       <div className="space-y-3">
         <h2 className="text-xs font-semibold uppercase tracking-[0.5px] text-muted">
-          Engagements
+          Client Engagements
         </h2>
 
         {supplier.engagements && supplier.engagements.length > 0 ? (

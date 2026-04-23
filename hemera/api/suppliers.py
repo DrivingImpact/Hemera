@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from hemera.database import get_db
 from hemera.dependencies import require_admin
 from hemera.models.supplier import Supplier, SupplierScore, SupplierSource
+from hemera.models.supplier_engagement import SupplierEngagement
 from hemera.models.transaction import Transaction
 from hemera.models.engagement import Engagement
 from hemera.models.finding import SupplierFinding
@@ -274,6 +275,14 @@ def get_supplier(supplier_id: int, db: Session = Depends(get_db), _admin=Depends
         .all()
     )
 
+    # Get Hemera engagement touchpoints (email, call, meeting, etc.)
+    hemera_engagements = (
+        db.query(SupplierEngagement)
+        .filter(SupplierEngagement.supplier_id == supplier_id)
+        .order_by(SupplierEngagement.created_at.desc())
+        .all()
+    )
+
     # Get completed AI analysis tasks for this supplier
     ai_tasks = (
         db.query(AITask)
@@ -375,6 +384,21 @@ def get_supplier(supplier_id: int, db: Session = Depends(get_db), _admin=Depends
                 "created_at": f.created_at.isoformat() if f.created_at else None,
             }
             for f in findings
+        ],
+        "hemera_engagements": [
+            {
+                "id": e.id,
+                "engagement_type": e.engagement_type,
+                "subject": e.subject,
+                "status": e.status,
+                "notes": e.notes,
+                "contact_name": e.contact_name,
+                "next_action": e.next_action,
+                "contacted_at": e.contacted_at.isoformat() if e.contacted_at else None,
+                "responded_at": e.responded_at.isoformat() if e.responded_at else None,
+                "created_at": e.created_at.isoformat() if e.created_at else None,
+            }
+            for e in hemera_engagements
         ],
         "ai_analysis": ai_analysis,
     }
