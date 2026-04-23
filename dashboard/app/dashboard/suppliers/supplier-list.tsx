@@ -63,6 +63,13 @@ export function SupplierList() {
   const [chLoading, setCHLoading] = useState(false);
   const [addingCH, setAddingCH] = useState<Set<string>>(new Set());
 
+  /* Streaming enrichment progress */
+  const [enrichActive, setEnrichActive] = useState(false);
+  const [enrichSupplierName, setEnrichSupplierName] = useState("");
+  const [enrichProgress, setEnrichProgress] = useState("");
+  const [enrichDetail, setEnrichDetail] = useState("");
+  const [enrichCounts, setEnrichCounts] = useState({ current: 0, total: 0 });
+
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /* ---- API helper ---- */
@@ -159,16 +166,80 @@ export function SupplierList() {
     }
   };
 
+  /* ---- Streaming enrichment (shared by add-from-CH and re-run) ---- */
+  const streamEnrich = useCallback(
+    async (supplierId: number, supplierName: string) => {
+      setEnrichActive(true);
+      setEnrichSupplierName(supplierName);
+      setEnrichProgress("Starting analysis...");
+      setEnrichDetail("");
+      setEnrichCounts({ current: 0, total: 0 });
+
+      try {
+        const token = await getToken();
+        const res = await fetch(`${API_URL}/api/suppliers/${supplierId}/enrich/stream`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!res.ok) {
+          const text = await res.text();
+          throw new Error(text || `API error ${res.status}`);
+        }
+        const reader = res.body?.getReader();
+        const decoder = new TextDecoder();
+        if (!reader) throw new Error("No response stream");
+
+        let buffer = "";
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            try {
+              const msg = JSON.parse(line);
+              if (msg.type === "progress") {
+                setEnrichCounts({ current: msg.current, total: msg.total });
+                if (msg.status === "analysing") {
+                  setEnrichProgress(`Layer ${msg.current} of ${msg.total}`);
+                  setEnrichDetail(msg.layer_name);
+                } else if (msg.status === "error") {
+                  setEnrichDetail(`${msg.layer_name} — error, skipping`);
+                }
+              } else if (msg.type === "done") {
+                setEnrichProgress(`Done — ${msg.findings_generated} findings generated`);
+                setEnrichDetail("");
+              }
+            } catch {
+              // skip unparseable lines
+            }
+          }
+        }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Analysis failed");
+      } finally {
+        setEnrichActive(false);
+      }
+    },
+    [getToken],
+  );
+
   /* ---- Add from Companies House ---- */
   const addFromCH = async (companyNumber: string, companyName: string) => {
     setAddingCH((prev) => new Set(prev).add(companyNumber));
     try {
-      await apiFetch("/suppliers/from-companies-house", {
+      const created = await apiFetch("/suppliers/from-companies-house", {
         method: "POST",
-        body: JSON.stringify({ company_number: companyNumber, company_name: companyName, enrich: true }),
+        body: JSON.stringify({ company_number: companyNumber, company_name: companyName, enrich: false }),
       });
       setShowCH(false);
       setCHResults([]);
+      await streamEnrich(created.id, created.name || companyName);
       await fetchSuppliers();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to add supplier");
@@ -182,13 +253,11 @@ export function SupplierList() {
   };
 
   /* ---- Rerun enrichment ---- */
-  const rerunEnrichment = async (id: number) => {
+  const rerunEnrichment = async (id: number, name: string) => {
     setEnrichingIds((prev) => new Set(prev).add(id));
     try {
-      await apiFetch(`/suppliers/${id}/enrich`, { method: "POST" });
+      await streamEnrich(id, name);
       await fetchSuppliers();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Enrichment failed");
     } finally {
       setEnrichingIds((prev) => {
         const next = new Set(prev);
@@ -204,6 +273,40 @@ export function SupplierList() {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
+      {enrichActive && (
+        <div className="fixed inset-0 z-50 bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-surface rounded-2xl border border-[#E5E5E0] shadow-xl max-w-md w-full p-8 flex flex-col items-center text-center">
+            <div className="w-10 h-10 rounded-full border-4 border-teal/20 border-t-teal animate-spin" />
+            <h3 className="text-sm font-semibold mt-4">Running Analysis</h3>
+            {enrichSupplierName && (
+              <p className="text-xs text-muted mt-1">{enrichSupplierName}</p>
+            )}
+            <p className="text-sm font-semibold mt-4">{enrichProgress}</p>
+            {enrichDetail && (
+              <p className="text-teal text-sm mt-1 font-medium">{enrichDetail}</p>
+            )}
+            {enrichCounts.total > 0 && (
+              <div className="w-full mt-4">
+                <div className="w-full h-2 bg-[#E5E5E0] rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-teal rounded-full transition-all duration-500"
+                    style={{
+                      width: `${Math.round((enrichCounts.current / enrichCounts.total) * 100)}%`,
+                    }}
+                  />
+                </div>
+                <p className="text-[11px] text-muted mt-1 text-center">
+                  Layer {enrichCounts.current}/{enrichCounts.total}
+                </p>
+              </div>
+            )}
+            <p className="text-muted text-[11px] mt-4 max-w-xs">
+              Checking Companies House, Environment Agency, HSE, and 50+ other public databases.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold">Suppliers</h1>
@@ -466,7 +569,7 @@ export function SupplierList() {
               expanded={expandedId === s.id}
               onToggle={() => setExpandedId(expandedId === s.id ? null : s.id)}
               enriching={enrichingIds.has(s.id)}
-              onRerunEnrichment={() => rerunEnrichment(s.id)}
+              onRerunEnrichment={() => rerunEnrichment(s.id, s.name)}
             />
           ))}
         </div>

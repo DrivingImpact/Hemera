@@ -395,6 +395,83 @@ async def enrich_single_supplier(supplier_id: int, db: Session = Depends(get_db)
     return result
 
 
+@router.post("/suppliers/{supplier_id}/enrich/stream")
+async def enrich_single_supplier_stream(
+    supplier_id: int,
+    db: Session = Depends(get_db),
+    _admin=Depends(require_admin),
+):
+    """Run enrichment on a supplier, streaming per-layer progress as NDJSON."""
+    from fastapi.responses import StreamingResponse
+    from hemera.services.enrichment import enrich_supplier as run_enrich
+    from hemera.services.finding_generator import generate_findings_from_sources
+    from hemera.models.finding import SupplierFinding
+    from hemera.api.hemerascope import FREE_LAYERS, LAYER_NAMES
+    from datetime import datetime
+    import json as _json
+
+    supplier = db.query(Supplier).filter(Supplier.id == supplier_id).first()
+    if not supplier:
+        raise HTTPException(status_code=404, detail="Supplier not found")
+
+    total_layers = len(FREE_LAYERS)
+
+    async def stream():
+        for i, layer in enumerate(FREE_LAYERS):
+            layer_name = LAYER_NAMES.get(layer, f"Layer {layer}")
+            yield _json.dumps({
+                "type": "progress",
+                "current": i + 1,
+                "total": total_layers,
+                "layer": layer,
+                "layer_name": layer_name,
+                "status": "analysing",
+            }) + "\n"
+
+            try:
+                await run_enrich(supplier, db, layers=[layer])
+            except Exception as e:
+                yield _json.dumps({
+                    "type": "progress",
+                    "current": i + 1,
+                    "total": total_layers,
+                    "layer": layer,
+                    "layer_name": layer_name,
+                    "status": "error",
+                    "error": str(e)[:200],
+                }) + "\n"
+
+        yield _json.dumps({
+            "type": "progress",
+            "current": total_layers,
+            "total": total_layers,
+            "layer_name": "Generating findings",
+            "status": "analysing",
+        }) + "\n"
+
+        db.query(SupplierFinding).filter(
+            SupplierFinding.supplier_id == supplier_id,
+            SupplierFinding.source == "deterministic",
+            SupplierFinding.is_active == True,  # noqa: E712
+        ).update({"is_active": False, "superseded_at": datetime.utcnow()})
+
+        all_sources = db.query(SupplierSource).filter(SupplierSource.supplier_id == supplier_id).all()
+        finding_dicts = generate_findings_from_sources(all_sources, supplier_name=supplier.name)
+        for fd in finding_dicts:
+            finding = SupplierFinding(supplier_id=supplier_id, is_active=True, **fd)
+            db.add(finding)
+
+        db.commit()
+
+        yield _json.dumps({
+            "type": "done",
+            "findings_generated": len(finding_dicts),
+            "layers_completed": total_layers,
+        }) + "\n"
+
+    return StreamingResponse(stream(), media_type="application/x-ndjson")
+
+
 @router.post("/suppliers/enrich-all")
 async def enrich_all_unenriched(
     limit: int = Query(10, le=50),
