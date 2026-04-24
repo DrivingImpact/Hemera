@@ -117,6 +117,9 @@ export default function QCPage() {
   const [cardOrder, setCardOrder] = useState<number[]>([]);  // indices into sampleData.cards
   const [submitResponse, setSubmitResponse] = useState<SubmitResponse | null>(null);
   const [swipeDir, setSwipeDir] = useState<"left" | "right" | null>(null);
+  const [verifyOpen, setVerifyOpen] = useState(false);
+  const [verifyData, setVerifyData] = useState<EmissionFactorContext | null>(null);
+  const [verifyLoading, setVerifyLoading] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const apiFetch = useCallback(
@@ -549,10 +552,6 @@ export default function QCPage() {
   const defraUrl = d.emission_factor.source?.toLowerCase().includes("defra")
     ? `https://www.gov.uk/government/publications/greenhouse-gas-reporting-conversion-factors-${d.emission_factor.year}`
     : null;
-
-  const [verifyOpen, setVerifyOpen] = useState(false);
-  const [verifyData, setVerifyData] = useState<EmissionFactorContext | null>(null);
-  const [verifyLoading, setVerifyLoading] = useState(false);
 
   const openVerify = async () => {
     setVerifyOpen(true);
