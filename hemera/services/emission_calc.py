@@ -14,10 +14,59 @@ Each transaction gets:
   - A pedigree score with GSD uncertainty
 """
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from hemera.models.emission_factor import EmissionFactor
 from hemera.models.transaction import Transaction
 from hemera.services.pedigree import score_emission_factor, aggregate_uncertainty, PedigreeScore
+
+
+# ── Classifier category → DEFRA EEIO SIC category mapping ──
+#
+# Each classifier category_name maps to an ordered list of substrings to match
+# against the EEIO factor's `category` or `keywords` field. The first substring
+# that hits a defra-eeio row is the chosen factor. If nothing matches, the
+# transaction is flagged for review — we do NOT fall back to a generic scope-3
+# factor (that's how Office Furniture was silently getting matched to
+# Agriculture before).
+_EEIO_MATCH_MAP: dict[str, list[str]] = {
+    # Scope 3 Cat 1 — Purchased goods
+    "Purchased goods — office supplies": ["paper and paper products"],
+    "Purchased goods — IT equipment": ["computer, electronic and optical products"],
+    "Purchased goods — catering/food": ["other food products", "food and beverage serving"],
+    "Purchased goods — drinks/alcohol": ["alcoholic beverages", "soft drinks"],
+    "Purchased goods — cleaning/hygiene": ["soap and detergents"],
+    "Purchased goods — merchandise/promotional": ["wearing apparel", "other manufactured goods"],
+    # Scope 3 Cat 1 — Services
+    "Purchased services — professional": ["legal services", "accounting, bookkeeping"],
+    "Purchased services — marketing": ["advertising and market research"],
+    "Purchased services — insurance": ["insurance, reinsurance"],
+    "Purchased services — telecoms": ["telecommunications services"],
+    "Purchased services — water supply": ["natural water; water treatment"],
+    # Scope 3 Cat 2 — Capital goods
+    "Capital goods": ["furniture", "machinery and equipment"],
+    # Scope 3 Cat 4 — Upstream transport
+    "Upstream transport & distribution": ["postal and courier", "land transport services"],
+    # Scope 3 Cat 5 — Waste
+    "Waste generated in operations": ["waste collection"],
+    # Scope 3 Cat 6 — Business travel
+    "Business travel — rail": ["rail transport services"],
+    "Business travel — air": ["air transport services"],
+    "Business travel — taxi": ["land transport services"],
+    "Business travel — accommodation": ["accommodation services"],
+    "Business travel — mileage/expenses": ["land transport services"],
+    # Scope 3 Cat 7 — Employee commuting
+    "Employee commuting": ["land transport services"],
+    # Scope 3 Cat 8 — Upstream leased assets
+    "Upstream leased assets": ["real estate services"],
+    # Scope 1 (EEIO only as a last-resort fallback; activity-based is preferred)
+    "Stationary combustion — gas/heating fuel": ["gas; distribution of gaseous fuels"],
+    "Mobile combustion — company vehicles": ["coke and refined petroleum products"],
+    "Fugitive emissions — refrigerants": ["other chemical products"],
+    # Scope 2 (EEIO only as a last-resort fallback)
+    "Purchased electricity": ["electricity, transmission"],
+    "Purchased heat/steam/cooling": ["gas; distribution of gaseous fuels"],
+}
 
 
 def calculate_emissions(
@@ -132,47 +181,50 @@ def _find_emission_factor(
         if ef:
             return ef, 2
 
-    # Level 3-4: Spend-based lookup by category
+    # Level 4: DEFRA EEIO spend-based, matched via the explicit SIC map.
     if transaction.category_name:
-        # Try to match by category name
-        ef = (
-            db.query(EmissionFactor)
-            .filter(
-                EmissionFactor.factor_type == "spend",
-                EmissionFactor.category.ilike(f"%{transaction.category_name.split(' — ')[-1][:30]}%"),
-            )
-            .order_by(EmissionFactor.year.desc())
-            .first()
-        )
-        if ef:
-            level = 4 if ef.source == "defra" else 3
-            return ef, level
-
-    # Fallback: try matching by scope
-    if transaction.scope:
-        ef = (
-            db.query(EmissionFactor)
-            .filter(
-                EmissionFactor.scope == transaction.scope,
-                EmissionFactor.factor_type == "spend",
-            )
-            .order_by(EmissionFactor.year.desc())
-            .first()
-        )
+        ef = _find_eeio_factor(transaction.category_name, db)
         if ef:
             return ef, 4
 
-    # Absolute fallback: general Scope 3 factor
-    ef = (
-        db.query(EmissionFactor)
-        .filter(EmissionFactor.source == "defra", EmissionFactor.factor_type == "spend")
-        .order_by(EmissionFactor.year.desc())
-        .first()
-    )
-    if ef:
-        return ef, 5
-
+    # No reliable match. We intentionally do NOT fall back to an arbitrary
+    # scope-3 factor — silently matching unmapped transactions to whatever
+    # SIC happens to sort first in the DB is how office furniture ended up
+    # classified as "Products of agriculture". Leave the transaction flagged
+    # for review so a QC analyst can map it manually.
     return None, 0
+
+
+def _find_eeio_factor(category_name: str, db: Session) -> EmissionFactor | None:
+    """Look up a DEFRA EEIO factor for a classifier category_name.
+
+    Uses _EEIO_MATCH_MAP to translate the classifier's category_name into an
+    ordered list of substrings; returns the first EEIO factor whose own
+    category/keywords match one of those substrings. Returns None if the
+    category isn't in the map or no EEIO row matches.
+    """
+    substrings = _EEIO_MATCH_MAP.get(category_name)
+    if not substrings:
+        return None
+
+    for substr in substrings:
+        ef = (
+            db.query(EmissionFactor)
+            .filter(
+                EmissionFactor.source == "defra-eeio",
+                EmissionFactor.factor_type == "spend",
+                or_(
+                    EmissionFactor.category.ilike(f"%{substr}%"),
+                    EmissionFactor.keywords.ilike(f"%{substr}%"),
+                ),
+            )
+            .order_by(EmissionFactor.year.desc())
+            .first()
+        )
+        if ef:
+            return ef
+
+    return None
 
 
 # Map canonical activity_type → (DEFRA category keywords, expected unit substring)
